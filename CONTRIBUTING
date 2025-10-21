@@ -5,7 +5,7 @@ possible.
 ## Pull Requests
 We actively welcome your pull requests! 
 
-1. Fork the repo and create your branch from `master`.
+1. Fork the repo and create your branch from `main`.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your changes.
 2. If you've added code that should be tested, add tests.
