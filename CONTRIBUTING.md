@@ -16,4 +16,4 @@ We actively welcome your pull requests!
 
 ## License
 By contributing to `rusty-bunny`, you agree that your contributions will be
-licensed under the LICENSE file in the root directory of this source tree.
+licensed under the [`LICENSE`](LICENSE) file in the root directory of this source tree.
