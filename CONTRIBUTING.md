@@ -5,7 +5,7 @@ possible.
 ## Pull Requests
 We actively welcome your pull requests! 
 
-1. Fork the repo and create your branch from `master`.
+1. Fork the repo and create your branch from `main`.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your changes.
 2. If you've added code that should be tested, add tests.
@@ -16,4 +16,4 @@ We actively welcome your pull requests!
 
 ## License
 By contributing to `rusty-bunny`, you agree that your contributions will be
-licensed under the LICENSE file in the root directory of this source tree.
+licensed under the [`LICENSE`](LICENSE) file in the root directory of this source tree.
