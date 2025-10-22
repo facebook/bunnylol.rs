@@ -3,9 +3,9 @@
 use crate::utils::bunnylol_command::BunnylolCommand;
 use crate::utils::url_encoding::build_search_url;
 
-pub struct REICommand;
+pub struct ReiCommand;
 
-impl BunnylolCommand for REICommand {
+impl BunnylolCommand for ReiCommand {
     const COMMAND: &'static str = "rei";
 
     fn process_args(args: &str) -> String {
@@ -24,13 +24,13 @@ mod tests {
 
     #[test]
     fn test_rei_command_base() {
-        assert_eq!(REICommand::process_args("rei"), "https://www.rei.com");
+        assert_eq!(ReiCommand::process_args("rei"), "https://www.rei.com");
     }
 
     #[test]
     fn test_rei_command_search() {
         assert_eq!(
-            REICommand::process_args("rei hiking boots"),
+            ReiCommand::process_args("rei hiking boots"),
             "https://www.rei.com/search?q=hiking%20boots"
         );
     }
@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn test_rei_command_search_multiple_words() {
         assert_eq!(
-            REICommand::process_args("rei camping gear outdoor"),
+            ReiCommand::process_args("rei camping gear outdoor"),
             "https://www.rei.com/search?q=camping%20gear%20outdoor"
         );
     }

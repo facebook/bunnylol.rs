@@ -16,5 +16,5 @@ pub use github::GitHubCommand;
 pub use gmail::GmailCommand;
 pub use google::GoogleCommand;
 pub use reddit::RedditCommand;
-pub use rei::REICommand;
+pub use rei::ReiCommand;
 pub use twitter::TwitterCommand;
