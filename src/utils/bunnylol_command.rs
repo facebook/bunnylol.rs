@@ -33,14 +33,18 @@ impl BunnylolCommandRegistry {
         use crate::commands::*;
 
         match command {
-            cmd if GitHubCommand::matches_command(cmd) => GitHubCommand::process_args(full_args),
-            cmd if TwitterCommand::matches_command(cmd) => TwitterCommand::process_args(full_args),
-            cmd if RedditCommand::matches_command(cmd) => RedditCommand::process_args(full_args),
-            cmd if GmailCommand::matches_command(cmd) => GmailCommand::process_args(full_args),
             cmd if DevBunnyCommand::matches_command(cmd) => {
                 DevBunnyCommand::process_args(full_args)
             }
-            cmd if REICommand::matches_command(cmd) => REICommand::process_args(full_args),
+            cmd if GitHubCommand::matches_command(cmd) => GitHubCommand::process_args(full_args),
+            cmd if GmailCommand::matches_command(cmd) => GmailCommand::process_args(full_args),
+            cmd if InstagramCommand::matches_command(cmd) => {
+                InstagramCommand::process_args(full_args)
+            }
+            cmd if RedditCommand::matches_command(cmd) => RedditCommand::process_args(full_args),
+            cmd if ReiCommand::matches_command(cmd) => ReiCommand::process_args(full_args),
+            cmd if TwitterCommand::matches_command(cmd) => TwitterCommand::process_args(full_args),
+            cmd if YouTubeCommand::matches_command(cmd) => YouTubeCommand::process_args(full_args),
             _ => GoogleCommand::process_args(full_args),
         }
     }
