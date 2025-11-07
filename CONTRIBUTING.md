@@ -14,5 +14,6 @@ We actively welcome your feature-related pull requests, however, we will not be 
 6. Open a pull request
 
 ## License
+
 By contributing to `bunnylol.rs`, you agree that your contributions will be
 licensed under the [`LICENSE`](LICENSE) file in the root directory of this source tree.
