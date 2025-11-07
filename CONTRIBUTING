@@ -1,9 +1,8 @@
-# Contributing to rusty-bunny
-We want to make contributing to this project as easy and transparent as
-possible.
+# Contributing to bunnylol.rs
+
+We actively welcome your feature-related pull requests, however, we will not be able to accept all contributions relating to adding / changing bindings. One benefit of open source software is that you can fork it and change whatever you would like to :)
 
 ## Pull Requests
-We actively welcome your pull requests! 
 
 1. Fork the repo and create your branch from `master`.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
@@ -15,5 +14,6 @@ We actively welcome your pull requests!
 6. Open a pull request
 
 ## License
-By contributing to `rusty-bunny`, you agree that your contributions will be
+
+By contributing to `bunnylol.rs`, you agree that your contributions will be
 licensed under the LICENSE file in the root directory of this source tree.

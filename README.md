@@ -1,4 +1,4 @@
-# Rusty Bunny
+# bunnylol.rs
 
 <!-- PROJECT SHIELDS -->
 <!--
@@ -16,26 +16,20 @@
 
 <br />
 <p align="center">
-  <h3 align="center">rusty-bunny</h3>
+  <h3 align="center">bunnylol.rs</h3>
 
   <p align="center">
-    rusty-bunny is a mini-clone of <a href="http://www.bunny1.org/">bunny1  </a>
     <br />
-    "a tool that lets you write smart bookmarks in [rust] and then share them across all your browsers..."
+    A tool that lets you write smart bookmarks (in Rust) and share them across all of your browsers.
     <br />
-    <a href="https://github.com/fbsamples/rusty-bunny"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/fbsamples/rusty-bunny#demo">View Demo</a>
-    ·
-    <a href="https://github.com/fbsamples/rusty-bunny/issues">Report Bug</a>
+    A modern rust clone of <a href="https://github.com/ccheever/bunny1">bunny1  </a>.
   </p>
 </p>
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
-- [Rusty Bunny](#rusty-bunny)
+- [bunnylol.rs](#bunnylolrs)
   - [Table of Contents](#table-of-contents)
   - [About the Project](#about-the-project)
   - [Demo](#demo)
@@ -51,16 +45,25 @@
   - [Contact](#contact)
   - [Acknowledgements](#acknowledgements)
 
-<!-- ABOUT THE PROJECT -->
-## About the Project
-
-The idea for this project came after learning about `bunny1` and using it at work. I really enjoyed it and thought, "I wonder if I could build my own from scratch?" so this is it!
-
 ## Demo
 
-![rusty-bunny demo][product-screenshot]
+![bunnylol.rs demo][product-screenshot]
 
-This is what `rusty-bunny` looks like in action.
+This is what `bunnylol.rs` looks like in action.
+
+## Quickstart
+
+```
+$ git clone https://github.com/facebook/bunnylol.rs.git
+$ cd bunnylol.rs
+$ cargo run
+```
+
+Open your web browser and go to `http://localhost:8000/search/fb` get redirected to Facebook.
+
+Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to get redirected to this repo.
+
+You can set your default search engine to `http://localhost:8000/?cmd=%s` and use bunnylol.rs. [Here is a guide for doing this in Chrome](https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop). This can work with a local or remote server deployment.
 
 ### Built With
 
@@ -78,30 +81,15 @@ To get a local copy up and running follow the simple steps under either of the f
 
 #### Prerequisites
 
-Make sure you have Rust installed.
-
-```shell
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-Rocket uses the nightly version of Rust so make sure you use that. If you'd like to only use nightly for this project, you can run this from the root of the project after cloning.
-
-```sh
-# from the root of the project
-rustup override set nightly
-```
+Make sure you have [Rust installed](https://rust-lang.org/tools/install/).
 
 #### Installation
 
-1. Clone the rusty-bunny
+1. Clone `bunnylol.rs`
 ```sh
-git clone https://github.com/fbsamples/rusty-bunny.git
+git clone https://github.com/facebook/bunnylol.rs.git
 ```
-2. Make sure you're using nightly
-```sh
-cargo --version
-```
-3. Build the project
+2. Build the project
 ```sh
 cargo build
 ```
@@ -115,8 +103,7 @@ This requires VSCode, Docker and the Remote Development extension pack. For more
 
 #### Spinning Up The Environment
 
-- Follow [the official guide](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume) to open this repository inside a dev container. VSCode will read the [config file](.devcontainer/devcontainer.json) provided to auto-install relevant dependencies and extensions.
-- To run terminal commands, use the [integrated terminal](https://code.visualstudio.com/docs/editor/integrated-terminal) functionality.
+- Follow [the official guide](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume) to open this repository inside a dev container.
 
 ### Running
 
@@ -139,7 +126,7 @@ cargo test
 
 To test out a command, type in http://localhost:8000/search?cmd= followed by your command.
 
-The following commands are supported by `rusty-bunny`:
+The following commands are supported by `bunnylol.rs`:
 - "tw" -> redirects to twitter.com
 - "tw @username" -> redirects to twitter.com/username
 - "gh" -> redirects to github.com
@@ -158,30 +145,9 @@ Contributions are what make the open source community such an amazing place to b
 
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
-<!-- CONTACT -->
-## Contact
-
-If you have questions or thoughts on this project, feel free to send them my way by @'ing me on Twitter or shooting me a DM.
-
-Joe Previte - [@jsjoeio](https://twitter.com/jsjoeio)
-
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
 * [The Rust Community](https://www.rust-lang.org/community)
 * [Rocket.rs](https://rocket.rs/)
 * [@othneildrew](https://github.com/othneildrew) - for the [README template](https://github.com/othneildrew/Best-README-Template)
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/fbsamples/rusty-bunny.svg?style=flat-square
-[contributors-url]: https://github.com/fbsamples/rusty-bunny/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/fbsamples/rusty-bunny.svg?style=flat-square
-[forks-url]: https://github.com/fbsamples/rusty-bunny/network/members
-[stars-shield]: https://img.shields.io/github/stars/fbsamples/rusty-bunny.svg?style=flat-square
-[stars-url]: https://github.com/fbsamples/rusty-bunny/stargazers
-[issues-shield]: https://img.shields.io/github/issues/fbsamples/rusty-bunny.svg?style=flat-square
-[issues-url]: https://github.com/fbsamples/rusty-bunny/issues
-[license-shield]: https://img.shields.io/github/license/fbsamples/rusty-bunny?style=flat-square
-[license-url]: https://github.com/fbsamples/rusty-bunny/blob/master/LICENSE
-[product-screenshot]: demo.gif
