@@ -59,11 +59,34 @@ $ cd bunnylol.rs
 $ cargo run
 ```
 
-Open your web browser and go to `http://localhost:8000/search/fb` get redirected to Facebook.
+Open your web browser and go to `http://localhost:8000/?cmd=fb` get redirected to Facebook.
 
 Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to get redirected to this repo.
 
 You can set your default search engine to `http://localhost:8000/?cmd=%s` and use bunnylol.rs. [Here is a guide for doing this in Chrome](https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop). This can work with a local or remote server deployment.
+
+
+<!-- USAGE EXAMPLES -->
+## Other Command Examples
+
+| Command | Usage Example | Description |
+|---------|--------------|-------------|
+| `gh` | `gh` | Redirects to github.com |
+| `gh` | `gh username` | Redirects to github.com/username |
+| `gh` | `gh username/repo` | Redirects to github.com/username/repo |
+| `tw` | `tw` | Redirects to twitter.com |
+| `tw` | `tw @username` | Redirects to twitter.com/username |
+| `tw` | `tw search terms` | Searches Twitter for "search terms" |
+| `r` | `r` | Redirects to reddit.com |
+| `r` | `r search terms` | Searches Reddit for "search terms" |
+| `r` | `r r/subreddit` | Redirects to reddit.com/r/subreddit |
+| `r` | `r r/subreddit search terms` | Searches within a subreddit for "search terms" |
+| `mail` | `mail` | Redirects to mail.google.com |
+| `rei` | `rei` | Redirects to www.rei.com |
+| `rei` | `rei search terms` | Searches REI for "search terms" |
+| `devbunny` | `devbunny command` | Redirects to localhost:8000/?cmd=command (for testing) |
+| `g` | `any search terms` | Searches Google for "any search terms" |
+| (default) | `any search terms` | Searches Google for "any search terms" |
 
 ### Built With
 
@@ -120,21 +143,6 @@ Run the following command
 ```sh
 cargo test
 ```
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-To test out a command, type in http://localhost:8000/search?cmd= followed by your command.
-
-The following commands are supported by `bunnylol.rs`:
-- "tw" -> redirects to twitter.com
-- "tw @username" -> redirects to twitter.com/username
-- "gh" -> redirects to github.com
-- "gh username" -> redirects to github.com/username
-- "gh username/repo" -> redirects to github.com/username/repo
-
-Everything else redirects to a google search with your query.
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -151,3 +159,18 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information
 * [The Rust Community](https://www.rust-lang.org/community)
 * [Rocket.rs](https://rocket.rs/)
 * [@othneildrew](https://github.com/othneildrew) - for the [README template](https://github.com/othneildrew/Best-README-Template)
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/fbsamples/rusty-bunny.svg?style=flat-square
+[contributors-url]: https://github.com/fbsamples/rusty-bunny/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/fbsamples/rusty-bunny.svg?style=flat-square
+[forks-url]: https://github.com/fbsamples/rusty-bunny/network/members
+[stars-shield]: https://img.shields.io/github/stars/fbsamples/rusty-bunny.svg?style=flat-square
+[stars-url]: https://github.com/fbsamples/rusty-bunny/stargazers
+[issues-shield]: https://img.shields.io/github/issues/fbsamples/rusty-bunny.svg?style=flat-square
+[issues-url]: https://github.com/fbsamples/rusty-bunny/issues
+[license-shield]: https://img.shields.io/github/license/fbsamples/rusty-bunny?style=flat-square
+[license-url]: https://github.com/fbsamples/rusty-bunny/blob/master/LICENSE
+[product-screenshot]: demo.gif
