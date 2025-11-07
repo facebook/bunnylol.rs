@@ -6,20 +6,20 @@ use crate::utils::url_encoding::build_path_url;
 pub struct GitHubCommand;
 
 impl BunnylolCommand for GitHubCommand {
-    const COMMAND: &'static str = "gh";
+    const BINDINGS: &'static [&'static str] = &["gh"];
 
     fn process_args(args: &str) -> String {
-        if args == Self::COMMAND {
+        let query = Self::get_command_args(args);
+        if query.is_empty() {
             "https://github.com".to_string()
         } else {
-            let query = Self::get_command_args(args);
             build_path_url("https://github.com", query)
         }
     }
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to GitHub repositories".to_string(),
             example: "gh facebook/react".to_string(),
         }

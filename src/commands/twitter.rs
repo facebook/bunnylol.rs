@@ -16,14 +16,13 @@ impl TwitterCommand {
 }
 
 impl BunnylolCommand for TwitterCommand {
-    const COMMAND: &'static str = "tw";
+    const BINDINGS: &'static [&'static str] = &["tw"];
 
     fn process_args(args: &str) -> String {
-        if args == Self::COMMAND {
+        let query = Self::get_command_args(args);
+        if query.is_empty() {
             "https://twitter.com".to_string()
         } else {
-            let query = Self::get_command_args(args);
-
             // Check if it looks like a Twitter profile
             if query.starts_with('@') {
                 Self::construct_profile_url(&query[1..])
@@ -35,7 +34,7 @@ impl BunnylolCommand for TwitterCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Twitter profiles or search Twitter".to_string(),
             example: "tw @MetaOpenSource".to_string(),
         }

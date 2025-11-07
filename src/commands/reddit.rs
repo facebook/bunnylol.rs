@@ -10,14 +10,13 @@ use crate::utils::url_encoding::build_search_url;
 pub struct RedditCommand;
 
 impl BunnylolCommand for RedditCommand {
-    const COMMAND: &'static str = "r";
+    const BINDINGS: &'static [&'static str] = &["r", "reddit"];
 
     fn process_args(args: &str) -> String {
-        if args == Self::COMMAND {
+        let query = Self::get_command_args(args);
+        if query.is_empty() {
             "https://reddit.com".to_string()
         } else {
-            let query = Self::get_command_args(args);
-
             // Check if it starts with r/ (subreddit pattern)
             if query.starts_with("r/") {
                 let subreddit_part = &query[2..]; // Remove "r/" prefix
@@ -44,7 +43,7 @@ impl BunnylolCommand for RedditCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Reddit or search subreddits".to_string(),
             example: "r r/rust".to_string(),
         }

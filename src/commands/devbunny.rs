@@ -6,7 +6,7 @@ use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 pub struct DevBunnyCommand;
 
 impl BunnylolCommand for DevBunnyCommand {
-    const COMMAND: &'static str = "devbunny";
+    const BINDINGS: &'static [&'static str] = &["devbunny"];
 
     fn process_args(args: &str) -> String {
         let cmd_part = Self::get_command_args(args);
@@ -18,7 +18,7 @@ impl BunnylolCommand for DevBunnyCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Test Bunnylol commands in development".to_string(),
             example: "devbunny gh facebook".to_string(),
         }

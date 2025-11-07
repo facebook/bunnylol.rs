@@ -5,7 +5,7 @@ use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 pub struct GmailCommand;
 
 impl BunnylolCommand for GmailCommand {
-    const COMMAND: &'static str = "mail";
+    const BINDINGS: &'static [&'static str] = &["gmail", "mail"];
 
     fn process_args(_args: &str) -> String {
         "https://mail.google.com".to_string()
@@ -13,7 +13,7 @@ impl BunnylolCommand for GmailCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Gmail".to_string(),
             example: "mail".to_string(),
         }

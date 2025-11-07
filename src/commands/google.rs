@@ -6,7 +6,7 @@ use crate::utils::url_encoding::build_search_url;
 pub struct GoogleCommand;
 
 impl BunnylolCommand for GoogleCommand {
-    const COMMAND: &'static str = ""; // Empty command means it's the default
+    const BINDINGS: &'static [&'static str] = &[""];
 
     fn process_args(args: &str) -> String {
         build_search_url("https://google.com/search", "q", args)
@@ -14,7 +14,7 @@ impl BunnylolCommand for GoogleCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: "(default)".to_string(),
+            bindings: vec!["(default)".to_string()],
             description: "Search Google (default fallback for any unrecognized command)".to_string(),
             example: "rust programming".to_string(),
         }

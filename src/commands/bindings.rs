@@ -1,11 +1,17 @@
 /// Bindings command handler
-/// Supports: bindings, list -> redirects to the bindings web portal
+///
+/// This command demonstrates the multi-binding feature.
+/// Both "bindings" and "list" will trigger this command.
+///
+/// Examples:
+/// - bindings -> /bindings
+/// - list -> /bindings
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 
 pub struct BindingsCommand;
 
 impl BunnylolCommand for BindingsCommand {
-    const COMMAND: &'static str = "bindings";
+    const BINDINGS: &'static [&'static str] = &["bindings", "list"];
 
     fn process_args(_args: &str) -> String {
         "/bindings".to_string()
@@ -13,7 +19,7 @@ impl BunnylolCommand for BindingsCommand {
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "View all Bunnylol command bindings in a web portal".to_string(),
             example: "bindings".to_string(),
         }
