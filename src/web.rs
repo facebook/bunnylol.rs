@@ -1,0 +1,173 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+use leptos::*;
+use leptos_meta::*;
+use serde::{Deserialize, Serialize};
+
+use crate::utils::bunnylol_command::{BunnylolCommandRegistry, CommandInfo};
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub struct BindingData {
+    pub command: String,
+    pub description: String,
+    pub example: String,
+}
+
+impl From<CommandInfo> for BindingData {
+    fn from(info: CommandInfo) -> Self {
+        Self {
+            command: info.command,
+            description: info.description,
+            example: info.example,
+        }
+    }
+}
+
+#[component]
+fn BindingCard(binding: BindingData) -> impl IntoView {
+    view! {
+        <div
+            class="binding-card"
+            style:background="linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
+            style:border-radius="8px"
+            style:padding="20px"
+            style:transition="transform 0.2s, box-shadow 0.2s"
+            style:border="2px solid #e0e0e0"
+        >
+            <div
+                style:font-family="'JetBrains Mono', monospace"
+                style:font-size="1.4em"
+                style:font-weight="700"
+                style:color="#667eea"
+                style:margin-bottom="10px"
+                style:background="white"
+                style:padding="8px 12px"
+                style:border-radius="4px"
+                style:display="inline-block"
+            >
+                {binding.command}
+            </div>
+            <div
+                style:color="#333"
+                style:margin-bottom="15px"
+                style:line-height="1.5"
+            >
+                {binding.description}
+            </div>
+            <div
+                style:background="white"
+                style:padding="10px"
+                style:border-radius="4px"
+                style:border-left="3px solid #667eea"
+            >
+                <div
+                    style:font-size="0.85em"
+                    style:color="#666"
+                    style:margin-bottom="5px"
+                    style:font-weight="600"
+                >
+                    "Example:"
+                </div>
+                <div
+                    style:font-family="'JetBrains Mono', monospace"
+                    style:color="#764ba2"
+                    style:font-weight="500"
+                >
+                    {binding.example}
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn BindingsPage() -> impl IntoView {
+    let bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
+        .into_iter()
+        .map(|cmd| cmd.into())
+        .collect();
+
+    view! {
+        <Html lang="en"/>
+        <Meta charset="UTF-8"/>
+        <Meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <Title text="Bunnylol Command Bindings"/>
+        <Link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <Link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+        <Link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+        <Style>
+            r#"
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body, html { height: 100%; width: 100%; }
+                body {
+                    font-family: 'JetBrains Mono', monospace;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    padding: 20px;
+                }
+                .binding-card {
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    cursor: pointer;
+                }
+                .binding-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                }
+            "#
+        </Style>
+
+        <div
+            style:max-width="1200px"
+            style:margin="0 auto"
+            style:background="white"
+            style:border-radius="12px"
+            style:padding="30px"
+            style:box-shadow="0 20px 60px rgba(0, 0, 0, 0.3)"
+            style:font-family="'JetBrains Mono', monospace"
+        >
+            <h1
+                style:color="#333"
+                style:text-align="center"
+                style:margin-bottom="10px"
+                style:font-size="2.5em"
+            >
+                "🐰 Bunnylol Command Bindings"
+            </h1>
+            <div
+                style:text-align="center"
+                style:color="#666"
+                style:margin-bottom="30px"
+                style:font-size="1.1em"
+            >
+                "All currently registered URL shortcuts"
+            </div>
+
+            <div
+                style:display="grid"
+                style:grid-template-columns="repeat(auto-fill, minmax(350px, 1fr))"
+                style:gap="20px"
+                style:margin-top="30px"
+            >
+                <For
+                    each=move || bindings.clone()
+                    key=|binding| binding.command.clone()
+                    children=|binding| view! { <BindingCard binding=binding /> }
+                />
+            </div>
+
+            <footer
+                style:text-align="center"
+                style:margin-top="40px"
+                style:color="#666"
+                style:font-size="0.9em"
+            >
+                <p>"💡 Tip: Use these commands in your browser search bar to quickly navigate to your favorite sites!"</p>
+            </footer>
+        </div>
+    }
+}

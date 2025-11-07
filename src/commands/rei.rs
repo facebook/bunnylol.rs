@@ -1,6 +1,6 @@
 /// REI command handler
 /// Supports: rei -> https://www.rei.com, rei [search terms] -> https://www.rei.com/search?q=[search terms]
-use crate::utils::bunnylol_command::BunnylolCommand;
+use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct REICommand;
@@ -14,6 +14,14 @@ impl BunnylolCommand for REICommand {
         } else {
             let query = Self::get_command_args(args);
             build_search_url("https://www.rei.com/search", "q", query)
+        }
+    }
+
+    fn get_info() -> CommandInfo {
+        CommandInfo {
+            command: Self::COMMAND.to_string(),
+            description: "Navigate to REI or search for outdoor gear".to_string(),
+            example: "rei hiking boots".to_string(),
         }
     }
 }

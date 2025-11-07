@@ -1,6 +1,6 @@
-/// Twitter command handler  
+/// Twitter command handler
 /// Supports: tw, tw @[username], tw [search terms]
-use crate::utils::bunnylol_command::BunnylolCommand;
+use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
 pub struct TwitterCommand;
@@ -32,6 +32,14 @@ impl BunnylolCommand for TwitterCommand {
             }
         }
     }
+
+    fn get_info() -> CommandInfo {
+        CommandInfo {
+            command: Self::COMMAND.to_string(),
+            description: "Navigate to Twitter profiles or search Twitter".to_string(),
+            example: "tw @MetaOpenSource".to_string(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -46,8 +54,8 @@ mod tests {
     #[test]
     fn test_twitter_command_profile() {
         assert_eq!(
-            TwitterCommand::process_args("tw @fbOpenSource"),
-            "https://twitter.com/fbOpenSource"
+            TwitterCommand::process_args("tw @MetaOpenSource"),
+            "https://twitter.com/MetaOpenSource"
         );
     }
 

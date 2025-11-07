@@ -4,7 +4,7 @@
 /// - r [search terms] -> https://www.reddit.com/search/?q=[search terms]
 /// - r r/[subreddit] -> https://reddit.com/r/[subreddit]
 /// - r r/[subreddit] [search terms] -> https://reddit.com/r/[subreddit]/search/?q=[search terms]
-use crate::utils::bunnylol_command::BunnylolCommand;
+use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct RedditCommand;
@@ -39,6 +39,14 @@ impl BunnylolCommand for RedditCommand {
                 // General reddit search
                 build_search_url("https://www.reddit.com/search/", "q", query)
             }
+        }
+    }
+
+    fn get_info() -> CommandInfo {
+        CommandInfo {
+            command: Self::COMMAND.to_string(),
+            description: "Navigate to Reddit or search subreddits".to_string(),
+            example: "r r/rust".to_string(),
         }
     }
 }

@@ -10,3 +10,6 @@ edition = "2024"
 rocket = { version = "0.5", features = ["json"] }
 percent-encoding = "2.3"
 tokio = { version = "1", features = ["macros"] }
+serde = { version = "1.0", features = ["derive"] }
+leptos = { version = "0.6", features = ["ssr"] }
+leptos_meta = { version = "0.6", features = ["ssr"] }
