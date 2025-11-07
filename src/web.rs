@@ -21,7 +21,7 @@ pub struct BindingData {
 impl From<CommandInfo> for BindingData {
     fn from(info: CommandInfo) -> Self {
         Self {
-            command: info.command,
+            command: info.bindings.first().unwrap_or(&"(default)".to_string()).clone(),
             description: info.description,
             example: info.example,
         }

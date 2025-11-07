@@ -6,20 +6,20 @@ use crate::utils::url_encoding::build_search_url;
 pub struct REICommand;
 
 impl BunnylolCommand for REICommand {
-    const COMMAND: &'static str = "rei";
+    const BINDINGS: &'static [&'static str] = &["rei"];
 
     fn process_args(args: &str) -> String {
-        if args == Self::COMMAND {
+        let query = Self::get_command_args(args);
+        if query.is_empty() {
             "https://www.rei.com".to_string()
         } else {
-            let query = Self::get_command_args(args);
             build_search_url("https://www.rei.com/search", "q", query)
         }
     }
 
     fn get_info() -> CommandInfo {
         CommandInfo {
-            command: Self::COMMAND.to_string(),
+            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to REI or search for outdoor gear".to_string(),
             example: "rei hiking boots".to_string(),
         }
