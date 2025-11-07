@@ -14,7 +14,8 @@ mod utils;
 
 use utils::bunnylol_command::BunnylolCommandRegistry;
 
-#[get("/<cmd>")]
+// http://localhost:8000/?cmd=gh
+#[get("/?<cmd>")]
 fn search(cmd: &str) -> Redirect {
     println!("You typed in {}", cmd);
 
