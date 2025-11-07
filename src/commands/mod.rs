@@ -2,6 +2,7 @@
 ///
 /// This module re-exports all the individual command implementations
 /// for easy importing in the registry.
+pub mod bindings;
 pub mod devbunny;
 pub mod github;
 pub mod gmail;
@@ -11,6 +12,7 @@ pub mod rei;
 pub mod twitter;
 
 // Re-export the command structs for convenience
+pub use bindings::BindingsCommand;
 pub use devbunny::DevBunnyCommand;
 pub use github::GitHubCommand;
 pub use gmail::GmailCommand;

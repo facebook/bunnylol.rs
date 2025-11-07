@@ -1,6 +1,6 @@
 /// DevBunny command handler
 /// Supports: devbunny [command] -> http://localhost:8000/?cmd=[command]
-use crate::utils::bunnylol_command::BunnylolCommand;
+use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 
 pub struct DevBunnyCommand;
@@ -14,6 +14,14 @@ impl BunnylolCommand for DevBunnyCommand {
             "http://localhost:8000/?cmd={}",
             utf8_percent_encode(cmd_part, NON_ALPHANUMERIC)
         )
+    }
+
+    fn get_info() -> CommandInfo {
+        CommandInfo {
+            command: Self::COMMAND.to_string(),
+            description: "Test Bunnylol commands in development".to_string(),
+            example: "devbunny gh facebook".to_string(),
+        }
     }
 }
 

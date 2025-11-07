@@ -10,7 +10,9 @@ extern crate rocket;
 
 use rocket::response::Redirect;
 mod commands;
+mod routes;
 mod utils;
+mod web;
 
 use utils::bunnylol_command::BunnylolCommandRegistry;
 
@@ -27,6 +29,12 @@ fn search(cmd: &str) -> Redirect {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    let _rocket = rocket::build().mount("/", routes![search]).launch().await?;
+    let _rocket = rocket::build()
+        .mount(
+            "/",
+            routes![search, routes::bindings_web],
+        )
+        .launch()
+        .await?;
     Ok(())
 }

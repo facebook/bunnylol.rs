@@ -1,3 +1,13 @@
+use serde::Serialize;
+
+/// Information about a registered command binding
+#[derive(Serialize)]
+pub struct CommandInfo {
+    pub command: String,
+    pub description: String,
+    pub example: String,
+}
+
 /// Bunnylol Command trait that all URL builders must implement
 pub trait BunnylolCommand {
     /// The command string that triggers this binding (e.g., "gh", "tw", "r")
@@ -19,6 +29,9 @@ pub trait BunnylolCommand {
     fn matches_command(command: &str) -> bool {
         command == Self::COMMAND
     }
+
+    /// Get information about this command (description and examples)
+    fn get_info() -> CommandInfo;
 }
 
 /// Bunnylol Command Registry that manages all Bunnylol commands
@@ -33,6 +46,7 @@ impl BunnylolCommandRegistry {
         use crate::commands::*;
 
         match command {
+            cmd if BindingsCommand::matches_command(cmd) => { BindingsCommand::process_args(full_args) }
             cmd if GitHubCommand::matches_command(cmd) => GitHubCommand::process_args(full_args),
             cmd if TwitterCommand::matches_command(cmd) => TwitterCommand::process_args(full_args),
             cmd if RedditCommand::matches_command(cmd) => RedditCommand::process_args(full_args),
@@ -43,6 +57,22 @@ impl BunnylolCommandRegistry {
             cmd if REICommand::matches_command(cmd) => REICommand::process_args(full_args),
             _ => GoogleCommand::process_args(full_args),
         }
+    }
+
+    /// Get all registered command bindings
+    pub fn get_all_commands() -> Vec<CommandInfo> {
+        use crate::commands::*;
+
+        vec![
+            BindingsCommand::get_info(),
+            GitHubCommand::get_info(),
+            TwitterCommand::get_info(),
+            RedditCommand::get_info(),
+            GmailCommand::get_info(),
+            DevBunnyCommand::get_info(),
+            REICommand::get_info(),
+            GoogleCommand::get_info(),
+        ]
     }
 }
 
@@ -62,6 +92,14 @@ mod tests {
             } else {
                 let query = Self::get_command_args(args);
                 format!("https://test.com/search?q={}", query)
+            }
+        }
+
+        fn get_info() -> CommandInfo {
+            CommandInfo {
+                command: Self::COMMAND.to_string(),
+                description: "Test command".to_string(),
+                example: "test query".to_string(),
             }
         }
     }
