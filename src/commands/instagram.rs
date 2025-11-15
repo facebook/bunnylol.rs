@@ -1,5 +1,5 @@
 /// Instagram command handler
-/// Supports: ig, ig @[username], ig [search terms]
+/// Supports: ig, instagram, ig @[username], ig [search terms]
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
@@ -16,7 +16,7 @@ impl InstagramCommand {
 }
 
 impl BunnylolCommand for InstagramCommand {
-    const BINDINGS: &'static [&'static str] = &["ig"];
+    const BINDINGS: &'static [&'static str] = &["ig", "instagram"];
 
     fn process_args(args: &str) -> String {
         let query = Self::get_command_args(args);
@@ -54,6 +54,14 @@ mod tests {
     }
 
     #[test]
+    fn test_instagram_command_base_full_name() {
+        assert_eq!(
+            InstagramCommand::process_args("instagram"),
+            "https://www.instagram.com"
+        );
+    }
+
+    #[test]
     fn test_instagram_command_profile() {
         assert_eq!(
             InstagramCommand::process_args("ig @instagram"),
@@ -62,9 +70,25 @@ mod tests {
     }
 
     #[test]
+    fn test_instagram_command_profile_full_name() {
+        assert_eq!(
+            InstagramCommand::process_args("instagram @instagram"),
+            "https://www.instagram.com/instagram"
+        );
+    }
+
+    #[test]
     fn test_instagram_command_search() {
         assert_eq!(
             InstagramCommand::process_args("ig travel photography"),
+            "https://www.instagram.com/explore/search/keyword?q=travel%20photography"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_search_full_name() {
+        assert_eq!(
+            InstagramCommand::process_args("instagram travel photography"),
             "https://www.instagram.com/explore/search/keyword?q=travel%20photography"
         );
     }

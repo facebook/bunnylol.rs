@@ -1,11 +1,11 @@
 /// WhatsApp command handler
-/// Supports: wa -> redirects to WhatsApp Web
+/// Supports: wa, whatsapp -> redirects to WhatsApp Web
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 
 pub struct WhatsAppCommand;
 
 impl BunnylolCommand for WhatsAppCommand {
-    const BINDINGS: &'static [&'static str] = &["wa"];
+    const BINDINGS: &'static [&'static str] = &["wa", "whatsapp"];
 
     fn process_args(_args: &str) -> String {
         "https://www.whatsapp.com".to_string()
@@ -28,6 +28,14 @@ mod tests {
     fn test_whatsapp_command() {
         assert_eq!(
             WhatsAppCommand::process_args("wa"),
+            "https://www.whatsapp.com"
+        );
+    }
+
+    #[test]
+    fn test_whatsapp_command_full_name() {
+        assert_eq!(
+            WhatsAppCommand::process_args("whatsapp"),
             "https://www.whatsapp.com"
         );
     }
