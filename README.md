@@ -32,6 +32,7 @@
     - [Running](#running)
     - [Testing](#testing)
   - [Usage](#usage)
+  - [Deployment](#deployment)
   - [Contributing](#contributing)
   - [License](#license)
   - [Contact](#contact)
@@ -136,6 +137,35 @@ Run the following command
 ```sh
 cargo test
 ```
+
+<!-- DEPLOYMENT -->
+## Deployment
+
+Bunnylol is designed to be easy to deploy and self-host on various platforms. We provide multiple deployment options:
+
+### Quick Deployment Options
+
+**Docker (Recommended)**:
+```sh
+docker-compose up -d
+```
+
+**Bare-Metal Linux**:
+```sh
+sudo ./deploy/deploy.sh
+```
+
+### Supported Platforms
+
+- Docker / Docker Compose
+- Linux servers (Ubuntu, Debian) with systemd
+- Hetzner Cloud
+- AWS (EC2, ECS)
+- Heroku
+- Any Linux VPS provider
+
+For detailed deployment instructions, platform-specific guides, and troubleshooting, see the **[Deployment Guide](deploy/DEPLOYMENT.md)**.
+
 <!-- CONTRIBUTING -->
 ## Contributing
 
