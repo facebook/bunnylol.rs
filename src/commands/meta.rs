@@ -1,5 +1,6 @@
 /// Meta command handler
 /// Supports: meta -> redirects to Meta.com
+/// Supports: meta accounts/account -> redirects to Meta Accounts Center
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 
 pub struct MetaCommand;
@@ -7,15 +8,19 @@ pub struct MetaCommand;
 impl BunnylolCommand for MetaCommand {
     const BINDINGS: &'static [&'static str] = &["meta"];
 
-    fn process_args(_args: &str) -> String {
-        "https://www.meta.com".to_string()
+    fn process_args(args: &str) -> String {
+        let query = Self::get_command_args(args);
+        match query {
+            "accounts" | "account" => "https://accountscenter.meta.com".to_string(),
+            _ => "https://www.meta.com".to_string(),
+        }
     }
 
     fn get_info() -> CommandInfo {
         CommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Meta".to_string(),
-            example: "meta".to_string(),
+            description: "Navigate to Meta or Meta Accounts Center".to_string(),
+            example: "meta accounts".to_string(),
         }
     }
 }
@@ -33,7 +38,23 @@ mod tests {
     }
 
     #[test]
-    fn test_meta_command_with_args() {
+    fn test_meta_command_accounts() {
+        assert_eq!(
+            MetaCommand::process_args("meta accounts"),
+            "https://accountscenter.meta.com"
+        );
+    }
+
+    #[test]
+    fn test_meta_command_account() {
+        assert_eq!(
+            MetaCommand::process_args("meta account"),
+            "https://accountscenter.meta.com"
+        );
+    }
+
+    #[test]
+    fn test_meta_command_with_other_args() {
         assert_eq!(
             MetaCommand::process_args("meta some args"),
             "https://www.meta.com"
