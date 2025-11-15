@@ -16,7 +16,6 @@
 
 <br />
 <p align="center">
-    <br />
     A tool that lets you write smart bookmarks (in Rust) and share them across all of your browsers.
     <br />
     A modern rust clone of <a href="https://github.com/ccheever/bunny1">bunny1  </a>.
@@ -29,7 +28,7 @@
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
     - [Manual Setup](#manual-setup)
-    - [VSCode Dev Container Setup](#vscode-dev-container-setup)
+    - [VS Code Dev Container Setup](#vscode-dev-container-setup)
     - [Running](#running)
     - [Testing](#testing)
   - [Usage](#usage)
@@ -64,6 +63,7 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 | Command | Usage Example | Description |
 |---------|--------------|-------------|
+| `bindings` | `bindings` | Shows a table of supported bindings / commands |
 | `gh` | `gh` | Redirects to github.com |
 | `gh` | `gh username` | Redirects to github.com/username |
 | `gh` | `gh username/repo` | Redirects to github.com/username/repo |
