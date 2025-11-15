@@ -28,7 +28,6 @@
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
     - [Manual Setup](#manual-setup)
-    - [VS Code Dev Container Setup](#vscode-dev-container-setup)
     - [Running](#running)
     - [Testing](#testing)
   - [Usage](#usage)
@@ -92,7 +91,6 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 To get a local copy up and running follow the simple steps under either of the following sections:
 - [Manual Setup](#manual-setup) – follow this if you prefer to install all dependencies locally.
-- [VSCode Dev Container Setup](#vscode-dev-container-setup) – follow this to run the project in an isolated development environment inside a Docker container, pre-installed with all dependencies.
 
 ### Manual Setup
 
@@ -111,25 +109,6 @@ git clone https://github.com/facebook/bunnylol.rs.git
 cargo build
 ```
 4. Follow the instructions in the [Running](#running) section.
-
-### VSCode Dev Container Setup
-
-#### Prerequisites
-
-This requires VSCode, Docker and the Remote Development extension pack. For more details see [the official docs](https://code.visualstudio.com/docs/remote/containers#_system-requirements).
-
-#### Spinning Up The Environment
-
-- Follow [the official guide](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume) to open this repository inside a dev container.
-
-### Running
-
-1. Run the project
-```sh
-cargo run
-```
-2. Visit [localhost:8000](http://localhost:8000/)
-3. To test a command, go to [localhost:8000/search?cmd=tw](http://localhost:8000/search?cmd=tw) and you should be redirected to Twitter
 
 ### Testing
 

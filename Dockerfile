@@ -21,10 +21,8 @@ RUN mkdir -p src && \
 # Copy source code
 COPY src ./src
 
-# Build the actual application
-# Touch main.rs to ensure it's rebuilt
-RUN touch src/main.rs && \
-    cargo build --release
+# Build the application
+RUN cargo build --release
 
 # Stage 2: Runtime image
 FROM debian:bookworm-slim
