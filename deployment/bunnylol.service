@@ -1,0 +1,31 @@
+[Unit]
+Description=Bunnylol - Smart Bookmark Service
+After=network.target
+
+[Service]
+Type=simple
+User=bunnylol
+Group=bunnylol
+WorkingDirectory=/var/lib/bunnylol
+ExecStart=/var/lib/bunnylol/bunnylol
+Restart=always
+RestartSec=10
+
+# Environment variables
+Environment="ROCKET_ADDRESS=0.0.0.0"
+Environment="ROCKET_PORT=8000"
+Environment="ROCKET_LOG_LEVEL=normal"
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bunnylol
+
+[Install]
+WantedBy=multi-user.target

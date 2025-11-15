@@ -1,2 +1,9 @@
 /target/*
 !/target/release
+
+# Environment files
+.env
+.env.local
+
+# Docker volumes
+data/
