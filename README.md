@@ -16,22 +16,15 @@
 
 <br />
 <p align="center">
-  <h3 align="center">bunnylol.rs</h3>
-
-  <p align="center">
     <br />
     A tool that lets you write smart bookmarks (in Rust) and share them across all of your browsers.
     <br />
     A modern rust clone of <a href="https://github.com/ccheever/bunny1">bunny1  </a>.
-  </p>
 </p>
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
-- [bunnylol.rs](#bunnylolrs)
-  - [Table of Contents](#table-of-contents)
-  - [About the Project](#about-the-project)
   - [Demo](#demo)
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
