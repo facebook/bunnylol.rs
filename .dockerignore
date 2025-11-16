@@ -1,0 +1,31 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+README.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+LICENSE
+*.md
+
+# Build artifacts
+target/
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Deployment files (not needed in container)
+deploy/
+Procfile
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Demo files
+demo.gif

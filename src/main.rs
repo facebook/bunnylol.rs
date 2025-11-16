@@ -28,12 +28,9 @@ fn search(cmd: &str) -> Redirect {
 }
 
 #[rocket::main]
-async fn main() -> Result<(), rocket::Error> {
+async fn main() -> Result<(), Box<rocket::Error>> {
     let _rocket = rocket::build()
-        .mount(
-            "/",
-            routes![search, routes::bindings_web],
-        )
+        .mount("/", routes![search, routes::bindings_web])
         .launch()
         .await?;
     Ok(())

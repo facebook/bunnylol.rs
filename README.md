@@ -28,10 +28,10 @@
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
     - [Manual Setup](#manual-setup)
-    - [VS Code Dev Container Setup](#vscode-dev-container-setup)
     - [Running](#running)
     - [Testing](#testing)
   - [Usage](#usage)
+  - [Deployment](#deployment)
   - [Contributing](#contributing)
   - [License](#license)
   - [Contact](#contact)
@@ -53,10 +53,20 @@ $ cargo run
 
 Open your web browser and go to `http://localhost:8000/?cmd=fb` get redirected to Facebook.
 
-Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to get redirected to this repo.
+Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to be redirected to this repo.
 
-You can set your default search engine to `http://localhost:8000/?cmd=%s` and use bunnylol.rs. [Here is a guide for doing this in Chrome](https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop). This can work with a local or remote server deployment.
+## Setting `bunnylol` to be your default search engine
 
+You can set your default search engine to `http://localhost:8000/?cmd=%s` and use `bunnylol.rs` for everything. For this to work, you will need to have the server deployed and running locally or on a server.
+
+### Desktop Browsers
+
+- [Guide for doing this in Desktop Chrome](https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop)
+- [Guide for doing this in Desktop Firefox](https://support.mozilla.org/en-US/kb/add-custom-search-engine-firefox)
+
+### Mobile Browsers
+
+On iOS, Safari restricts changing default search providers, so the first step is to install Firefox and [set it as the default browser](https://support.covenanteyes.com/hc/en-us/articles/12223357002267-How-do-I-set-a-default-browser-on-an-iPhone). Then change your [default search engine](https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios).
 
 <!-- USAGE EXAMPLES -->
 ## Other Command Examples
@@ -91,51 +101,48 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 To get a local copy up and running follow the simple steps under either of the following sections:
 - [Manual Setup](#manual-setup) – follow this if you prefer to install all dependencies locally.
-- [VSCode Dev Container Setup](#vscode-dev-container-setup) – follow this to run the project in an isolated development environment inside a Docker container, pre-installed with all dependencies.
 
 ### Manual Setup
 
-#### Prerequisites
-
 Make sure you have [Rust installed](https://rust-lang.org/tools/install/).
 
-#### Installation
-
-1. Clone `bunnylol.rs`
 ```sh
-git clone https://github.com/facebook/bunnylol.rs.git
+$ git clone https://github.com/facebook/bunnylol.rs.git
+$ cd bunnylol.rs
+$ cargo run
 ```
-2. Build the project
+
+
+## Deployment with Docker
+
+`Bunnylol` is designed to be easy to deploy anywhere using Docker.
+
 ```sh
-cargo build
+docker-compose up -d
 ```
-4. Follow the instructions in the [Running](#running) section.
 
-### VSCode Dev Container Setup
+The application will be running at `http://localhost:8000` by default.
 
-#### Prerequisites
+### Auto-start on Boot (Linux)
 
-This requires VSCode, Docker and the Remote Development extension pack. For more details see [the official docs](https://code.visualstudio.com/docs/remote/containers#_system-requirements).
+Docker containers can automatically start on system boot:
 
-#### Spinning Up The Environment
+1. Enable Docker service: `sudo systemctl enable docker` (or )
+2. Use restart policy in `docker-compose.yml`:
+   ```yaml
+   services:
+     bunnylol:
+       restart: unless-stopped
+   ```
 
-- Follow [the official guide](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-a-git-repository-or-github-pr-in-an-isolated-container-volume) to open this repository inside a dev container.
+### Where to Deploy
 
-### Running
+Docker makes it easy to deploy anywhere:
+- Any cloud provider (AWS, GCP, Azure, DigitalOcean, Hetzner, etc.)
+- VPS / home servers
 
-1. Run the project
-```sh
-cargo run
-```
-2. Visit [localhost:8000](http://localhost:8000/)
-3. To test a command, go to [localhost:8000/search?cmd=tw](http://localhost:8000/search?cmd=tw) and you should be redirected to Twitter
+For detailed deployment instructions, reverse proxy setup, and troubleshooting, see the **[Deployment Guide](deployment/DEPLOYMENT.md)**.
 
-### Testing
-
-Run the following command
-```sh
-cargo test
-```
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -156,14 +163,14 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/fbsamples/rusty-bunny.svg?style=flat-square
-[contributors-url]: https://github.com/fbsamples/rusty-bunny/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/fbsamples/rusty-bunny.svg?style=flat-square
-[forks-url]: https://github.com/fbsamples/rusty-bunny/network/members
-[stars-shield]: https://img.shields.io/github/stars/fbsamples/rusty-bunny.svg?style=flat-square
-[stars-url]: https://github.com/fbsamples/rusty-bunny/stargazers
-[issues-shield]: https://img.shields.io/github/issues/fbsamples/rusty-bunny.svg?style=flat-square
-[issues-url]: https://github.com/fbsamples/rusty-bunny/issues
-[license-shield]: https://img.shields.io/github/license/fbsamples/rusty-bunny?style=flat-square
-[license-url]: https://github.com/fbsamples/rusty-bunny/blob/master/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square
+[contributors-url]: https://github.com/facebook/bunnylol.rs/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/facebook/bunnylol.rs.svg?style=flat-square
+[forks-url]: https://github.com/facebook/bunnylol.rs/network/members
+[stars-shield]: https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square
+[stars-url]: https://github.com/facebook/bunnylol.rs/stargazers
+[issues-shield]: https://img.shields.io/github/issues/facebook/bunnylol.rs.svg?style=flat-square
+[issues-url]: https://github.com/facebook/bunnylol.rs/issues
+[license-shield]: https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square
+[license-url]: https://github.com/facebook/bunnylol.rs/blob/master/LICENSE
 [product-screenshot]: demo.gif
