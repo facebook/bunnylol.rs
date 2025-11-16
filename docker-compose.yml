@@ -1,0 +1,21 @@
+services:
+  bunnylol:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bunnylol
+    restart: unless-stopped
+    ports:
+      - "${BUNNYLOL_PORT:-8000}:${BUNNYLOL_PORT:-8000}"
+    environment:
+      - ROCKET_LOG_LEVEL=${ROCKET_LOG_LEVEL:-normal}
+      - BUNNYLOL_PORT=${BUNNYLOL_PORT:-8000}
+    # Uncomment to persist any data if needed in the future
+    # volumes:
+    #   - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:$${BUNNYLOL_PORT}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
