@@ -166,7 +166,27 @@ pub fn BindingsPage() -> impl IntoView {
                 style:color="#666"
                 style:font-size="0.9em"
             >
-                <p>"💡 Tip: Use these commands in your browser search bar to quickly navigate to your favorite sites!"</p>
+                <p style:margin-bottom="10px">"💡 Tip: Use these commands in your browser search bar to quickly navigate to your favorite sites!"</p>
+                <div
+                    style:background="#f5f7fa"
+                    style:padding="15px"
+                    style:border-radius="6px"
+                    style:margin-top="15px"
+                    style:border="1px solid #e0e0e0"
+                >
+                    <div style:font-weight="600" style:margin-bottom="8px" style:color="#333">"Example URL:"</div>
+                    <code
+                        style:font-family="'JetBrains Mono', monospace"
+                        style:background="white"
+                        style:padding="8px 12px"
+                        style:border-radius="4px"
+                        style:display="inline-block"
+                        style:color="#667eea"
+                        style:border="1px solid #667eea"
+                    >
+                        "http://localhost:8000/?cmd=gh facebook/bunnylol.rs"
+                    </code>
+                </div>
             </footer>
         </div>
     }
