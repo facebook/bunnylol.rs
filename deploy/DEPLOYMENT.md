@@ -23,17 +23,20 @@ For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup scr
 
 ### Usage
 
+Download and run the setup script:
+
 ```bash
-# Download and run the setup script
-curl -fsSL https://raw.githubusercontent.com/alichtman/bunnylol.rs/main/deploy/setup-ubuntu-server.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/alichtman/bunnylol.rs/main/deploy/setup-ubuntu-server.sh -o setup-ubuntu-server.sh
+chmod +x setup-ubuntu-server.sh
+sudo ./setup-ubuntu-server.sh
 ```
 
 Or clone the repository first and run locally:
 
 ```bash
 git clone https://github.com/alichtman/bunnylol.rs.git
-cd bunnylol.rs/deploy
-sudo ./setup-ubuntu-server.sh
+cd bunnylol.rs
+sudo deploy/setup-ubuntu-server.sh
 ```
 
 ### What the Script Does
