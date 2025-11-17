@@ -146,17 +146,26 @@ clone_or_update_repo() {
 }
 
 deploy_application() {
-    log_info "Deploying bunnylol.rs with Docker Compose..."
+    log_info "Checking application deployment status..."
 
     cd "$INSTALL_DIR"
 
-    # Stop existing containers if any
-    if docker compose ps -q &> /dev/null; then
-        log_info "Stopping existing containers..."
-        docker compose down
+    # Check if containers are already running
+    if docker compose ps 2>/dev/null | grep -q "Up"; then
+        log_warning "Containers are already running!"
+        log_info "Skipping deployment to avoid downtime."
+        echo ""
+        log_info "Current container status:"
+        docker compose ps
+        echo ""
+        log_info "To update the application manually, run:"
+        echo "  cd $INSTALL_DIR"
+        echo "  git pull"
+        echo "  docker compose up -d --build  # This will do a rolling update"
+        return 0
     fi
 
-    # Start the application
+    # Start the application (only if not already running)
     log_info "Starting containers..."
     docker compose up -d --build
 
