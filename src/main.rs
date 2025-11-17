@@ -40,7 +40,7 @@ fn not_found() -> Redirect {
 }
 
 #[rocket::main]
-async fn main() -> Result<(), rocket::Error> {
+async fn main() -> Result<(), Box<rocket::Error>> {
     let _rocket = rocket::build()
         .mount(
             "/",
