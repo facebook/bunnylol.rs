@@ -189,27 +189,13 @@ clone_or_update_repo() {
 }
 
 deploy_application() {
-    log_info "Checking application deployment status..."
+    log_info "Deploying application with Docker Compose..."
 
     cd "$INSTALL_DIR"
 
-    # Check if containers are already running
-    if docker compose ps 2>/dev/null | grep -q "Up"; then
-        log_warning "Containers are already running!"
-        log_info "Skipping deployment to avoid downtime."
-        echo ""
-        log_info "Current container status:"
-        docker compose ps
-        echo ""
-        log_info "To update the application manually, run:"
-        echo "  cd $INSTALL_DIR"
-        echo "  git pull"
-        echo "  docker compose up -d --build  # This will do a rolling update"
-        return 0
-    fi
-
-    # Start the application (only if not already running)
-    log_info "Starting containers..."
+    # Deploy/update the application
+    # docker compose up -d performs rolling updates if containers are already running
+    log_info "Starting containers (or updating if already running)..."
     docker compose up -d --build
 
     # Wait a moment for containers to start

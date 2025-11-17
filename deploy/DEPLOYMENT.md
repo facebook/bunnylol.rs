@@ -4,11 +4,52 @@ This guide covers deploying bunnylol.rs using Docker.
 
 ## Table of Contents
 
+- [Quick Start: Automated Setup](#quick-start-automated-setup)
 - [Docker Deployment](#docker-deployment)
 - [Configuration](#configuration)
 - [Running on Boot](#running-on-boot)
 - [Reverse Proxy Setup](#reverse-proxy-setup)
 - [Troubleshooting](#troubleshooting)
+
+## Quick Start: Automated Setup
+
+For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup script that installs Docker and deploys bunnylol.rs in one command.
+
+### Prerequisites
+
+- Fresh Ubuntu server (22.04 LTS, 24.04 LTS, 25.04, or 25.10+)
+- Root or sudo access
+- Internet connection
+
+### Usage
+
+```bash
+# Download and run the setup script
+curl -fsSL https://raw.githubusercontent.com/alichtman/bunnylol.rs/main/deploy/setup-ubuntu-server.sh | sudo bash
+```
+
+Or clone the repository first and run locally:
+
+```bash
+git clone https://github.com/alichtman/bunnylol.rs.git
+cd bunnylol.rs/deploy
+sudo ./setup-ubuntu-server.sh
+```
+
+### What the Script Does
+
+The automated setup script will:
+
+1. ✓ Verify you're running a supported Ubuntu version
+2. ✓ Update system packages
+3. ✓ Install Docker CE and Docker Compose
+4. ✓ Configure Docker to start on boot
+5. ✓ Clone the bunnylol.rs repository
+6. ✓ Deploy the application with `docker compose up -d --build`
+
+After completion, bunnylol will be running on port 8000. The script is safe to run multiple times - it will skip already-installed components and update the repository if it already exists.
+
+---
 
 ## Docker Deployment
 
