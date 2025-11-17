@@ -53,6 +53,49 @@ check_root() {
     fi
 }
 
+check_ubuntu_version() {
+    log_info "Checking Ubuntu version..."
+
+    # Check if running on Ubuntu
+    if [ ! -f /etc/os-release ]; then
+        log_error "Cannot determine OS version (/etc/os-release not found)"
+        exit 1
+    fi
+
+    . /etc/os-release
+
+    if [ "$ID" != "ubuntu" ]; then
+        log_error "This script is designed for Ubuntu only. Detected OS: $ID"
+        exit 1
+    fi
+
+    # Extract version number (e.g., "24.04" from "24.04.1 LTS")
+    VERSION_NUMBER=$(echo "$VERSION_ID" | cut -d. -f1,2)
+    VERSION_MAJOR=$(echo "$VERSION_NUMBER" | cut -d. -f1)
+    VERSION_MINOR=$(echo "$VERSION_NUMBER" | cut -d. -f2)
+
+    # Minimum supported version: 22.04
+    MIN_MAJOR=22
+    MIN_MINOR=4
+
+    # Compare versions
+    if [ "$VERSION_MAJOR" -lt "$MIN_MAJOR" ] ||
+       ([ "$VERSION_MAJOR" -eq "$MIN_MAJOR" ] && [ "$VERSION_MINOR" -lt "$MIN_MINOR" ]); then
+        log_error "Unsupported Ubuntu version: $VERSION_ID"
+        echo ""
+        echo "This script requires Ubuntu 22.04 (Jammy) or higher:"
+        echo "  - Ubuntu 22.04 LTS (Jammy)"
+        echo "  - Ubuntu 24.04 LTS (Noble)"
+        echo "  - Ubuntu 25.04 (Plucky)"
+        echo "  - Ubuntu 25.10 (Questing)"
+        echo ""
+        echo "Your version: Ubuntu $VERSION_ID ($VERSION_CODENAME)"
+        exit 1
+    fi
+
+    log_success "Ubuntu $VERSION_ID ($VERSION_CODENAME) - supported ✓"
+}
+
 #############################################################################
 # Installation Functions
 #############################################################################
@@ -212,6 +255,7 @@ main() {
     echo ""
 
     check_root
+    check_ubuntu_version
     update_system
     install_prerequisites
     install_docker
