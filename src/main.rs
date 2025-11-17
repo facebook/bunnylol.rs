@@ -27,10 +27,26 @@ fn search(cmd: &str) -> Redirect {
     Redirect::to(redirect_url)
 }
 
+// Root path without query parameters -> redirect to bindings
+#[get("/", rank = 2)]
+fn root() -> Redirect {
+    Redirect::to("/bindings")
+}
+
+// Catch 404 errors and redirect to bindings page
+#[catch(404)]
+fn not_found() -> Redirect {
+    Redirect::to("/bindings")
+}
+
 #[rocket::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
     let _rocket = rocket::build()
-        .mount("/", routes![search, routes::bindings_web])
+        .mount(
+            "/",
+            routes![search, root, routes::bindings_web],
+        )
+        .register("/", catchers![not_found])
         .launch()
         .await?;
     Ok(())
