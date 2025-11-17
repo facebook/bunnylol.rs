@@ -21,7 +21,11 @@ pub struct BindingData {
 impl From<CommandInfo> for BindingData {
     fn from(info: CommandInfo) -> Self {
         Self {
-            command: info.bindings.first().unwrap_or(&"(default)".to_string()).clone(),
+            command: info
+                .bindings
+                .first()
+                .unwrap_or(&"(default)".to_string())
+                .clone(),
             description: info.description,
             example: info.example,
         }
@@ -87,10 +91,13 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
 
 #[component]
 pub fn BindingsPage() -> impl IntoView {
-    let bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
+    let mut bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
         .into_iter()
         .map(|cmd| cmd.into())
         .collect();
+
+    // Sort bindings alphabetically by command name
+    bindings.sort_by(|a, b| a.command.to_lowercase().cmp(&b.command.to_lowercase()));
 
     view! {
         <Html lang="en"/>
@@ -186,6 +193,81 @@ pub fn BindingsPage() -> impl IntoView {
                     >
                         "http://localhost:8000/?cmd=gh facebook/bunnylol.rs"
                     </code>
+                    <p style:font-size="0.85em" style:margin-top="10px" style:color="#888" style:line-height="1.5">
+                        "Note: This example assumes you've deployed bunnylol locally. For best results, deploy bunnylol on a networked server accessible from all your devices."
+                    </p>
+                </div>
+
+                <div
+                    style:background="#f5f7fa"
+                    style:padding="20px"
+                    style:border-radius="6px"
+                    style:margin-top="20px"
+                    style:border="1px solid #e0e0e0"
+                >
+                    <div style:font-weight="600" style:margin-bottom="12px" style:color="#333" style:font-size="1.1em">
+                        "📚 Setup Guides"
+                    </div>
+                    <div style:color="#666" style:line-height="1.8">
+                        <p style:margin-bottom="10px">"Set bunnylol as your default search engine to use these commands directly from your address bar:"</p>
+                        <div style:margin-left="15px">
+                            <p style:margin-bottom="5px">
+                                "🖥️ Desktop Chrome: "
+                                <a
+                                    href="https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
+                                >
+                                    "Setup Guide"
+                                </a>
+                            </p>
+                            <p style:margin-bottom="5px">
+                                "🦊 Desktop Firefox: "
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/add-custom-search-engine-firefox"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
+                                >
+                                    "Setup Guide"
+                                </a>
+                            </p>
+                            <p style:margin-bottom="5px">
+                                "📱 iOS Firefox: "
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
+                                >
+                                    "Setup Guide"
+                                </a>
+                            </p>
+                            <p>
+                                "📱 Android Firefox: "
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
+                                >
+                                    "Setup Guide"
+                                </a>
+                            </p>
+                        </div>
+                        <p style:font-size="0.85em" style:margin-top="12px" style:color="#888" style:font-style="italic">
+                            "Note: iOS Safari does not support custom search engines. Please use Firefox on iOS instead."
+                        </p>
+                    </div>
                 </div>
             </footer>
         </div>

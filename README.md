@@ -59,6 +59,8 @@ Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to be redirected to th
 
 You can set your default search engine to `http://localhost:8000/?cmd=%s` and use `bunnylol.rs` for everything. For this to work, you will need to have the server deployed and running locally or on a server.
 
+**Note:** For best results, deploy bunnylol on a networked server accessible from all your devices, rather than just running it locally.
+
 ### Desktop Browsers
 
 - [Guide for doing this in Desktop Chrome](https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop)
@@ -66,7 +68,14 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 ### Mobile Browsers
 
-On iOS, Safari restricts changing default search providers, so the first step is to install Firefox and [set it as the default browser](https://support.covenanteyes.com/hc/en-us/articles/12223357002267-How-do-I-set-a-default-browser-on-an-iPhone). Then change your [default search engine](https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios).
+**Note:** iOS Safari does not support custom search engines, so you'll need to use Firefox (or another browser that does) instead.
+
+#### iOS (Firefox)
+1. Install Firefox and [set it as the default browser](https://support.covenanteyes.com/hc/en-us/articles/12223357002267-How-do-I-set-a-default-browser-on-an-iPhone)
+2. Change your [default search engine in Firefox for iOS](https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios)
+
+#### Android (Firefox)
+- [Guide for managing default search engines in Firefox for Android](https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android)
 
 <!-- USAGE EXAMPLES -->
 ## Other Command Examples
