@@ -31,18 +31,53 @@ impl From<CommandInfo> for BindingData {
 #[component]
 fn BindingCard(binding: BindingData) -> impl IntoView {
     view! {
-        <div class="binding-card">
-            <div class="command-name">
+        <div
+            class="binding-card"
+            style:background="linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
+            style:border-radius="8px"
+            style:padding="20px"
+            style:transition="transform 0.2s, box-shadow 0.2s"
+            style:border="2px solid #e0e0e0"
+        >
+            <div
+                style:font-family="'JetBrains Mono', monospace"
+                style:font-size="1.4em"
+                style:font-weight="700"
+                style:color="#667eea"
+                style:margin-bottom="10px"
+                style:background="white"
+                style:padding="8px 12px"
+                style:border-radius="4px"
+                style:display="inline-block"
+            >
                 {binding.command}
             </div>
-            <div class="command-description">
+            <div
+                style:color="#333"
+                style:margin-bottom="15px"
+                style:line-height="1.5"
+            >
                 {binding.description}
             </div>
-            <div class="example-box">
-                <div class="example-label">
+            <div
+                style:background="white"
+                style:padding="10px"
+                style:border-radius="4px"
+                style:border-left="3px solid #667eea"
+            >
+                <div
+                    style:font-size="0.85em"
+                    style:color="#666"
+                    style:margin-bottom="5px"
+                    style:font-weight="600"
+                >
                     "Example:"
                 </div>
-                <div class="example-text">
+                <div
+                    style:font-family="'JetBrains Mono', monospace"
+                    style:color="#764ba2"
+                    style:font-weight="500"
+                >
                     {binding.example}
                 </div>
             </div>
@@ -79,11 +114,6 @@ pub fn BindingsPage() -> impl IntoView {
                     padding: 20px;
                 }
                 .binding-card {
-                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                    border-radius: 8px;
-                    padding: 20px;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                    border: 2px solid #e0e0e0;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                     cursor: pointer;
                 }
@@ -91,142 +121,41 @@ pub fn BindingsPage() -> impl IntoView {
                     transform: translateY(-5px);
                     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
                 }
-                .command-name {
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 1.4em;
-                    font-weight: 700;
-                    color: #667eea;
-                    margin-bottom: 10px;
-                    background: white;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    display: inline-block;
-                }
-                .command-description {
-                    color: #333;
-                    margin-bottom: 15px;
-                    line-height: 1.5;
-                }
-                .example-box {
-                    background: white;
-                    padding: 10px;
-                    border-radius: 4px;
-                    border-left: 3px solid #667eea;
-                }
-                .example-label {
-                    font-size: 0.85em;
-                    color: #666;
-                    margin-bottom: 5px;
-                    font-weight: 600;
-                }
-                .example-text {
-                    font-family: 'JetBrains Mono', monospace;
-                    color: #764ba2;
-                    font-weight: 500;
-                }
-                .container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    background: white;
-                    border-radius: 12px;
-                    padding: 30px;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                    font-family: 'JetBrains Mono', monospace;
-                }
-                .page-title {
-                    color: #333;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 2.5em;
-                }
-                .page-subtitle {
-                    text-align: center;
-                    color: #666;
-                    margin-bottom: 30px;
-                    font-size: 1.1em;
-                }
-                .bindings-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-                    gap: 20px;
-                    margin-top: 30px;
-                }
-                .footer {
-                    text-align: center;
-                    margin-top: 40px;
-                    color: #666;
-                    font-size: 0.9em;
-                }
-                .info-box {
-                    background: #f5f7fa;
-                    padding: 15px;
-                    border-radius: 6px;
-                    margin-top: 15px;
-                    border: 1px solid #e0e0e0;
-                }
-                .info-box-title {
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                    color: #333;
-                }
-                .example-code {
-                    font-family: 'JetBrains Mono', monospace;
-                    background: white;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    display: inline-block;
-                    color: #667eea;
-                    border: 1px solid #667eea;
-                }
-                .setup-guides {
-                    background: #f5f7fa;
-                    padding: 20px;
-                    border-radius: 6px;
-                    margin-top: 20px;
-                    border: 1px solid #e0e0e0;
-                }
-                .setup-guides-title {
-                    font-weight: 600;
-                    margin-bottom: 12px;
-                    color: #333;
-                    font-size: 1.1em;
-                }
-                .setup-guides-content {
-                    color: #666;
-                    line-height: 1.8;
-                }
-                .setup-guides-content p {
-                    margin-bottom: 10px;
-                }
-                .setup-guides-list {
-                    margin-left: 15px;
-                }
-                .setup-guides-list p {
-                    margin-bottom: 5px;
-                }
-                .setup-guides-list p:last-child {
-                    margin-bottom: 0;
-                }
-                .setup-link {
-                    color: #667eea;
-                    text-decoration: none;
-                    font-weight: 500;
-                }
-                .setup-link:hover {
-                    text-decoration: underline;
-                }
             "#
         </Style>
 
-        <div class="container">
-            <h1 class="page-title">
+        <div
+            style:max-width="1200px"
+            style:margin="0 auto"
+            style:background="white"
+            style:border-radius="12px"
+            style:padding="30px"
+            style:box-shadow="0 20px 60px rgba(0, 0, 0, 0.3)"
+            style:font-family="'JetBrains Mono', monospace"
+        >
+            <h1
+                style:color="#333"
+                style:text-align="center"
+                style:margin-bottom="10px"
+                style:font-size="2.5em"
+            >
                 "🐰 Bunnylol Command Bindings"
             </h1>
-            <div class="page-subtitle">
+            <div
+                style:text-align="center"
+                style:color="#666"
+                style:margin-bottom="30px"
+                style:font-size="1.1em"
+            >
                 "All currently registered URL shortcuts"
             </div>
 
-            <div class="bindings-grid">
+            <div
+                style:display="grid"
+                style:grid-template-columns="repeat(auto-fill, minmax(350px, 1fr))"
+                style:gap="20px"
+                style:margin-top="30px"
+            >
                 <For
                     each=move || bindings.clone()
                     key=|binding| binding.command.clone()
@@ -234,40 +163,69 @@ pub fn BindingsPage() -> impl IntoView {
                 />
             </div>
 
-            <footer class="footer">
+            <footer
+                style:text-align="center"
+                style:margin-top="40px"
+                style:color="#666"
+                style:font-size="0.9em"
+            >
                 <p style:margin-bottom="10px">"💡 Tip: Use these commands in your browser search bar to quickly navigate to your favorite sites!"</p>
-                <div class="info-box">
-                    <div class="info-box-title">"Example URL:"</div>
-                    <code class="example-code">
+                <div
+                    style:background="#f5f7fa"
+                    style:padding="15px"
+                    style:border-radius="6px"
+                    style:margin-top="15px"
+                    style:border="1px solid #e0e0e0"
+                >
+                    <div style:font-weight="600" style:margin-bottom="8px" style:color="#333">"Example URL:"</div>
+                    <code
+                        style:font-family="'JetBrains Mono', monospace"
+                        style:background="white"
+                        style:padding="8px 12px"
+                        style:border-radius="4px"
+                        style:display="inline-block"
+                        style:color="#667eea"
+                        style:border="1px solid #667eea"
+                    >
                         "http://localhost:8000/?cmd=gh facebook/bunnylol.rs"
                     </code>
                 </div>
 
-                <div class="setup-guides">
-                    <div class="setup-guides-title">
+                <div
+                    style:background="#f5f7fa"
+                    style:padding="20px"
+                    style:border-radius="6px"
+                    style:margin-top="20px"
+                    style:border="1px solid #e0e0e0"
+                >
+                    <div style:font-weight="600" style:margin-bottom="12px" style:color="#333" style:font-size="1.1em">
                         "📚 Setup Guides"
                     </div>
-                    <div class="setup-guides-content">
-                        <p>"Set bunnylol as your default search engine to use these commands directly from your address bar:"</p>
-                        <div class="setup-guides-list">
-                            <p>
+                    <div style:color="#666" style:line-height="1.8">
+                        <p style:margin-bottom="10px">"Set bunnylol as your default search engine to use these commands directly from your address bar:"</p>
+                        <div style:margin-left="15px">
+                            <p style:margin-bottom="5px">
                                 "🖥️ Desktop Chrome: "
                                 <a
-                                    class="setup-link"
                                     href="https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
                                 >
                                     "Setup Guide"
                                 </a>
                             </p>
-                            <p>
+                            <p style:margin-bottom="5px">
                                 "🦊 Desktop Firefox: "
                                 <a
-                                    class="setup-link"
                                     href="https://support.mozilla.org/en-US/kb/add-custom-search-engine-firefox"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
                                 >
                                     "Setup Guide"
                                 </a>
@@ -275,10 +233,12 @@ pub fn BindingsPage() -> impl IntoView {
                             <p>
                                 "📱 Mobile (Firefox on iOS): "
                                 <a
-                                    class="setup-link"
                                     href="https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
                                 >
                                     "Setup Guide"
                                 </a>
