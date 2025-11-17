@@ -21,7 +21,11 @@ pub struct BindingData {
 impl From<CommandInfo> for BindingData {
     fn from(info: CommandInfo) -> Self {
         Self {
-            command: info.bindings.first().unwrap_or(&"(default)".to_string()).clone(),
+            command: info
+                .bindings
+                .first()
+                .unwrap_or(&"(default)".to_string())
+                .clone(),
             description: info.description,
             example: info.example,
         }
@@ -234,7 +238,7 @@ pub fn BindingsPage() -> impl IntoView {
                                 </a>
                             </p>
                             <p style:margin-bottom="5px">
-                                "📱 Firefox for iOS: "
+                                "📱 iOS Firefox: "
                                 <a
                                     href="https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios"
                                     target="_blank"
@@ -247,7 +251,7 @@ pub fn BindingsPage() -> impl IntoView {
                                 </a>
                             </p>
                             <p>
-                                "📱 Firefox for Android: "
+                                "📱 Android Firefox: "
                                 <a
                                     href="https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android"
                                     target="_blank"

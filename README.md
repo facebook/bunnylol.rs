@@ -68,7 +68,7 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 ### Mobile Browsers
 
-**Note:** iOS Safari does not support custom search engines. On iOS, you'll need to use Firefox instead.
+**Note:** iOS Safari does not support custom search engines, so you'll need to use Firefox (or another browser that does) instead.
 
 #### iOS (Firefox)
 1. Install Firefox and [set it as the default browser](https://support.covenanteyes.com/hc/en-us/articles/12223357002267-How-do-I-set-a-default-browser-on-an-iPhone)
