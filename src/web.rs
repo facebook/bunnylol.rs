@@ -189,6 +189,9 @@ pub fn BindingsPage() -> impl IntoView {
                     >
                         "http://localhost:8000/?cmd=gh facebook/bunnylol.rs"
                     </code>
+                    <p style:font-size="0.85em" style:margin-top="10px" style:color="#888" style:line-height="1.5">
+                        "Note: This example assumes you've deployed bunnylol locally. For best results, deploy bunnylol on a networked server accessible from all your devices."
+                    </p>
                 </div>
 
                 <div
@@ -230,8 +233,8 @@ pub fn BindingsPage() -> impl IntoView {
                                     "Setup Guide"
                                 </a>
                             </p>
-                            <p>
-                                "📱 Mobile (Firefox on iOS): "
+                            <p style:margin-bottom="5px">
+                                "📱 Firefox for iOS: "
                                 <a
                                     href="https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios"
                                     target="_blank"
@@ -243,7 +246,23 @@ pub fn BindingsPage() -> impl IntoView {
                                     "Setup Guide"
                                 </a>
                             </p>
+                            <p>
+                                "📱 Firefox for Android: "
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style:color="#667eea"
+                                    style:text-decoration="none"
+                                    style:font-weight="500"
+                                >
+                                    "Setup Guide"
+                                </a>
+                            </p>
                         </div>
+                        <p style:font-size="0.85em" style:margin-top="12px" style:color="#888" style:font-style="italic">
+                            "Note: iOS Safari does not support custom search engines. Please use Firefox on iOS instead."
+                        </p>
                     </div>
                 </div>
             </footer>
