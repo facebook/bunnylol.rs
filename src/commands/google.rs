@@ -1,11 +1,11 @@
-/// Google command handler (default fallback)
+/// Google Search command handler (default fallback)
 /// Supports: g [search terms], or any unrecognized command
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
-pub struct GoogleCommand;
+pub struct GoogleSearchCommand;
 
-impl BunnylolCommand for GoogleCommand {
+impl BunnylolCommand for GoogleSearchCommand {
     const BINDINGS: &'static [&'static str] = &["g", ""];
 
     fn process_args(args: &str) -> String {
@@ -27,33 +27,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_google_command_simple() {
+    fn test_google_search_command_simple() {
         assert_eq!(
-            GoogleCommand::process_args("hello"),
+            GoogleSearchCommand::process_args("hello"),
             "https://google.com/search?q=hello"
         );
     }
 
     #[test]
-    fn test_google_command_with_spaces() {
+    fn test_google_search_command_with_spaces() {
         assert_eq!(
-            GoogleCommand::process_args("hello world"),
+            GoogleSearchCommand::process_args("hello world"),
             "https://google.com/search?q=hello%20world"
         );
     }
 
     #[test]
-    fn test_google_command_with_g_prefix() {
+    fn test_google_search_command_with_g_prefix() {
         assert_eq!(
-            GoogleCommand::process_args("g hello world"),
+            GoogleSearchCommand::process_args("g hello world"),
             "https://google.com/search?q=hello%20world"
         );
     }
 
     #[test]
-    fn test_google_command_g_only() {
+    fn test_google_search_command_g_only() {
         assert_eq!(
-            GoogleCommand::process_args("g"),
+            GoogleSearchCommand::process_args("g"),
             "https://google.com/search?q="
         );
     }

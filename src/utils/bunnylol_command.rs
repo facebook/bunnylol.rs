@@ -73,7 +73,11 @@ impl BunnylolCommandRegistry {
             cmd if RustCommand::matches_command(cmd) => RustCommand::process_args(full_args),
             cmd if HackCommand::matches_command(cmd) => HackCommand::process_args(full_args),
             cmd if AmazonCommand::matches_command(cmd) => AmazonCommand::process_args(full_args),
-            _ => GoogleCommand::process_args(full_args),
+            cmd if GoogleDocsCommand::matches_command(cmd) => GoogleDocsCommand::process_args(full_args),
+            cmd if GoogleSheetsCommand::matches_command(cmd) => GoogleSheetsCommand::process_args(full_args),
+            cmd if GoogleSlidesCommand::matches_command(cmd) => GoogleSlidesCommand::process_args(full_args),
+            cmd if GoogleChatCommand::matches_command(cmd) => GoogleChatCommand::process_args(full_args),
+            _ => GoogleSearchCommand::process_args(full_args),
         }
     }
 
@@ -101,7 +105,11 @@ impl BunnylolCommandRegistry {
             RustCommand::get_info(),
             HackCommand::get_info(),
             AmazonCommand::get_info(),
-            GoogleCommand::get_info(),
+            GoogleDocsCommand::get_info(),
+            GoogleSheetsCommand::get_info(),
+            GoogleSlidesCommand::get_info(),
+            GoogleChatCommand::get_info(),
+            GoogleSearchCommand::get_info(),
         ]
     }
 }
