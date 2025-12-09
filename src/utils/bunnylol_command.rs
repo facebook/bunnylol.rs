@@ -72,6 +72,7 @@ impl BunnylolCommandRegistry {
             cmd if ChatGPTCommand::matches_command(cmd) => ChatGPTCommand::process_args(full_args),
             cmd if RustCommand::matches_command(cmd) => RustCommand::process_args(full_args),
             cmd if HackCommand::matches_command(cmd) => HackCommand::process_args(full_args),
+            cmd if AmazonCommand::matches_command(cmd) => AmazonCommand::process_args(full_args),
             _ => GoogleCommand::process_args(full_args),
         }
     }
@@ -99,6 +100,7 @@ impl BunnylolCommandRegistry {
             ChatGPTCommand::get_info(),
             RustCommand::get_info(),
             HackCommand::get_info(),
+            AmazonCommand::get_info(),
             GoogleCommand::get_info(),
         ]
     }
