@@ -4,6 +4,7 @@
 /// for easy importing in the registry.
 pub mod bindings;
 pub mod cargo;
+pub mod chatgpt;
 pub mod claude;
 pub mod devbunny;
 pub mod facebook;
@@ -22,6 +23,7 @@ pub mod whatsapp;
 // Re-export the command structs for convenience
 pub use bindings::BindingsCommand;
 pub use cargo::CargoCommand;
+pub use chatgpt::ChatGPTCommand;
 pub use claude::ClaudeCommand;
 pub use devbunny::DevBunnyCommand;
 pub use facebook::FacebookCommand;
