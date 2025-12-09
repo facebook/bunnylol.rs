@@ -68,6 +68,7 @@ impl BunnylolCommandRegistry {
             cmd if MetaCommand::matches_command(cmd) => MetaCommand::process_args(full_args),
             cmd if CargoCommand::matches_command(cmd) => CargoCommand::process_args(full_args),
             cmd if NpmCommand::matches_command(cmd) => NpmCommand::process_args(full_args),
+            cmd if ClaudeCommand::matches_command(cmd) => ClaudeCommand::process_args(full_args),
             _ => GoogleCommand::process_args(full_args),
         }
     }
@@ -91,6 +92,7 @@ impl BunnylolCommandRegistry {
             MetaCommand::get_info(),
             CargoCommand::get_info(),
             NpmCommand::get_info(),
+            ClaudeCommand::get_info(),
             GoogleCommand::get_info(),
         ]
     }
