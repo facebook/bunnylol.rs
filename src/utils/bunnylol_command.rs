@@ -66,6 +66,7 @@ impl BunnylolCommandRegistry {
             cmd if ThreadsCommand::matches_command(cmd) => ThreadsCommand::process_args(full_args),
             cmd if WhatsAppCommand::matches_command(cmd) => WhatsAppCommand::process_args(full_args),
             cmd if MetaCommand::matches_command(cmd) => MetaCommand::process_args(full_args),
+            cmd if CargoCommand::matches_command(cmd) => CargoCommand::process_args(full_args),
             _ => GoogleCommand::process_args(full_args),
         }
     }
@@ -87,6 +88,7 @@ impl BunnylolCommandRegistry {
             ThreadsCommand::get_info(),
             WhatsAppCommand::get_info(),
             MetaCommand::get_info(),
+            CargoCommand::get_info(),
             GoogleCommand::get_info(),
         ]
     }
