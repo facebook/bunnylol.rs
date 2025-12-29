@@ -11,7 +11,7 @@ use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 pub struct BindingsCommand;
 
 impl BunnylolCommand for BindingsCommand {
-    const BINDINGS: &'static [&'static str] = &["bindings", "commmands", "list"];
+    const BINDINGS: &'static [&'static str] = &["bindings", "commmands", "list", "bunny", "cmd", "cmds", "help"];
 
     fn process_args(_args: &str) -> String {
         "/bindings".to_string()
@@ -33,5 +33,25 @@ mod tests {
     #[test]
     fn test_bindings_command() {
         assert_eq!(BindingsCommand::process_args("bindings"), "/bindings");
+    }
+
+    #[test]
+    fn test_bunny_command() {
+        assert_eq!(BindingsCommand::process_args("bunny"), "/bindings");
+    }
+
+    #[test]
+    fn test_cmd_command() {
+        assert_eq!(BindingsCommand::process_args("cmd"), "/bindings");
+    }
+
+    #[test]
+    fn test_cmds_command() {
+        assert_eq!(BindingsCommand::process_args("cmds"), "/bindings");
+    }
+
+    #[test]
+    fn test_help_command() {
+        assert_eq!(BindingsCommand::process_args("help"), "/bindings");
     }
 }
