@@ -3,9 +3,9 @@
 # Checks for upstream changes and redeploys if necessary
 #
 # This script is designed to be run by cron every 5 minutes.
-# It will only rebuild and redeploy if there are new commits on the remote branch.
+# It will only rebuild and redeploy if there are new commits on the remote branch, or if a docker container for this service isn't already running.
 
-set -e
+set -euo pipefail
 
 # Derive repository directory from script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,9 +37,19 @@ git fetch origin "$BRANCH" 2>&1 | tee -a "$LOG_FILE" || {
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/$BRANCH)
 
+# Check if container is running
+CONTAINER_RUNNING=false
+if docker ps | grep -q bunnylol; then
+    CONTAINER_RUNNING=true
+fi
+
 if [ "$LOCAL" = "$REMOTE" ]; then
-    log "No changes detected. Current commit: $LOCAL"
-    exit 0
+    if [ "$CONTAINER_RUNNING" = true ]; then
+        log "No changes detected and container is running. Current commit: $LOCAL"
+        exit 0
+    else
+        log "No changes detected, but container is not running. Redeploying..."
+    fi
 fi
 
 log "Changes detected! Deploying..."

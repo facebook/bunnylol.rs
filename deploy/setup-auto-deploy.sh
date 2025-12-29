@@ -80,13 +80,6 @@ fi
 (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
 echo -e "${GREEN}✓${NC} Added cron job: $CRON_SCHEDULE"
 
-# Test the auto-deploy script
-echo -e "\n${YELLOW}Testing auto-deploy script...${NC}"
-LOG_FILE="$LOG_FILE" BRANCH="$BRANCH" "$AUTO_DEPLOY_SCRIPT" || {
-    echo -e "${RED}✗ Test failed. Please check the configuration.${NC}"
-    exit 1
-}
-
 echo -e "\n${GREEN}=== Setup Complete! ===${NC}\n"
 echo "Configuration:"
 echo "  Repository: $REPO_DIR"
@@ -104,3 +97,6 @@ echo "  View logs:        tail -f $LOG_FILE"
 echo "  List cron jobs:   crontab -l"
 echo "  Remove cron job:  crontab -e (then delete the auto-deploy line)"
 echo "  Manual run:       $AUTO_DEPLOY_SCRIPT"
+echo ""
+echo -e "${YELLOW}Running initial deployment...${NC}\n"
+LOG_FILE="$LOG_FILE" BRANCH="$BRANCH" "$AUTO_DEPLOY_SCRIPT"

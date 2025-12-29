@@ -3,7 +3,8 @@
     "allow": [
       "Bash(docker inspect:*)",
       "Bash(docker-compose build:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
