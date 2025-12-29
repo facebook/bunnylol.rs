@@ -148,7 +148,7 @@ EOF
         docker-ce-cli \
         containerd.io \
         docker-buildx-plugin \
-        docker-compose-plugin
+        docker-compose-v2
 
     log_success "Docker installed successfully"
 }

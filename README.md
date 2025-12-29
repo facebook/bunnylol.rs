@@ -162,7 +162,7 @@ $ cargo run
 `Bunnylol` is designed to be easy to deploy anywhere using Docker.
 
 ```sh
-docker-compose up -d
+docker compose up -d
 ```
 
 The application will be running at `http://localhost:8000` by default.
@@ -171,7 +171,7 @@ The application will be running at `http://localhost:8000` by default.
 
 Docker containers can automatically start on system boot:
 
-1. Enable Docker service: `sudo systemctl enable docker` (or )
+1. Enable Docker service: `sudo systemctl enable docker`
 2. Use restart policy in `docker-compose.yml`:
    ```yaml
    services:

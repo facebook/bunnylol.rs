@@ -70,7 +70,7 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
 
 2. **Start the service**:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 3. **Access the application**:
@@ -78,12 +78,12 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
 
 4. **View logs**:
    ```bash
-   docker-compose logs -f
+   docker compose logs -f
    ```
 
 5. **Stop the service**:
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
 ### Using Docker directly
@@ -111,7 +111,7 @@ When you've made code changes and need to deploy them to your running server:
 The simplest way to rebuild and redeploy:
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 This command will:
@@ -124,9 +124,9 @@ This command will:
 If you need to rebuild without using cached layers:
 
 ```bash
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Remote Server Rebuild
@@ -146,7 +146,7 @@ If your server is running on a remote machine (e.g., Hetzner, AWS, etc.):
 
 3. **Rebuild and redeploy**:
    ```bash
-   docker-compose up --build -d
+   docker compose up --build -d
    ```
 
 4. **Verify the deployment**:
@@ -160,7 +160,7 @@ If your server is running on a remote machine (e.g., Hetzner, AWS, etc.):
 If you have SSH configured with a host alias (e.g., `hetzner`), you can rebuild from your local machine:
 
 ```bash
-ssh your-server "cd bunnylol.rs && git pull && docker-compose up --build -d"
+ssh your-server "cd bunnylol.rs && git pull && docker compose up --build -d"
 ```
 
 ### Verifying the Deployment
@@ -371,7 +371,7 @@ For production deployments with HTTPS, use a reverse proxy like Caddy or nginx.
 **Container won't start:**
 ```bash
 # Check logs
-docker-compose logs bunnylol
+docker compose logs bunnylol
 
 # Check if port is already in use
 sudo netstat -tlnp | grep 8000

@@ -65,16 +65,16 @@ git pull origin "$BRANCH" 2>&1 | tee -a "$LOG_FILE" || {
 
 # Rebuild and redeploy
 log "Building new image while old container is still running (this may take a few minutes)..."
-docker-compose build --no-cache 2>&1 | tee -a "$LOG_FILE" || {
+docker compose build --no-cache 2>&1 | tee -a "$LOG_FILE" || {
     log "ERROR: Build failed"
     exit 1
 }
 
 log "Stopping old container..."
-docker-compose down 2>&1 | tee -a "$LOG_FILE"
+docker compose down 2>&1 | tee -a "$LOG_FILE"
 
 log "Starting new container..."
-docker-compose up -d 2>&1 | tee -a "$LOG_FILE" || {
+docker compose up -d 2>&1 | tee -a "$LOG_FILE" || {
     log "ERROR: Failed to start containers"
     exit 1
 }
@@ -94,7 +94,7 @@ if docker ps | grep -q bunnylol; then
     log "  Created at: $CONTAINER_CREATED"
 else
     log "ERROR: Container not running after deployment!"
-    docker-compose logs --tail=50 bunnylol | tee -a "$LOG_FILE"
+    docker compose logs --tail=50 bunnylol | tee -a "$LOG_FILE"
     exit 1
 fi
 
