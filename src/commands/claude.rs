@@ -7,15 +7,23 @@ pub struct ClaudeCommand;
 impl BunnylolCommand for ClaudeCommand {
     const BINDINGS: &'static [&'static str] = &["claude"];
 
-    fn process_args(_args: &str) -> String {
-        "https://claude.ai".to_string()
+    fn process_args(args: &str) -> String {
+        let trimmed = args.trim();
+        match trimmed {
+            "billing" | "cost" => "https://claude.ai/settings/billing".to_string(),
+            "artifacts" => "https://claude.ai/artifacts".to_string(),
+            "artifacts my" => "https://claude.ai/artifacts/my".to_string(),
+            "chats" => "https://claude.ai/recents".to_string(),
+            "projects" => "https://claude.ai/projects".to_string(),
+            _ => "https://claude.ai".to_string(),
+        }
     }
 
     fn get_info() -> CommandInfo {
         CommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Claude AI".to_string(),
-            example: "claude".to_string(),
+            description: "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)".to_string(),
+            example: "claude projects".to_string(),
         }
     }
 }
@@ -26,14 +34,62 @@ mod tests {
 
     #[test]
     fn test_claude_command() {
-        assert_eq!(ClaudeCommand::process_args("claude"), "https://claude.ai");
+        assert_eq!(ClaudeCommand::process_args(""), "https://claude.ai");
     }
 
     #[test]
     fn test_claude_command_with_args() {
         assert_eq!(
-            ClaudeCommand::process_args("claude some args"),
+            ClaudeCommand::process_args("some args"),
             "https://claude.ai"
+        );
+    }
+
+    #[test]
+    fn test_claude_billing() {
+        assert_eq!(
+            ClaudeCommand::process_args("billing"),
+            "https://claude.ai/settings/billing"
+        );
+    }
+
+    #[test]
+    fn test_claude_cost() {
+        assert_eq!(
+            ClaudeCommand::process_args("cost"),
+            "https://claude.ai/settings/billing"
+        );
+    }
+
+    #[test]
+    fn test_claude_artifacts() {
+        assert_eq!(
+            ClaudeCommand::process_args("artifacts"),
+            "https://claude.ai/artifacts"
+        );
+    }
+
+    #[test]
+    fn test_claude_artifacts_my() {
+        assert_eq!(
+            ClaudeCommand::process_args("artifacts my"),
+            "https://claude.ai/artifacts/my"
+        );
+    }
+
+    #[test]
+    fn test_claude_chats() {
+        assert_eq!(
+            ClaudeCommand::process_args("chats"),
+            "https://claude.ai/recents"
+        );
+    }
+
+    #[test]
+    fn test_claude_projects() {
+        assert_eq!(
+            ClaudeCommand::process_args("projects"),
+            "https://claude.ai/projects"
         );
     }
 }
