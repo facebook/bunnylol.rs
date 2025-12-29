@@ -64,16 +64,16 @@ git pull origin "$BRANCH" 2>&1 | tee -a "$LOG_FILE" || {
 }
 
 # Rebuild and redeploy
-log "Stopping containers..."
-docker-compose down 2>&1 | tee -a "$LOG_FILE"
-
-log "Building new image (this may take a few minutes)..."
+log "Building new image while old container is still running (this may take a few minutes)..."
 docker-compose build --no-cache 2>&1 | tee -a "$LOG_FILE" || {
     log "ERROR: Build failed"
     exit 1
 }
 
-log "Starting containers..."
+log "Stopping old container..."
+docker-compose down 2>&1 | tee -a "$LOG_FILE"
+
+log "Starting new container..."
 docker-compose up -d 2>&1 | tee -a "$LOG_FILE" || {
     log "ERROR: Failed to start containers"
     exit 1
