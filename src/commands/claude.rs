@@ -22,6 +22,7 @@ impl BunnylolCommand for ClaudeCommand {
             "artifacts my" => "https://claude.ai/artifacts/my".to_string(),
             "chats" => "https://claude.ai/recents".to_string(),
             "projects" => "https://claude.ai/projects".to_string(),
+            "usage" => "https://claude.ai/settings/usage".to_string(),
             "upgrade" => "https://claude.ai/upgrade".to_string(),
             _ => "https://claude.ai".to_string(),
         };

@@ -6,7 +6,8 @@
       "Bash(docker run:*)",
       "Bash(echo:*)",
       "Bash(cargo check:*)",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
