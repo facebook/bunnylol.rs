@@ -1,6 +1,6 @@
 # Multi-stage build for bunnylol.rs
 # Stage 1: Build the application
-FROM rust:1.91.0-slim as builder
+FROM rust:1.91.0-slim AS builder
 
 WORKDIR /app
 
@@ -13,16 +13,13 @@ RUN apt-get update && \
 COPY Cargo.toml Cargo.lock ./
 
 # Create a dummy main.rs to cache dependencies
-RUN mkdir -p src && \
-    echo "fn main() {}" > src/main.rs && \
-    cargo build --release && \
-    rm -rf src
+RUN mkdir -p src
 
 # Copy source code
 COPY src ./src
 
-# Build the application (touch src to force rebuild after dummy build)
-RUN touch src/main.rs && cargo build --release
+# Build the application
+RUN cargo build --release
 
 # Stage 2: Runtime image
 FROM debian:bookworm-slim
