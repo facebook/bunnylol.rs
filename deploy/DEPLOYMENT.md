@@ -1,6 +1,6 @@
 # Deployment Guide for Bunnylol
 
-This guide covers deploying bunnylol.rs using Docker.
+This guide covers deploying `bunnylol.rs` using Docker.
 
 ## Table of Contents
 
@@ -99,6 +99,63 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
      --restart unless-stopped \
      bunnylol
    ```
+
+## Rebuilding and Redeploying
+
+When you've made code changes and need to deploy them to your running server:
+
+### Local Rebuild
+
+If you're deploying locally:
+
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Remote Server Rebuild
+
+If your server is running on a remote machine (e.g., Hetzner, AWS, etc.):
+
+1. **SSH into your server and navigate to the project directory**:
+   ```bash
+   ssh your-server
+   cd bunnylol.rs
+   ```
+
+2. **Pull the latest changes** (if using Git):
+   ```bash
+   git pull
+   ```
+
+3. **Rebuild and redeploy**:
+   ```bash
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+
+4. **Verify the deployment**:
+   ```bash
+   docker ps
+   docker logs --tail=20 bunnylol
+   ```
+
+### One-Liner for Remote Rebuild
+
+If you have SSH configured with a host alias (e.g., `hetzner`), you can rebuild from your local machine:
+
+```bash
+ssh your-server "cd bunnylol.rs && git pull && docker-compose down && docker-compose build --no-cache && docker-compose up -d"
+```
+
+### Verifying the Deployment
+
+After rebuilding, check that:
+- The container was created recently: `docker ps` (check CREATED column)
+- The application is running: `curl http://localhost:8000/health`
+- Logs look healthy: `docker logs --tail=50 bunnylol`
 
 ## Configuration
 
