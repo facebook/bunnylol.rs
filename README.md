@@ -82,23 +82,58 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 | Command | Usage Example | Description |
 |---------|--------------|-------------|
-| `bindings` | `bindings` | Shows a table of supported bindings / commands |
+| `bindings`, `commmands`, `list` | `bindings` | View all Bunnylol command bindings in a web portal |
 | `gh` | `gh` | Redirects to github.com |
 | `gh` | `gh username` | Redirects to github.com/username |
 | `gh` | `gh username/repo` | Redirects to github.com/username/repo |
 | `tw` | `tw` | Redirects to twitter.com |
 | `tw` | `tw @username` | Redirects to twitter.com/username |
 | `tw` | `tw search terms` | Searches Twitter for "search terms" |
-| `r` | `r` | Redirects to reddit.com |
-| `r` | `r search terms` | Searches Reddit for "search terms" |
-| `r` | `r r/subreddit` | Redirects to reddit.com/r/subreddit |
-| `r` | `r r/subreddit search terms` | Searches within a subreddit for "search terms" |
-| `mail` | `mail` | Redirects to mail.google.com |
+| `r`, `reddit` | `r` | Redirects to reddit.com |
+| `r`, `reddit` | `r search terms` | Searches Reddit for "search terms" |
+| `r`, `reddit` | `r r/subreddit` | Redirects to reddit.com/r/subreddit |
+| `r`, `reddit` | `r r/subreddit search terms` | Searches within a subreddit for "search terms" |
+| `mail`, `gmail` | `mail` | Redirects to mail.google.com |
 | `rei` | `rei` | Redirects to www.rei.com |
 | `rei` | `rei search terms` | Searches REI for "search terms" |
+| `fb` | `fb` | Redirects to facebook.com |
+| `fb` | `fb page` | Redirects to facebook.com/page |
+| `fb` | `fb search terms` | Searches Facebook for "search terms" |
+| `ig`, `instagram` | `ig` | Redirects to instagram.com |
+| `ig`, `instagram` | `ig @username` | Redirects to instagram.com/username |
+| `ig`, `instagram` | `ig search terms` | Searches Instagram for "search terms" |
+| `threads` | `threads` | Redirects to threads.net |
+| `threads` | `threads @username` | Redirects to threads.net/@username |
+| `threads` | `threads search terms` | Searches Threads for "search terms" |
+| `wa`, `whatsapp` | `wa` | Redirects to whatsapp.com |
+| `meta`, `metaai` | `meta` | Redirects to meta.com |
+| `meta`, `metaai` | `meta accounts` | Redirects to Meta Accounts Center |
+| `meta`, `metaai` | `meta ai` or `metaai` | Redirects to meta.ai |
+| `cargo`, `crates` | `cargo` | Redirects to crates.io |
+| `cargo`, `crates` | `cargo serde` | Searches crates.io for "serde" |
+| `cargo`, `crates` | `cargo settings` | Redirects to crates.io/settings/profile |
+| `cargo`, `crates` | `cargo tokens` | Redirects to crates.io/settings/tokens |
+| `npm`, `npmjs` | `npm` | Redirects to npmjs.com |
+| `npm`, `npmjs` | `npm react` | Searches npmjs.com for "react" |
+| `claude` | `claude` | Redirects to claude.ai |
+| `chatgpt` | `chatgpt` | Redirects to chatgpt.com |
+| `rust` | `rust` | Redirects to Rust std documentation |
+| `rust` | `rust HashMap` | Searches Rust std docs for "HashMap" |
+| `hack` | `hack` | Redirects to Hack documentation |
+| `hack` | `hack async` | Searches Hack docs for "async" |
+| `az`, `amzn`, `azn`, `amazon` | `az` | Redirects to amazon.com |
+| `az`, `amzn`, `azn`, `amazon` | `az headphones` | Searches Amazon for "headphones" |
+| `yt`, `youtube` | `yt` | Redirects to youtube.com |
+| `yt`, `youtube` | `yt search terms` | Searches YouTube for videos |
+| `yt`, `youtube` | `yt studio` | Redirects to YouTube Studio |
+| `yt`, `youtube` | `yt subscriptions` or `yt subs` | Redirects to YouTube subscriptions feed |
+| `docs`, `gdoc` | `docs` | Redirects to Google Docs |
+| `gsheets` | `gsheets` | Redirects to Google Sheets |
+| `gslides` | `gslides` | Redirects to Google Slides |
+| `gchat` | `gchat` | Redirects to Google Chat |
 | `devbunny` | `devbunny command` | Redirects to localhost:8000/?cmd=command (for testing) |
-| `g` | `any search terms` | Searches Google for "any search terms" |
-| (default) | `any search terms` | Searches Google for "any search terms" |
+| `g` | `g search terms` | Searches Google for "search terms" |
+| (default) | `any search terms` | Searches Google for "any search terms" (default fallback) |
 
 ### Built With
 
