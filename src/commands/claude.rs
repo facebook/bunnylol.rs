@@ -8,15 +8,38 @@ impl BunnylolCommand for ClaudeCommand {
     const BINDINGS: &'static [&'static str] = &["claude"];
 
     fn process_args(args: &str) -> String {
-        let trimmed = args.trim();
-        match trimmed {
-            "billing" | "cost" => "https://claude.ai/settings/billing".to_string(),
-            "artifacts" => "https://claude.ai/artifacts".to_string(),
-            "artifacts my" => "https://claude.ai/artifacts/my".to_string(),
-            "chats" => "https://claude.ai/recents".to_string(),
-            "projects" => "https://claude.ai/projects".to_string(),
-            _ => "https://claude.ai".to_string(),
-        }
+        let query = Self::get_command_args(args);
+        println!("ClaudeCommand::process_args - input: {:?}, query: {:?}", args, query);
+
+        let result = match query {
+            "billing" | "cost" => {
+                println!("   >> Matched billing/cost branch");
+                "https://claude.ai/settings/billing".to_string()
+            },
+            "artifacts" => {
+                println!("   >> Matched artifacts branch");
+                "https://claude.ai/artifacts".to_string()
+            },
+            "artifacts my" => {
+                println!("   >> Matched artifacts my branch");
+                "https://claude.ai/artifacts/my".to_string()
+            },
+            "chats" => {
+                println!("   >> Matched chats branch");
+                "https://claude.ai/recents".to_string()
+            },
+            "projects" => {
+                println!("   >> Matched projects branch");
+                "https://claude.ai/projects".to_string()
+            },
+            _ => {
+                println!("   >> Matched default branch (no specific match)");
+                "https://claude.ai".to_string()
+            },
+        };
+
+        println!("   >> ClaudeCommand::process_args - returning: {}", result);
+        result
     }
 
     fn get_info() -> CommandInfo {
