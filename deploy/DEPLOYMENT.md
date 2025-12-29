@@ -6,6 +6,8 @@ This guide covers deploying `bunnylol.rs` using Docker.
 
 - [Quick Start: Automated Setup](#quick-start-automated-setup)
 - [Docker Deployment](#docker-deployment)
+- [Rebuilding and Redeploying](#rebuilding-and-redeploying)
+- [Auto-Deployment](#auto-deployment)
 - [Configuration](#configuration)
 - [Running on Boot](#running-on-boot)
 - [Reverse Proxy Setup](#reverse-proxy-setup)
@@ -156,6 +158,81 @@ After rebuilding, check that:
 - The container was created recently: `docker ps` (check CREATED column)
 - The application is running: `curl http://localhost:8000/health`
 - Logs look healthy: `docker logs --tail=50 bunnylol`
+
+## Auto-Deployment
+
+For production servers, you can set up automatic deployment that checks for upstream changes and redeploys automatically.
+
+### How It Works
+
+The auto-deployment system:
+1. Checks for new commits on the remote repository every 5 minutes
+2. If changes are detected, pulls them and rebuilds the Docker container
+3. Logs all activity to `/var/log/bunnylol-deploy.log`
+4. Only rebuilds when there are actual changes (no unnecessary rebuilds)
+
+### Setup
+
+On your server, run the setup script:
+
+```bash
+sudo /path/to/bunnylol.rs/deploy/setup-auto-deploy.sh
+```
+
+Or if using an SSH alias:
+
+```bash
+ssh your-server "sudo /root/bunnylol.rs/deploy/setup-auto-deploy.sh"
+```
+
+This will:
+- Make the auto-deploy script executable
+- Create the log file and directory
+- Configure git settings for automated pulling
+- Set up a cron job to run every 5 minutes
+- Test the deployment script
+
+### Customization
+
+You can customize the behavior with environment variables:
+
+```bash
+# Check every 10 minutes instead of 5
+CRON_SCHEDULE="*/10 * * * *" sudo deploy/setup-auto-deploy.sh
+
+# Use a different branch
+BRANCH="production" sudo deploy/setup-auto-deploy.sh
+
+# Custom log location
+LOG_FILE="/var/log/custom-deploy.log" sudo deploy/setup-auto-deploy.sh
+```
+
+### Monitoring
+
+**View deployment logs:**
+```bash
+tail -f /var/log/bunnylol-deploy.log
+```
+
+**Check cron job status:**
+```bash
+crontab -l
+```
+
+**Manually trigger deployment:**
+```bash
+sudo /path/to/bunnylol.rs/deploy/auto-deploy.sh
+```
+
+### Removing Auto-Deployment
+
+To disable auto-deployment:
+
+```bash
+# Remove the cron job
+crontab -e
+# Delete the line containing "auto-deploy.sh"
+```
 
 ## Configuration
 
