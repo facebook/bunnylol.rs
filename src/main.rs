@@ -33,6 +33,12 @@ fn root() -> Redirect {
     Redirect::to("/bindings")
 }
 
+// Health check endpoint for Docker healthcheck (no verbose logging)
+#[get("/health")]
+fn health() -> &'static str {
+    "ok"
+}
+
 // Catch 404 errors and redirect to bindings page
 #[catch(404)]
 fn not_found() -> Redirect {
@@ -44,7 +50,7 @@ async fn main() -> Result<(), Box<rocket::Error>> {
     let _rocket = rocket::build()
         .mount(
             "/",
-            routes![search, root, routes::bindings_web],
+            routes![search, root, health, routes::bindings_web],
         )
         .register("/", catchers![not_found])
         .launch()

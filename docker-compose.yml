@@ -14,8 +14,8 @@ services:
     # volumes:
     #   - ./data:/app/data
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:$${BUNNYLOL_PORT}/"]
-      interval: 30s
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:$${BUNNYLOL_PORT}/health"]
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
