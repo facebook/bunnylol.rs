@@ -26,6 +26,7 @@ pub mod rust;
 pub mod threads;
 pub mod twitter;
 pub mod whatsapp;
+pub mod youtube;
 
 // Re-export the command structs for convenience
 pub use amazon::AmazonCommand;
@@ -52,3 +53,4 @@ pub use rust::RustCommand;
 pub use threads::ThreadsCommand;
 pub use twitter::TwitterCommand;
 pub use whatsapp::WhatsAppCommand;
+pub use youtube::YouTubeCommand;
