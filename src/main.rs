@@ -19,10 +19,11 @@ use utils::bunnylol_command::BunnylolCommandRegistry;
 // http://localhost:8000/?cmd=gh
 #[get("/?<cmd>")]
 fn search(cmd: &str) -> Redirect {
-    println!("You typed in {}", cmd);
+    println!("bunnylol command: {}", cmd);
 
     let command = utils::get_command_from_query_string(cmd);
     let redirect_url = BunnylolCommandRegistry::process_command(command, cmd);
+    println!("redirecting to: {}", redirect_url);
 
     Redirect::to(redirect_url)
 }
@@ -48,10 +49,7 @@ fn not_found() -> Redirect {
 #[rocket::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
     let _rocket = rocket::build()
-        .mount(
-            "/",
-            routes![search, root, health, routes::bindings_web],
-        )
+        .mount("/", routes![search, root, health, routes::bindings_web])
         .register("/", catchers![not_found])
         .launch()
         .await?;
