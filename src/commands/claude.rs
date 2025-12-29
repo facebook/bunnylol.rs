@@ -9,33 +9,21 @@ impl BunnylolCommand for ClaudeCommand {
 
     fn process_args(args: &str) -> String {
         let query = Self::get_command_args(args);
-        println!("ClaudeCommand::process_args - input: {:?}, query: {:?}", args, query);
+        println!(
+            "ClaudeCommand::process_args - input: {:?}, query: {:?}",
+            args, query
+        );
 
         let result = match query {
-            "billing" | "cost" => {
-                println!("   >> Matched billing/cost branch");
-                "https://claude.ai/settings/billing".to_string()
-            },
-            "artifacts" => {
-                println!("   >> Matched artifacts branch");
-                "https://claude.ai/artifacts".to_string()
-            },
-            "artifacts my" => {
-                println!("   >> Matched artifacts my branch");
-                "https://claude.ai/artifacts/my".to_string()
-            },
-            "chats" => {
-                println!("   >> Matched chats branch");
-                "https://claude.ai/recents".to_string()
-            },
-            "projects" => {
-                println!("   >> Matched projects branch");
-                "https://claude.ai/projects".to_string()
-            },
-            _ => {
-                println!("   >> Matched default branch (no specific match)");
-                "https://claude.ai".to_string()
-            },
+            "platform" => "https://platform.claude.com".to_string(),
+            "api" | "keys" | "apikey" => "https://platform.claude.com/settings/keys".to_string(),
+            "billing" | "cost" => "https://claude.ai/settings/billing".to_string(),
+            "artifacts" => "https://claude.ai/artifacts".to_string(),
+            "artifacts my" => "https://claude.ai/artifacts/my".to_string(),
+            "chats" => "https://claude.ai/recents".to_string(),
+            "projects" => "https://claude.ai/projects".to_string(),
+            "upgrade" => "https://claude.ai/upgrade".to_string(),
+            _ => "https://claude.ai".to_string(),
         };
 
         println!("   >> ClaudeCommand::process_args - returning: {}", result);
@@ -45,7 +33,9 @@ impl BunnylolCommand for ClaudeCommand {
     fn get_info() -> CommandInfo {
         CommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)".to_string(),
+            description:
+                "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)"
+                    .to_string(),
             example: "claude projects".to_string(),
         }
     }
