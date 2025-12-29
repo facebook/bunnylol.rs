@@ -71,6 +71,7 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
 2. **Start the service**:
    ```bash
    docker compose up -d
+   BUNNYLOL_PORT=9000 docker compose up -d
    ```
 
 3. **Access the application**:

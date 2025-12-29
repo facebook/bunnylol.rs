@@ -10,6 +10,7 @@ services:
     environment:
       - ROCKET_LOG_LEVEL=${ROCKET_LOG_LEVEL:-normal}
       - BUNNYLOL_PORT=${BUNNYLOL_PORT:-8000}
+      - ROCKET_PORT=${BUNNYLOL_PORT:-8000}
     # Uncomment to persist any data if needed in the future
     # volumes:
     #   - ./data:/app/data

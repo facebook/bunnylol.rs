@@ -40,12 +40,8 @@ RUN useradd -m -u 1000 bunnylol && \
 
 USER bunnylol
 
-# Expose the default Rocket port
-EXPOSE 8000
-
 # Set environment variables
 ENV ROCKET_ADDRESS=0.0.0.0
-ENV ROCKET_PORT=8000
 
 # Run the application
 CMD ["/app/bunnylol"]

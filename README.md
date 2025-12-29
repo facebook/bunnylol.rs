@@ -162,7 +162,11 @@ $ cargo run
 `Bunnylol` is designed to be easy to deploy anywhere using Docker.
 
 ```sh
-docker compose up -d
+# run on default port 8000
+$ docker compose up -d
+
+# run on custom port 9000
+$BUNNYLOL_PORT=9000·docker compose up
 ```
 
 The application will be running at `http://localhost:8000` by default.
