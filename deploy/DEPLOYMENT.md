@@ -106,9 +106,22 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
 
 When you've made code changes and need to deploy them to your running server:
 
-### Local Rebuild
+### Quick Rebuild (Recommended)
 
-If you're deploying locally:
+The simplest way to rebuild and redeploy:
+
+```bash
+docker-compose up --build -d
+```
+
+This command will:
+- Build a new image with your latest changes
+- Stop the old container
+- Start a new container with the updated image
+
+### Full Rebuild (Clean Build)
+
+If you need to rebuild without using cached layers:
 
 ```bash
 docker-compose down
@@ -133,9 +146,7 @@ If your server is running on a remote machine (e.g., Hetzner, AWS, etc.):
 
 3. **Rebuild and redeploy**:
    ```bash
-   docker-compose down
-   docker-compose build --no-cache
-   docker-compose up -d
+   docker-compose up --build -d
    ```
 
 4. **Verify the deployment**:
@@ -149,7 +160,7 @@ If your server is running on a remote machine (e.g., Hetzner, AWS, etc.):
 If you have SSH configured with a host alias (e.g., `hetzner`), you can rebuild from your local machine:
 
 ```bash
-ssh your-server "cd bunnylol.rs && git pull && docker-compose down && docker-compose build --no-cache && docker-compose up -d"
+ssh your-server "cd bunnylol.rs && git pull && docker-compose up --build -d"
 ```
 
 ### Verifying the Deployment
