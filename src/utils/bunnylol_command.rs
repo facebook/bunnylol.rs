@@ -47,9 +47,29 @@ pub trait BunnylolCommand {
 pub struct BunnylolCommandRegistry;
 
 impl BunnylolCommandRegistry {
+    /// Process commands that use special prefixes (like $ for stock tickers)
+    fn process_prefix_commands(command: &str) -> Option<String> {
+        use crate::commands::*;
+
+        if command.starts_with('$') {
+            // Don't process bare $ - let it fall through to default search
+            if command.len() <= 1 {
+                return None;
+            }
+            return Some(StockCommand::process_ticker(command));
+        }
+
+        None
+    }
+
     /// Process a command string and return the appropriate URL
     pub fn process_command(command: &str, full_args: &str) -> String {
         use crate::commands::*;
+
+        // Check for prefix commands first
+        if let Some(url) = Self::process_prefix_commands(command) {
+            return url;
+        }
 
         match command {
             cmd if BindingsCommand::matches_command(cmd) => { BindingsCommand::process_args(full_args) }
@@ -78,6 +98,7 @@ impl BunnylolCommandRegistry {
             cmd if WikipediaCommand::matches_command(cmd) => WikipediaCommand::process_args(full_args),
             cmd if DuckDuckGoCommand::matches_command(cmd) => DuckDuckGoCommand::process_args(full_args),
             cmd if SoundCloudCommand::matches_command(cmd) => SoundCloudCommand::process_args(full_args),
+            cmd if StockCommand::matches_command(cmd) => StockCommand::process_args(full_args),
             cmd if GoogleDocsCommand::matches_command(cmd) => GoogleDocsCommand::process_args(full_args),
             cmd if GoogleMapsCommand::matches_command(cmd) => GoogleMapsCommand::process_args(full_args),
             cmd if GoogleSheetsCommand::matches_command(cmd) => GoogleSheetsCommand::process_args(full_args),
@@ -116,6 +137,7 @@ impl BunnylolCommandRegistry {
             WikipediaCommand::get_info(),
             DuckDuckGoCommand::get_info(),
             SoundCloudCommand::get_info(),
+            StockCommand::get_info(),
             GoogleDocsCommand::get_info(),
             GoogleMapsCommand::get_info(),
             GoogleSheetsCommand::get_info(),
