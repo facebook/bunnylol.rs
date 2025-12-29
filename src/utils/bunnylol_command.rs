@@ -62,6 +62,7 @@ impl BunnylolCommandRegistry {
             }
             cmd if REICommand::matches_command(cmd) => REICommand::process_args(full_args),
             cmd if InstagramCommand::matches_command(cmd) => InstagramCommand::process_args(full_args),
+            cmd if LinkedInCommand::matches_command(cmd) => LinkedInCommand::process_args(full_args),
             cmd if FacebookCommand::matches_command(cmd) => FacebookCommand::process_args(full_args),
             cmd if ThreadsCommand::matches_command(cmd) => ThreadsCommand::process_args(full_args),
             cmd if WhatsAppCommand::matches_command(cmd) => WhatsAppCommand::process_args(full_args),
@@ -98,6 +99,7 @@ impl BunnylolCommandRegistry {
             DevBunnyCommand::get_info(),
             REICommand::get_info(),
             InstagramCommand::get_info(),
+            LinkedInCommand::get_info(),
             FacebookCommand::get_info(),
             ThreadsCommand::get_info(),
             WhatsAppCommand::get_info(),
