@@ -1,4 +1,4 @@
-# Deployment Guide for Bunnylol
+# Server Deployment Guide for Bunnylol
 
 This guide covers deploying `bunnylol.rs` using either native service installation or Docker.
 
@@ -59,12 +59,14 @@ After completion, bunnylol will be running on port 8000. The script is safe to r
 
 ## Native Service Installation
 
-The recommended deployment method for Linux and macOS is to install bunnylol as a native system service. This provides better integration with your OS and doesn't require Docker.
+The recommended deployment method for **Linux** is to install bunnylol as a native `systemd` service. This provides better integration with your OS and doesn't require Docker.
+
+**Note:** Native service installation is only supported on Linux (`systemd`). For macOS and Windows, please use [Docker Deployment](#docker-deployment) instead.
 
 ### Prerequisites
 
 - Rust (only needed if binary not in PATH)
-- Linux (systemd) or macOS (launchd) or Windows (Service Manager)
+- **Linux with `systemd`** (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)
 - sudo/root access
 
 ### Installation
@@ -78,16 +80,17 @@ $ sudo bunnylol service install
 
 # The installer will:
 # - Find the bunnylol binary in PATH
-# - Create service files (systemd/launchd/Windows Service)
-# - Configure autostart on boot
+# - Create systemd service file at /etc/systemd/system/bunnylol.service
+# - Configure autostart on boot (always enabled)
 # - Start the service immediately
 ```
 
 Default configuration:
 - **Port**: 8000
 - **Address**: 0.0.0.0 (accessible from network)
-- **Autostart**: Enabled
+- **Autostart**: Enabled (always)
 - **Run as**: root
+- **Auto-restart**: On failure (5 second delay)
 
 ### Managing the Service
 
@@ -95,8 +98,14 @@ Default configuration:
 # Check service status
 $ sudo bunnylol service status
 
+# View logs (last 20 lines)
+$ sudo bunnylol service logs
+
 # View logs (follow mode)
 $ sudo bunnylol service logs -f
+
+# View more lines
+$ sudo bunnylol service logs -n 100
 
 # Restart the service
 $ sudo bunnylol service restart
@@ -110,7 +119,7 @@ $ sudo bunnylol service start
 
 ### Custom Configuration
 
-Customize port, address, and other settings during installation:
+Customize port and address during installation:
 
 ```bash
 # Custom port
@@ -119,38 +128,36 @@ $ sudo bunnylol service install --port 9000
 # Custom address (e.g., localhost only)
 $ sudo bunnylol service install --address 127.0.0.1
 
-# Don't autostart on boot
-$ sudo bunnylol service install --no-autostart
-
-# Install but don't start immediately
-$ sudo bunnylol service install --no-start
+# Both custom port and address
+$ sudo bunnylol service install --port 9000 --address 127.0.0.1
 ```
+
+**Note:** The service always autostarts on boot and starts immediately after installation. These behaviors cannot be disabled as they are the primary purpose of installing a service.
 
 ### Uninstalling
 
 ```bash
-# Uninstall system service
+# Uninstall system service (stops service and removes systemd files)
 $ sudo bunnylol service uninstall
 ```
 
 ### Platform-Specific Details
 
-#### Linux (systemd)
+#### Linux (`systemd`)
 
 - Service file: `/etc/systemd/system/bunnylol.service`
 - Logs: `journalctl -u bunnylol -f` or `sudo bunnylol service logs -f`
-- Binary location: `/usr/local/bin/bunnylol` (or wherever installed)
+- Binary location: Detected automatically from PATH (typically `/usr/local/bin/bunnylol`)
+- Service runs as: root
+- Restart policy: On failure with 5 second delay
 
-#### macOS (launchd)
+#### macOS / Windows
 
-- Service file: `/Library/LaunchDaemons/com.facebook.bunnylol.plist`
-- Logs: Use Console.app or `sudo bunnylol service logs`
-- Binary location: `/usr/local/bin/bunnylol` (or wherever installed)
+Native service installation is **not supported** on macOS or Windows.
 
-#### Windows (Service Manager)
-
-- Managed through Windows Service Manager
-- Binary location: `C:\Program Files\bunnylol\` or wherever installed
+Recommended alternatives:**
+ **Docker**: Use `docker compose up -d` (see [Docker Deployment](#docker-deployment))
+ **Direct run**: Use `bunnylol serve` (runs in foreground, doesn't auto-start on boot)
 
 ---
 
