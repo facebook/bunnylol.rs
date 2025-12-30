@@ -46,12 +46,12 @@ enum Commands {
         address: Option<String>,
     },
 
-    /// Install bunnylol server as a systemd service
-    #[cfg(all(feature = "cli", target_os = "linux"))]
+    /// Install bunnylol server as a service
+    #[cfg(feature = "cli")]
     InstallServer {
-        /// Install as user-level service (default is system-level)
+        /// Install as system-level service (default is user-level)
         #[arg(long)]
-        user: bool,
+        system: bool,
 
         /// Port to bind the server to
         #[arg(long, default_value = "8000")]
@@ -65,33 +65,25 @@ enum Commands {
         #[arg(long)]
         force: bool,
 
-        /// Enable service to start on boot
-        #[arg(long, default_value = "true")]
-        enable: bool,
+        /// Disable autostart on boot
+        #[arg(long)]
+        no_autostart: bool,
 
-        /// Start service after installation
-        #[arg(long, default_value = "true")]
-        start: bool,
+        /// Do not start service after installation
+        #[arg(long)]
+        no_start: bool,
     },
 
-    /// Uninstall bunnylol systemd service
-    #[cfg(all(feature = "cli", target_os = "linux"))]
+    /// Uninstall bunnylol service
+    #[cfg(feature = "cli")]
     UninstallServer {
-        /// Uninstall user-level service
+        /// Uninstall system-level service
         #[arg(long)]
-        user: bool,
-
-        /// Remove the bunnylol binary
-        #[arg(long)]
-        remove_binary: bool,
-
-        /// Remove data directory
-        #[arg(long)]
-        remove_data: bool,
+        system: bool,
     },
 
-    /// Manage bunnylol systemd service
-    #[cfg(all(feature = "cli", target_os = "linux"))]
+    /// Manage bunnylol service
+    #[cfg(feature = "cli")]
     Server {
         #[command(subcommand)]
         action: ServerAction,
@@ -103,43 +95,43 @@ enum Commands {
     Command(Vec<String>),
 }
 
-#[cfg(all(feature = "cli", target_os = "linux"))]
+#[cfg(feature = "cli")]
 #[derive(Subcommand)]
 enum ServerAction {
     /// Start the server service
     Start {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Stop the server service
     Stop {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Restart the server service
     Restart {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Enable server to start on boot
     Enable {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Disable server from starting on boot
     Disable {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Show server status
     Status {
         #[arg(long)]
-        user: bool,
+        system: bool,
     },
     /// Show server logs
     Logs {
         #[arg(long)]
-        user: bool,
+        system: bool,
         #[arg(short, long)]
         follow: bool,
         #[arg(short = 'n', long, default_value = "20")]
@@ -185,43 +177,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         }
 
-        #[cfg(all(feature = "cli", target_os = "linux"))]
-        Some(Commands::InstallServer { user, port, address, force, enable, start }) => {
-            use bunnylol::systemd_installer::service_templates::ServiceConfig;
-            use bunnylol::systemd_installer::installer::install_service;
+        #[cfg(feature = "cli")]
+        Some(Commands::InstallServer { system, port, address, force, no_autostart, no_start }) => {
+            use bunnylol::service_installer::{ServiceConfig, install_service};
 
             let service_config = ServiceConfig {
                 port,
                 address: address.unwrap_or_else(|| {
-                    if user { "127.0.0.1".to_string() } else { "0.0.0.0".to_string() }
+                    if system { "0.0.0.0".to_string() } else { "127.0.0.1".to_string() }
                 }),
                 log_level: config.server.log_level.clone(),
-                user_mode: user,
+                system_mode: system,
             };
 
-            install_service(service_config, force, enable, start)?;
+            install_service(service_config, force, !no_autostart, !no_start)?;
             Ok(())
         }
 
-        #[cfg(all(feature = "cli", target_os = "linux"))]
-        Some(Commands::UninstallServer { user, remove_binary, remove_data }) => {
-            use bunnylol::systemd_installer::installer::uninstall_service;
-            uninstall_service(user, remove_binary, remove_data)?;
+        #[cfg(feature = "cli")]
+        Some(Commands::UninstallServer { system }) => {
+            use bunnylol::service_installer::uninstall_service;
+            uninstall_service(system)?;
             Ok(())
         }
 
-        #[cfg(all(feature = "cli", target_os = "linux"))]
+        #[cfg(feature = "cli")]
         Some(Commands::Server { action }) => {
-            use bunnylol::systemd_installer::manager::*;
+            use bunnylol::service_installer::*;
 
             match action {
-                ServerAction::Start { user } => start_service(user)?,
-                ServerAction::Stop { user } => stop_service(user)?,
-                ServerAction::Restart { user } => restart_service(user)?,
-                ServerAction::Enable { user } => enable_service(user)?,
-                ServerAction::Disable { user } => disable_service(user)?,
-                ServerAction::Status { user } => service_status(user)?,
-                ServerAction::Logs { user, follow, lines } => service_logs(user, follow, lines)?,
+                ServerAction::Start { system } => start_service(system)?,
+                ServerAction::Stop { system } => stop_service(system)?,
+                ServerAction::Restart { system } => restart_service(system)?,
+                ServerAction::Enable { system } => enable_service(system)?,
+                ServerAction::Disable { system } => disable_service(system)?,
+                ServerAction::Status { system } => service_status(system)?,
+                ServerAction::Logs { system, follow, lines } => service_logs(system, follow, lines)?,
             }
             Ok(())
         }

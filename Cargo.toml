@@ -46,6 +46,7 @@ leptos_meta = { version = "0.6", features = ["ssr"], optional = true }
 open = { version = "5.0", optional = true }
 tabled = { version = "0.16", optional = true }
 whoami = { version = "1.5", optional = true }
+service-manager = { version = "0.10", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
@@ -53,7 +54,7 @@ libc = "0.2"
 [features]
 default = ["server", "cli"]
 server = ["rocket", "leptos", "leptos_meta"]
-cli = ["open", "tabled", "whoami"]
+cli = ["open", "tabled", "whoami", "service-manager"]
 
 [dev-dependencies]
 assert_cmd = "2.0"

@@ -18,7 +18,8 @@
       "Bash(rustc:*)",
       "Bash(cargo build:*)",
       "Bash(./target/debug/bunnylol-cli:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(timeout 5 cargo run:*)"
     ],
     "deny": [],
     "ask": []
