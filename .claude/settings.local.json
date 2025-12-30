@@ -10,7 +10,10 @@
       "Bash(grep:*)",
       "Bash(docker compose:*)",
       "Bash(docker container:*)",
-      "Bash(ip addr:*)"
+      "Bash(ip addr:*)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(printf:*)"
     ],
     "deny": [],
     "ask": []
