@@ -92,8 +92,8 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
 #[component]
 pub fn BindingsPage() -> impl IntoView {
     let mut bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
-        .into_iter()
-        .map(|cmd| cmd.into())
+        .iter()
+        .map(|cmd| (*cmd).clone().into())
         .collect();
 
     // Sort bindings alphabetically by command name
