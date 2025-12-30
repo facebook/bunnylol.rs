@@ -9,7 +9,7 @@ use leptos::*;
 use leptos_meta::*;
 use serde::{Deserialize, Serialize};
 
-use bunnylol::{BunnylolCommandRegistry, BunnylolCommandInfo};
+use crate::{BunnylolCommandRegistry, BunnylolCommandInfo};
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct BindingData {

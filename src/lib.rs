@@ -11,6 +11,9 @@ pub mod config;
 pub mod history;
 pub mod utils;
 
+#[cfg(feature = "server")]
+pub mod server;
+
 pub use bunnylol_command_registry::BunnylolCommandRegistry;
 pub use commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 pub use config::BunnylolConfig;

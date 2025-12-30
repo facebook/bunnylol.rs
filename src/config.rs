@@ -30,6 +30,10 @@ pub struct BunnylolConfig {
     /// Command history settings
     #[serde(default)]
     pub history: HistoryConfig,
+
+    /// Server configuration (for bunnylol serve)
+    #[serde(default)]
+    pub server: ServerConfig,
 }
 
 impl Default for BunnylolConfig {
@@ -39,6 +43,7 @@ impl Default for BunnylolConfig {
             default_search: default_search_engine(),
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
+            server: ServerConfig::default(),
         }
     }
 }
@@ -64,6 +69,32 @@ impl Default for HistoryConfig {
     }
 }
 
+/// Configuration for bunnylol server
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerConfig {
+    /// Port to bind the server to
+    #[serde(default = "default_port")]
+    pub port: u16,
+
+    /// Address to bind to (127.0.0.1 for localhost, 0.0.0.0 for network)
+    #[serde(default = "default_address")]
+    pub address: String,
+
+    /// Rocket log level (normal, debug, critical, off)
+    #[serde(default = "default_log_level")]
+    pub log_level: String,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            port: default_port(),
+            address: default_address(),
+            log_level: default_log_level(),
+        }
+    }
+}
+
 fn default_search_engine() -> String {
     "google".to_string()
 }
@@ -74,6 +105,18 @@ fn default_history_enabled() -> bool {
 
 fn default_max_entries() -> usize {
     1000
+}
+
+fn default_port() -> u16 {
+    8000
+}
+
+fn default_address() -> String {
+    "127.0.0.1".to_string()
+}
+
+fn default_log_level() -> String {
+    "normal".to_string()
 }
 
 impl BunnylolConfig {
@@ -171,6 +214,9 @@ mod tests {
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);
+        assert_eq!(config.server.port, 8000);
+        assert_eq!(config.server.address, "127.0.0.1");
+        assert_eq!(config.server.log_level, "normal");
     }
 
     #[test]
@@ -208,6 +254,14 @@ mod tests {
     }
 
     #[test]
+    fn test_server_config_defaults() {
+        let config = ServerConfig::default();
+        assert_eq!(config.port, 8000);
+        assert_eq!(config.address, "127.0.0.1");
+        assert_eq!(config.log_level, "normal");
+    }
+
+    #[test]
     #[cfg(feature = "cli")]
     fn test_parse_valid_toml() {
         let toml_str = r#"
@@ -221,6 +275,11 @@ mod tests {
             [history]
             enabled = false
             max_entries = 500
+
+            [server]
+            port = 9000
+            address = "0.0.0.0"
+            log_level = "debug"
         "#;
 
         let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
@@ -230,5 +289,8 @@ mod tests {
         assert_eq!(config.aliases.get("blog"), Some(&"gh username/blog".to_string()));
         assert!(!config.history.enabled);
         assert_eq!(config.history.max_entries, 500);
+        assert_eq!(config.server.port, 9000);
+        assert_eq!(config.server.address, "0.0.0.0");
+        assert_eq!(config.server.log_level, "debug");
     }
 }
