@@ -110,11 +110,52 @@ fn setup_manager(system_mode: bool) -> Result<(Box<dyn ServiceManager>, ServiceL
 
 /// Install bunnylol service using service-manager crate
 pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, start_now: bool) -> Result<(), ServiceError> {
-    println!("Installing bunnylol service...");
+    let service_type = if config.system_mode { "system" } else { "user" };
+    println!("Installing bunnylol {} service...", service_type);
+    println!();
 
     // Require binary to be installed and on PATH
     let binary_path = which::which("bunnylol").map_err(|_| ServiceError::BinaryNotFound)?;
-    println!("✓ Found bunnylol binary at {}", binary_path.display());
+    println!("✓ Found bunnylol binary: {}", binary_path.display());
+
+    // Print service file location based on platform
+    #[cfg(target_os = "linux")]
+    {
+        let service_path = if config.system_mode {
+            "/etc/systemd/system/bunnylol.service"
+        } else {
+            "~/.config/systemd/user/bunnylol.service"
+        };
+        println!("✓ Service file will be created at: {}", service_path);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = if config.system_mode {
+            format!("/Library/LaunchDaemons/{}.plist", SERVICE_LABEL)
+        } else {
+            format!("~/Library/LaunchAgents/{}.plist", SERVICE_LABEL)
+        };
+        println!("✓ Service file will be created at: {}", plist_path);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        println!("✓ Service will be registered with Windows Service Manager");
+    }
+
+    println!();
+    println!("Service configuration:");
+    println!("  Label:       {}", SERVICE_LABEL);
+    println!("  Binary:      {}", binary_path.display());
+    println!("  Command:     bunnylol serve --port {} --address {}", config.port, config.address);
+    println!("  Port:        {}", config.port);
+    println!("  Address:     {}", config.address);
+    println!("  Log level:   {}", config.log_level);
+    println!("  Autostart:   {}", if autostart { "enabled" } else { "disabled" });
+    println!("  Start now:   {}", if start_now { "yes" } else { "no" });
+    println!("  User:        {}", if config.system_mode { "root" } else { "current user" });
+    println!();
 
     let (manager, label) = setup_manager(config.system_mode)?;
 
@@ -135,6 +176,7 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         ),
     ];
 
+    println!("Creating service file...");
     // Install the service
     let install_ctx = ServiceInstallCtx {
         label: label.clone(),
@@ -152,10 +194,12 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         .install(install_ctx)
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
-    println!("✓ Service installed");
+    println!("✓ Service file created and registered");
 
     // Start the service if requested
     if start_now {
+        println!();
+        println!("Starting service...");
         let start_ctx = ServiceStartCtx {
             label: label.clone(),
         };
@@ -171,33 +215,71 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         println!("✓ Service appears to be running");
     }
 
-    println!("\n🎉 Bunnylol server installed successfully!");
-    println!("\nServer URL: http://{}:{}", config.address, config.port);
+    println!();
+    println!("🎉 Bunnylol server installed successfully!");
+    println!();
+    println!("Server URL: http://{}:{}", config.address, config.port);
     println!("Add to browser search: http://{}:{}/?cmd=%s", config.address, config.port);
 
-    println!("\nManage service:");
-    println!("  bunnylol server status{}", if config.system_mode { " --system" } else { "" });
-    println!("  bunnylol server logs{}", if config.system_mode { " --system" } else { "" });
-    println!("  bunnylol server restart{}", if config.system_mode { " --system" } else { "" });
+    println!();
+    println!("Manage service:");
+    println!("  bunnylol service status{}", if config.system_mode { " --system" } else { "" });
+    println!("  bunnylol service logs{}", if config.system_mode { " --system" } else { "" });
+    println!("  bunnylol service restart{}", if config.system_mode { " --system" } else { "" });
+    println!("  bunnylol service uninstall{}", if config.system_mode { " --system" } else { "" });
 
     Ok(())
 }
 
 /// Uninstall bunnylol service
 pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
-    println!("Uninstalling bunnylol service...");
+    let service_type = if system_mode { "system" } else { "user" };
+    println!("Uninstalling bunnylol {} service...", service_type);
+    println!();
+
+    // Print service file location based on platform
+    #[cfg(target_os = "linux")]
+    {
+        let service_path = if system_mode {
+            "/etc/systemd/system/bunnylol.service"
+        } else {
+            "~/.config/systemd/user/bunnylol.service"
+        };
+        println!("Service file: {}", service_path);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let plist_path = if system_mode {
+            format!("/Library/LaunchDaemons/{}.plist", SERVICE_LABEL)
+        } else {
+            format!("~/Library/LaunchAgents/{}.plist", SERVICE_LABEL)
+        };
+        println!("Service file: {}", plist_path);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        println!("Unregistering from Windows Service Manager");
+    }
+
+    println!();
 
     let (manager, label) = setup_manager(system_mode)?;
 
     // Stop the service first (ignore errors if already stopped)
+    println!("Stopping service...");
     let stop_ctx = ServiceStopCtx {
         label: label.clone(),
     };
 
-    let _ = manager.stop(stop_ctx);
-    println!("✓ Service stopped");
+    match manager.stop(stop_ctx) {
+        Ok(_) => println!("✓ Service stopped"),
+        Err(_) => println!("ℹ Service was not running"),
+    }
 
     // Uninstall the service
+    println!("Removing service file...");
     let uninstall_ctx = ServiceUninstallCtx {
         label: label.clone(),
     };
@@ -206,8 +288,9 @@ pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
         .uninstall(uninstall_ctx)
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
-    println!("✓ Service uninstalled");
-    println!("\n✓ Bunnylol service removed successfully");
+    println!("✓ Service file removed");
+    println!();
+    println!("✓ Bunnylol service uninstalled successfully");
 
     Ok(())
 }
