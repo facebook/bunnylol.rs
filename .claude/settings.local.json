@@ -13,7 +13,11 @@
       "Bash(ip addr:*)",
       "Bash(git reset:*)",
       "Bash(git add:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(cargo --version:*)",
+      "Bash(rustc:*)",
+      "Bash(cargo build:*)",
+      "Bash(./target/debug/bunnylol-cli:*)"
     ],
     "deny": [],
     "ask": []
