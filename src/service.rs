@@ -141,11 +141,7 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         program: binary_path,
         args,
         contents: None,  // Use default service file generation
-        username: if config.system_mode {
-            Some("bunnylol".to_string())
-        } else {
-            None
-        },
+        username: None,  // System services run as root, user services run as current user
         working_directory: None,
         environment: Some(environment),
         autostart,

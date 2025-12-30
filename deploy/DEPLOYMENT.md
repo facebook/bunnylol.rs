@@ -91,7 +91,7 @@ Default configuration:
 - **Port**: 8000
 - **Address**: 0.0.0.0 (accessible from network)
 - **Autostart**: Enabled
-- **Service user** (Linux): `bunnylol` system user
+- **Service user**: root (system-level) or current user (user-level)
 
 #### User-Level Service
 
