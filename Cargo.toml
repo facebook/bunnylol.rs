@@ -54,3 +54,7 @@ cli = ["clap", "open", "tabled", "whoami"]
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.0"
+
+[profile.release]
+lto = true
+strip = true
