@@ -71,18 +71,6 @@ enum ServiceAction {
         /// Address to bind to
         #[arg(long)]
         address: Option<String>,
-
-        /// Overwrite existing service
-        #[arg(long)]
-        force: bool,
-
-        /// Disable autostart on boot
-        #[arg(long)]
-        no_autostart: bool,
-
-        /// Do not start service after installation
-        #[arg(long)]
-        no_start: bool,
     },
     /// Uninstall bunnylol service
     Uninstall,
@@ -145,26 +133,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Service { action }) => {
             use bunnylol::service::*;
 
-            match action {
-                ServiceAction::Install { port, address, force, no_autostart, no_start } => {
+            let result = match action {
+                ServiceAction::Install { port, address } => {
                     let service_config = ServiceConfig {
                         port,
                         address: address.unwrap_or_else(|| "0.0.0.0".to_string()),
                         log_level: config.server.log_level.clone(),
-                        system_mode: true,
                     };
 
-                    install_service(service_config, force, !no_autostart, !no_start)?;
+                    install_systemd_service(service_config)
                 }
-                ServiceAction::Uninstall => {
-                    uninstall_service(true)?;
-                }
-                ServiceAction::Start => start_service(true)?,
-                ServiceAction::Stop => stop_service(true)?,
-                ServiceAction::Restart => restart_service(true)?,
-                ServiceAction::Status => service_status(true)?,
-                ServiceAction::Logs { follow, lines } => service_logs(true, follow, lines)?,
+                ServiceAction::Uninstall => uninstall_service(),
+                ServiceAction::Start => start_service(),
+                ServiceAction::Stop => stop_service(),
+                ServiceAction::Restart => restart_service(),
+                ServiceAction::Status => service_status(),
+                ServiceAction::Logs { follow, lines } => service_logs(follow, lines),
+            };
+
+            if let Err(e) = result {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
+
             Ok(())
         }
 
@@ -225,12 +216,12 @@ fn execute_command(args: Vec<String>, config: &BunnylolConfig, dry_run: bool) ->
     println!("{}", url);
 
     // Track command in history if enabled
-    if config.history.enabled {
-        if let Some(history) = History::new(config) {
-            let username = whoami::username();
-            if let Err(e) = history.add(&full_args, &username) {
-                eprintln!("Warning: Failed to save command to history: {}", e);
-            }
+    if config.history.enabled
+        && let Some(history) = History::new(config)
+    {
+        let username = whoami::username();
+        if let Err(e) = history.add(&full_args, &username) {
+            eprintln!("Warning: Failed to save command to history: {}", e);
         }
     }
 

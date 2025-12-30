@@ -5,13 +5,20 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use std::ffi::OsString;
 use std::fmt;
-use std::process::Command;
-use service_manager::*;
 
-/// Service label used across all platforms (reverse domain notation)
+#[cfg(target_os = "linux")]
+use service_manager::*;
+#[cfg(target_os = "linux")]
+use std::ffi::OsString;
+#[cfg(target_os = "linux")]
+use std::process::Command;
+
+/// Service label used for systemd (reverse domain notation)
 pub const SERVICE_LABEL: &str = "com.facebook.bunnylol";
+
+/// Service name used in systemctl/journalctl commands
+pub const SERVICE_NAME: &str = "bunnylol";
 
 // ============================================================================
 // Error Types
@@ -23,6 +30,7 @@ pub enum ServiceError {
     BinaryNotFound,
     ServiceStartFailed(String),
     IoError(std::io::Error),
+    UnsupportedPlatform,
 }
 
 impl fmt::Display for ServiceError {
@@ -32,17 +40,30 @@ impl fmt::Display for ServiceError {
                 write!(f, "service manager error: {}", msg)
             }
             ServiceError::BinaryNotFound => {
-                write!(f, "bunnylol binary not found in PATH\n\n\
+                write!(
+                    f,
+                    "bunnylol binary not found in PATH\n\n\
                     Please install bunnylol first:\n  \
                     cargo install bunnylol\n\n\
                     Or install from the current directory:\n  \
-                    cargo install --path .")
+                    cargo install --path ."
+                )
             }
             ServiceError::ServiceStartFailed(msg) => {
                 write!(f, "service installed but failed to start: {}", msg)
             }
             ServiceError::IoError(e) => {
                 write!(f, "I/O error: {}", e)
+            }
+            ServiceError::UnsupportedPlatform => {
+                write!(
+                    f,
+                    "Native service installation is only supported on Linux (systemd).\n\n\
+                    For macOS and Windows, please use Docker instead:\n  \
+                    docker compose up -d\n\n\
+                    Or run the server directly:\n  \
+                    bunnylol serve"
+                )
             }
         }
     }
@@ -65,7 +86,6 @@ pub struct ServiceConfig {
     pub port: u16,
     pub address: String,
     pub log_level: String,
-    pub system_mode: bool,  // true = system-level, false = user-level
 }
 
 impl Default for ServiceConfig {
@@ -74,7 +94,6 @@ impl Default for ServiceConfig {
             port: 8000,
             address: "0.0.0.0".to_string(),
             log_level: "normal".to_string(),
-            system_mode: true,
         }
     }
 }
@@ -83,19 +102,15 @@ impl Default for ServiceConfig {
 // Helper Functions
 // ============================================================================
 
-/// Common helper to set up service manager with label
-fn setup_manager(system_mode: bool) -> Result<(Box<dyn ServiceManager>, ServiceLabel), ServiceError> {
+/// Common helper to set up service manager with label (Linux systemd only)
+#[cfg(target_os = "linux")]
+fn setup_manager() -> Result<(Box<dyn ServiceManager>, ServiceLabel), ServiceError> {
     let mut manager = <dyn ServiceManager>::native()
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
-    let service_level = if system_mode {
-        ServiceLevel::System
-    } else {
-        ServiceLevel::User
-    };
-
-    manager.set_level(service_level)
-        .map_err(|e| ServiceError::ServiceManagerError(format!("Failed to set service level: {}", e)))?;
+    manager.set_level(ServiceLevel::System).map_err(|e| {
+        ServiceError::ServiceManagerError(format!("Failed to set service level: {}", e))
+    })?;
 
     let label: ServiceLabel = SERVICE_LABEL
         .parse()
@@ -108,47 +123,37 @@ fn setup_manager(system_mode: bool) -> Result<(Box<dyn ServiceManager>, ServiceL
 // Service Lifecycle Functions
 // ============================================================================
 
-/// Install bunnylol service using service-manager crate
-pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, start_now: bool) -> Result<(), ServiceError> {
+/// Install bunnylol service using systemd (Linux only)
+#[cfg(target_os = "linux")]
+pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError> {
     println!("Installing bunnylol system service...");
+    println!("Platform: Linux (systemd)");
     println!();
 
-    // Require binary to be installed and on PATH
     let binary_path = which::which("bunnylol").map_err(|_| ServiceError::BinaryNotFound)?;
     println!("✓ Found bunnylol binary: {}", binary_path.display());
-
-    // Print service file location based on platform
-    #[cfg(target_os = "linux")]
-    {
-        println!("✓ Service file will be created at: /etc/systemd/system/bunnylol.service");
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        println!("✓ Service file will be created at: /Library/LaunchDaemons/{}.plist", SERVICE_LABEL);
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        println!("✓ Service will be registered with Windows Service Manager");
-    }
-
+    println!(
+        "✓ Service file will be created at: /etc/systemd/system/{}.service",
+        SERVICE_NAME
+    );
     println!();
+
     println!("Service configuration:");
     println!("  Label:       {}", SERVICE_LABEL);
     println!("  Binary:      {}", binary_path.display());
-    println!("  Command:     bunnylol serve --port {} --address {}", config.port, config.address);
+    println!(
+        "  Command:     bunnylol serve --port {} --address {}",
+        config.port, config.address
+    );
     println!("  Port:        {}", config.port);
     println!("  Address:     {}", config.address);
     println!("  Log level:   {}", config.log_level);
-    println!("  Autostart:   {}", if autostart { "enabled" } else { "disabled" });
-    println!("  Start now:   {}", if start_now { "yes" } else { "no" });
     println!("  Run as:      root");
+    println!("  Autostart:   enabled");
     println!();
 
-    let (manager, label) = setup_manager(config.system_mode)?;
+    let (manager, label) = setup_manager()?;
 
-    // Prepare arguments for the bunnylol serve command
     let args = vec![
         OsString::from("serve"),
         OsString::from("--port"),
@@ -157,26 +162,21 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         OsString::from(&config.address),
     ];
 
-    // Add environment variables for Rocket
-    let environment = vec![
-        (
-            "ROCKET_LOG_LEVEL".to_string(),
-            config.log_level.clone(),
-        ),
-    ];
+    let environment = vec![("ROCKET_LOG_LEVEL".to_string(), config.log_level)];
 
     println!("Creating service file...");
-    // Install the service
     let install_ctx = ServiceInstallCtx {
         label: label.clone(),
         program: binary_path,
         args,
-        contents: None,  // Use default service file generation
-        username: None,  // System services run as root, user services run as current user
+        contents: None,
+        username: None,
         working_directory: None,
         environment: Some(environment),
-        autostart,
-        restart_policy: RestartPolicy::OnFailure { delay_secs: Some(5) },
+        autostart: true,
+        restart_policy: RestartPolicy::OnFailure {
+            delay_secs: Some(5),
+        },
     };
 
     manager
@@ -185,30 +185,23 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
 
     println!("✓ Service file created and registered");
 
-    // Start the service if requested
-    if start_now {
-        println!();
-        println!("Starting service...");
-        let start_ctx = ServiceStartCtx {
-            label: label.clone(),
-        };
+    println!();
+    println!("Starting service...");
 
-        manager
-            .start(start_ctx)
-            .map_err(|e| ServiceError::ServiceStartFailed(e.to_string()))?;
+    manager
+        .start(ServiceStartCtx { label })
+        .map_err(|e| ServiceError::ServiceStartFailed(e.to_string()))?;
 
-        println!("✓ Service started");
-
-        // Wait a bit for startup
-        std::thread::sleep(std::time::Duration::from_secs(2));
-        println!("✓ Service appears to be running");
-    }
+    println!("✓ Service started");
 
     println!();
     println!("🎉 Bunnylol server installed successfully!");
     println!();
     println!("Server URL: http://{}:{}", config.address, config.port);
-    println!("Add to browser search: http://{}:{}/?cmd=%s", config.address, config.port);
+    println!(
+        "Add to browser search: http://{}:{}/?cmd=%s",
+        config.address, config.port
+    );
 
     println!();
     println!("Manage service:");
@@ -220,32 +213,20 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
     Ok(())
 }
 
-/// Uninstall bunnylol service
-pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
+#[cfg(not(target_os = "linux"))]
+pub fn install_systemd_service(_config: ServiceConfig) -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
+}
+
+/// Uninstall bunnylol service (Linux only)
+#[cfg(target_os = "linux")]
+pub fn uninstall_service() -> Result<(), ServiceError> {
     println!("Uninstalling bunnylol system service...");
+    println!("Service file: /etc/systemd/system/{}.service", SERVICE_NAME);
     println!();
 
-    // Print service file location based on platform
-    #[cfg(target_os = "linux")]
-    {
-        println!("Service file: /etc/systemd/system/bunnylol.service");
-    }
+    let (manager, label) = setup_manager()?;
 
-    #[cfg(target_os = "macos")]
-    {
-        println!("Service file: /Library/LaunchDaemons/{}.plist", SERVICE_LABEL);
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        println!("Unregistering from Windows Service Manager");
-    }
-
-    println!();
-
-    let (manager, label) = setup_manager(system_mode)?;
-
-    // Stop the service first (ignore errors if already stopped)
     println!("Stopping service...");
     let stop_ctx = ServiceStopCtx {
         label: label.clone(),
@@ -253,17 +234,23 @@ pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
 
     match manager.stop(stop_ctx) {
         Ok(_) => println!("✓ Service stopped"),
-        Err(_) => println!("ℹ Service was not running"),
+        Err(e) => {
+            let err_msg = e.to_string().to_lowercase();
+            if err_msg.contains("not found")
+                || err_msg.contains("not loaded")
+                || err_msg.contains("could not be found")
+            {
+                println!("ℹ Service was not running")
+            } else {
+                println!("⚠ Warning: Could not stop service: {}", e)
+            }
+        }
     }
 
-    // Uninstall the service
     println!("Removing service file...");
-    let uninstall_ctx = ServiceUninstallCtx {
-        label: label.clone(),
-    };
 
     manager
-        .uninstall(uninstall_ctx)
+        .uninstall(ServiceUninstallCtx { label })
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
     println!("✓ Service file removed");
@@ -273,134 +260,124 @@ pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
     Ok(())
 }
 
-/// Start the bunnylol service
-pub fn start_service(system_mode: bool) -> Result<(), ServiceError> {
-    let (manager, label) = setup_manager(system_mode)?;
+#[cfg(not(target_os = "linux"))]
+pub fn uninstall_service() -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
+}
 
-    let start_ctx = ServiceStartCtx {
-        label,
-    };
+/// Start the bunnylol service (Linux only)
+#[cfg(target_os = "linux")]
+pub fn start_service() -> Result<(), ServiceError> {
+    let (manager, label) = setup_manager()?;
 
     manager
-        .start(start_ctx)
+        .start(ServiceStartCtx { label })
         .map_err(|e| ServiceError::ServiceStartFailed(e.to_string()))?;
 
     println!("✓ Service started");
     Ok(())
 }
 
-/// Stop the bunnylol service
-pub fn stop_service(system_mode: bool) -> Result<(), ServiceError> {
-    let (manager, label) = setup_manager(system_mode)?;
+#[cfg(not(target_os = "linux"))]
+pub fn start_service() -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
+}
 
-    let stop_ctx = ServiceStopCtx {
-        label,
-    };
+/// Stop the bunnylol service (Linux only)
+#[cfg(target_os = "linux")]
+pub fn stop_service() -> Result<(), ServiceError> {
+    let (manager, label) = setup_manager()?;
 
     manager
-        .stop(stop_ctx)
+        .stop(ServiceStopCtx { label })
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
     println!("✓ Service stopped");
     Ok(())
 }
 
-/// Restart the bunnylol service
-pub fn restart_service(system_mode: bool) -> Result<(), ServiceError> {
+#[cfg(not(target_os = "linux"))]
+pub fn stop_service() -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
+}
+
+/// Restart the bunnylol service (Linux only)
+#[cfg(target_os = "linux")]
+pub fn restart_service() -> Result<(), ServiceError> {
     println!("Restarting bunnylol service...");
-    stop_service(system_mode)?;
-    start_service(system_mode)?;
+
+    let (manager, label) = setup_manager()?;
+
+    manager
+        .stop(ServiceStopCtx {
+            label: label.clone(),
+        })
+        .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
+    println!("✓ Service stopped");
+
+    manager
+        .start(ServiceStartCtx { label })
+        .map_err(|e| ServiceError::ServiceStartFailed(e.to_string()))?;
+    println!("✓ Service started");
+
     Ok(())
 }
 
-/// Get the status of the bunnylol service (platform-specific)
-#[allow(unused_variables)]
-pub fn service_status(system_mode: bool) -> Result<(), ServiceError> {
-    // Platform-specific status check
-    #[cfg(target_os = "linux")]
-    {
-        let mut cmd = Command::new("systemctl");
-        if !system_mode {
-            cmd.arg("--user");
-        }
-        cmd.args(&["status", "bunnylol"]);
-
-        let status = cmd.status()
-            .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
-
-        if !status.success() {
-            eprintln!("\nNote: Service may not be running (exit code: {})", status.code().unwrap_or(-1));
-        }
-        Ok(())
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let status = Command::new("launchctl")
-            .args(&["list", SERVICE_LABEL])
-            .status()
-            .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
-
-        if !status.success() {
-            eprintln!("\nNote: Service may not be running");
-        }
-        Ok(())
-    }
-
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    {
-        eprintln!("Status checking not implemented for this platform");
-        Ok(())
-    }
+#[cfg(not(target_os = "linux"))]
+pub fn restart_service() -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
 }
 
-/// View logs for the bunnylol service (platform-specific)
-#[allow(unused_variables)]
-pub fn service_logs(system_mode: bool, follow: bool, lines: u32) -> Result<(), ServiceError> {
-    #[cfg(target_os = "linux")]
-    {
-        let mut cmd = Command::new("journalctl");
-        if !system_mode {
-            cmd.arg("--user");
-        }
-        cmd.args(&["-u", "bunnylol", "-n", &lines.to_string()]);
-        if follow {
-            cmd.arg("-f");
-        }
+/// Get the status of the bunnylol service (Linux systemd only)
+#[cfg(target_os = "linux")]
+pub fn service_status() -> Result<(), ServiceError> {
+    let cmd = Command::new("systemctl")
+        .args(&["status", SERVICE_NAME])
+        .status()
+        .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
-        let status = cmd.status()
-            .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
-
-        if !status.success() {
-            return Err(ServiceError::ServiceManagerError(
-                format!("journalctl exited with code {}", status.code().unwrap_or(-1))
-            ));
-        }
-        Ok(())
+    if !cmd.success() {
+        eprintln!(
+            "\nNote: Service may not be running (exit code: {})",
+            cmd.code().unwrap_or(-1)
+        );
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        // On macOS, logs go to system.log or can be viewed with `log show`
-        let mut cmd = Command::new("log");
-        cmd.args(&["show", "--predicate", &format!("processImagePath CONTAINS \"bunnylol\""), "--last", &format!("{}m", lines)]);
+    Ok(())
+}
 
-        if follow {
-            cmd.arg("--style").arg("syslog");
-        }
+#[cfg(not(target_os = "linux"))]
+pub fn service_status() -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
+}
 
-        let status = cmd.status()
-            .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
-
-        if !status.success() {
-            eprintln!("Note: Could not retrieve logs. You can also check Console.app");
-        }
-        Ok(())
+/// View logs for the bunnylol service (Linux systemd only)
+#[cfg(target_os = "linux")]
+pub fn service_logs(follow: bool, lines: u32) -> Result<(), ServiceError> {
+    let mut cmd = Command::new("journalctl");
+    cmd.args(&["-u", SERVICE_NAME, "-n", &lines.to_string()]);
+    if follow {
+        cmd.arg("-f");
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    {
-        eprintln!("Log viewing not implemented for this platform");
-        Ok(())
+    let status = cmd
+        .status()
+        .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
+
+    if !status.success() {
+        return Err(ServiceError::ServiceManagerError(format!(
+            "journalctl exited with code {}",
+            status.code().unwrap_or(-1)
+        )));
     }
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn service_logs(
+    #[allow(unused_variables)] follow: bool,
+    #[allow(unused_variables)] lines: u32,
+) -> Result<(), ServiceError> {
+    Err(ServiceError::UnsupportedPlatform)
 }

@@ -31,8 +31,8 @@ impl BunnylolCommand for InstagramCommand {
                 "messages" | "msg" | "chat" => "https://www.instagram.com/direct/inbox/".to_string(),
                 _ => {
                     // Check if it looks like an Instagram profile
-                    if query.starts_with('@') {
-                        Self::construct_profile_url(&query[1..])
+                    if let Some(username) = query.strip_prefix('@') {
+                        Self::construct_profile_url(username)
                     } else {
                         Self::construct_search_url(query)
                     }

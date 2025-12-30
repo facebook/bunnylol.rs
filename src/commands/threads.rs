@@ -24,8 +24,8 @@ impl BunnylolCommand for ThreadsCommand {
             "https://www.threads.net".to_string()
         } else {
             // Check if it looks like a Threads profile
-            if query.starts_with('@') {
-                Self::construct_profile_url(&query[1..])
+            if let Some(username) = query.strip_prefix('@') {
+                Self::construct_profile_url(username)
             } else {
                 Self::construct_search_url(query)
             }

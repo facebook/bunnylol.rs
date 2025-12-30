@@ -120,7 +120,7 @@ impl History {
         let reader = BufReader::new(file);
         let entries: Vec<HistoryEntry> = reader
             .lines()
-            .filter_map(|line| line.ok())
+            .map_while(Result::ok)
             .filter_map(|line| HistoryEntry::from_line(&line))
             .collect();
 

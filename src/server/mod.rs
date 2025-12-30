@@ -41,12 +41,11 @@ fn search(cmd: &str, config: &State<BunnylolConfig>, client_ip: ClientIP) -> Red
     println!("redirecting to: {}", redirect_url);
 
     // Track command in history if enabled
-    if config.history.enabled {
-        if let Some(history) = History::new(config.inner()) {
-            if let Err(e) = history.add(cmd, &client_ip.0) {
-                eprintln!("Warning: Failed to save command to history: {}", e);
-            }
-        }
+    if config.history.enabled
+        && let Some(history) = History::new(config.inner())
+        && let Err(e) = history.add(cmd, &client_ip.0)
+    {
+        eprintln!("Warning: Failed to save command to history: {}", e);
     }
 
     Redirect::to(redirect_url)
