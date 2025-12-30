@@ -1,9 +1,9 @@
 # `bunnylol.rs` -- Smart browser bookmarks with Rust
 
+[![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
+[![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
 [![Contributors](https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/graphs/contributors)
-[![Forks](https://img.shields.io/github/forks/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/network/members)
 [![Stargazers](https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/stargazers)
-[![Issues](https://img.shields.io/github/issues/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/issues)
 [![License](https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square)](https://github.com/facebook/bunnylol.rs/blob/master/LICENSE)
 
 <p align="center">
@@ -22,10 +22,26 @@ Or run the CLI:
 $ bunnylol-cli gh facebook/react
 ```
 
+## Installation
+
+`bunnylol` is available on [crates.io](https://crates.io/crates/bunnylol):
+
+```sh
+# Install both CLI and server
+$ cargo install bunnylol
+
+# Install just the CLI
+$ cargo install bunnylol --features cli --no-default-features
+
+# Install just the server
+$ cargo install bunnylol --features server --no-default-features
+```
+
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
   - [Demo](#demo)
+  - [Installation](#installation)
   - [CLI Quickstart](#cli-quickstart)
   - [CLI Configuration](#cli-configuration)
   - [Web Server Quickstart](#quickstart---web-server)
@@ -43,17 +59,7 @@ $ bunnylol-cli gh facebook/react
 
 ## CLI Quickstart
 
-Prefer using the command line? Use **bunnylol-cli** to open URLs directly from your terminal!
-
-### Installation
-
-```sh
-$ git clone https://github.com/facebook/bunnylol.rs.git
-$ cd bunnylol.rs
-
-# Install the CLI globally
-$ cargo install --path . --bin bunnylol-cli
-```
+Prefer using the command line? Use `bunnylol-cli` to open URLs directly from your terminal!
 
 ### Basic Usage
 
@@ -237,12 +243,25 @@ bunnylol-cli work
 
 ## Quickstart - Web Server
 
+After [installing](#installation) bunnylol, start the server:
+
+```sh
+$ bunnylol-server
+```
+
+Or use Docker:
+
 ```sh
 $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
-# Run with docker compose:
 $ docker compose up -d
-# Manual setup:
+```
+
+Or build from source:
+
+```sh
+$ git clone https://github.com/facebook/bunnylol.rs.git
+$ cd bunnylol.rs
 $ cargo run --bin bunnylol-server
 ```
 
@@ -341,8 +360,9 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow the simple steps under either of the following sections:
-- [Manual Setup](#manual-setup) – follow this if you prefer to install all dependencies locally.
+See the [Installation](#installation) section to install bunnylol from crates.io.
+
+To build from source or contribute to the project, see [Manual Setup](#manual-setup) below.
 
 ### Manual Setup
 
