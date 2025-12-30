@@ -34,7 +34,10 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 xdg = "2.5"
 
-# Web server dependencies (optional)
+# These are marked as optional so that we can optimize the size of each binary
+# They are all needed for one or the other
+
+# Web server dependencies
 rocket = { version = "0.5", features = ["json"], optional = true }
 tokio = { version = "1", features = ["macros"], optional = true }
 leptos = { version = "0.6", features = ["ssr"], optional = true }
