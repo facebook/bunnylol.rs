@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 /// Information about a registered command binding
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct BunnylolCommandInfo {
     pub bindings: Vec<String>,
     pub description: String,
