@@ -2,7 +2,7 @@
 /// Supports:
 /// - rust -> https://doc.rust-lang.org/stable/std/index.html
 /// - rust [search terms] -> https://doc.rust-lang.org/stable/std/index.html?search=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct RustCommand;
@@ -19,8 +19,8 @@ impl BunnylolCommand for RustCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Rust documentation or search Rust std docs".to_string(),
             example: "rust HashMap".to_string(),

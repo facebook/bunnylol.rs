@@ -1,6 +1,6 @@
 /// ChatGPT command handler
 /// Supports: chatgpt -> redirects to chatgpt.com
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct ChatGPTCommand;
 
@@ -11,8 +11,8 @@ impl BunnylolCommand for ChatGPTCommand {
         "https://chatgpt.com".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to ChatGPT".to_string(),
             example: "chatgpt".to_string(),

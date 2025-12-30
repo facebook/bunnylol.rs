@@ -9,7 +9,8 @@ use leptos::*;
 use leptos_meta::*;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::bunnylol_command::{BunnylolCommandRegistry, CommandInfo};
+use crate::bunnylol_command_registry::BunnylolCommandRegistry;
+use crate::commands::bunnylol_command::BunnylolCommandInfo;
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct BindingData {
@@ -18,8 +19,8 @@ pub struct BindingData {
     pub example: String,
 }
 
-impl From<CommandInfo> for BindingData {
-    fn from(info: CommandInfo) -> Self {
+impl From<BunnylolCommandInfo> for BindingData {
+    fn from(info: BunnylolCommandInfo) -> Self {
         Self {
             command: info
                 .bindings

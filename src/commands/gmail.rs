@@ -1,6 +1,6 @@
 /// Gmail command handler
 /// Supports: mail (simple redirect to Gmail)
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct GmailCommand;
 
@@ -11,8 +11,8 @@ impl BunnylolCommand for GmailCommand {
         "https://mail.google.com".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Gmail".to_string(),
             example: "mail".to_string(),

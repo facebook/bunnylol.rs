@@ -1,6 +1,6 @@
 /// DuckDuckGo Search command handler
 /// Supports: ddg [search terms], duckduckgo [search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct DuckDuckGoCommand;
@@ -13,8 +13,8 @@ impl BunnylolCommand for DuckDuckGoCommand {
         build_search_url("https://duckduckgo.com/", "q", query)
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Search DuckDuckGo".to_string(),
             example: "ddg rust programming".to_string(),

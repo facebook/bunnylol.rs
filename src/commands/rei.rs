@@ -1,6 +1,6 @@
 /// REI command handler
 /// Supports: rei -> https://www.rei.com, rei [search terms] -> https://www.rei.com/search?q=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct REICommand;
@@ -17,8 +17,8 @@ impl BunnylolCommand for REICommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to REI or search for outdoor gear".to_string(),
             example: "rei hiking boots".to_string(),

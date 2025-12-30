@@ -1,6 +1,6 @@
 /// Twitter command handler
 /// Supports: tw, tw @[username], tw [search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
 pub struct TwitterCommand;
@@ -32,8 +32,8 @@ impl BunnylolCommand for TwitterCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Twitter profiles or search Twitter".to_string(),
             example: "tw @MetaOpenSource".to_string(),

@@ -7,7 +7,7 @@
 /// - az cart -> https://www.amazon.com/gp/cart/view.html/
 /// - az pay/wallet -> https://www.amazon.com/cpe/yourpayments/wallet
 /// - az [search terms] -> https://www.amazon.com/s?k=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct AmazonCommand;
@@ -31,8 +31,8 @@ impl BunnylolCommand for AmazonCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Amazon or search for products".to_string(),
             example: "az headphones".to_string(),

@@ -1,7 +1,7 @@
 /// 1Password command
 ///
 /// Shortcut to 1Password home page
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct OnePasswordCommand;
 
@@ -12,8 +12,8 @@ impl BunnylolCommand for OnePasswordCommand {
         "https://my.1password.com/home".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "1Password home page".to_string(),
             example: "1p".to_string(),

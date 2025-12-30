@@ -2,7 +2,7 @@
 /// Supports:
 /// - hack -> https://docs.hhvm.com/hack/
 /// - hack [search terms] -> https://docs.hhvm.com/search?term=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct HackCommand;
@@ -19,8 +19,8 @@ impl BunnylolCommand for HackCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Hack documentation or search Hack docs".to_string(),
             example: "hack async".to_string(),

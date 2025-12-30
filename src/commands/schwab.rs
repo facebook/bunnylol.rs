@@ -8,7 +8,7 @@
 /// - transfer/transfers/payments: Transfers and payments page
 /// - security: Security settings page
 /// - contact/contactus/call: Contact us page
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct SchwabCommand;
 
@@ -33,8 +33,8 @@ impl BunnylolCommand for SchwabCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Charles Schwab shortcuts (billpay, orders, trade, transfer, security, contact)".to_string(),
             example: "schwab trade".to_string(),

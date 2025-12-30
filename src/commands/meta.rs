@@ -3,7 +3,7 @@
 /// Supports: meta accounts/account -> redirects to Meta Accounts Center
 /// Supports: metaai/meta ai -> redirects to Meta AI
 /// Supports: meta pay -> redirects to Meta Pay
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct MetaCommand;
 
@@ -21,8 +21,8 @@ impl BunnylolCommand for MetaCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Meta, Meta AI, Meta Accounts Center, or Meta Pay".to_string(),
             example: "meta accounts".to_string(),

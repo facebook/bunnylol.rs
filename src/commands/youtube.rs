@@ -2,7 +2,7 @@
 /// Supports:
 /// - yt/youtube -> https://youtube.com/
 /// - yt [search terms] -> https://www.youtube.com/results?search_query=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct YouTubeCommand;
@@ -23,8 +23,8 @@ impl BunnylolCommand for YouTubeCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to YouTube or search for videos".to_string(),
             example: "yt rust programming".to_string(),

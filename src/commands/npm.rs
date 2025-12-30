@@ -2,7 +2,7 @@
 /// Supports:
 /// - npm/npmjs -> https://www.npmjs.com
 /// - npm [search terms] -> https://www.npmjs.com/search?q=[search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct NpmCommand;
@@ -19,8 +19,8 @@ impl BunnylolCommand for NpmCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to npmjs.com or search for npm packages".to_string(),
             example: "npm react".to_string(),

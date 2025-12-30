@@ -1,6 +1,6 @@
 /// Threads command handler
 /// Supports: threads, threads @[username], threads [search terms]
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
 pub struct ThreadsCommand;
@@ -32,8 +32,8 @@ impl BunnylolCommand for ThreadsCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Threads profiles or search Threads".to_string(),
             example: "threads @zuck".to_string(),

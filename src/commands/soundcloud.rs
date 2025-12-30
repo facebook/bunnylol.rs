@@ -1,4 +1,4 @@
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::encode_url;
 
 pub struct SoundCloudCommand;
@@ -19,8 +19,8 @@ impl BunnylolCommand for SoundCloudCommand {
         }
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to SoundCloud (supports: likes)".to_string(),
             example: "sc edm".to_string(),

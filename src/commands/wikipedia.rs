@@ -1,4 +1,4 @@
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::encode_url;
 
 pub struct WikipediaCommand;
@@ -18,8 +18,8 @@ impl BunnylolCommand for WikipediaCommand {
         )
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: vec!["wiki".to_string(), "wikipedia".to_string()],
             description: "Search on Wikipedia".to_string(),
             example: "wiki rust programming".to_string(),

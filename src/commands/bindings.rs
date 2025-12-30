@@ -6,7 +6,7 @@
 /// Examples:
 /// - bindings -> /bindings
 /// - list -> /bindings
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct BindingsCommand;
 
@@ -17,8 +17,8 @@ impl BunnylolCommand for BindingsCommand {
         "/bindings".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "View all Bunnylol command bindings in a web portal".to_string(),
             example: "bindings".to_string(),

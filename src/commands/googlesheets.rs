@@ -1,6 +1,6 @@
 /// Google Sheets command handler
 /// Supports: gsheets -> redirects to Google Sheets
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct GoogleSheetsCommand;
 
@@ -11,8 +11,8 @@ impl BunnylolCommand for GoogleSheetsCommand {
         "https://docs.google.com/spreadsheets/u/0/".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Google Sheets".to_string(),
             example: "gsheets".to_string(),

@@ -1,6 +1,6 @@
 /// Claude command handler
 /// Supports: claude -> redirects to claude.ai
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct ClaudeCommand;
 
@@ -31,8 +31,8 @@ impl BunnylolCommand for ClaudeCommand {
         result
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description:
                 "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)"

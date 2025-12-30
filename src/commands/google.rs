@@ -1,6 +1,6 @@
 /// Google Search command handler (default fallback)
 /// Supports: g [search terms], or any unrecognized command
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
 pub struct GoogleSearchCommand;
@@ -13,8 +13,8 @@ impl BunnylolCommand for GoogleSearchCommand {
         build_search_url("https://google.com/search", "q", query)
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: vec!["g".to_string(), "(default)".to_string()],
             description: "Search Google (default fallback for any unrecognized command)".to_string(),
             example: "g rust programming".to_string(),

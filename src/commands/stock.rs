@@ -1,4 +1,4 @@
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 
 pub struct StockCommand;
@@ -36,8 +36,8 @@ impl BunnylolCommand for StockCommand {
         Self::build_yahoo_finance_url(ticker)
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: vec!["stock".to_string(), "stocks".to_string(), "finance".to_string(), "$<ticker>".to_string()],
             description: "Look up stock prices on Yahoo Finance".to_string(),
             example: "stock META  or  $META".to_string(),

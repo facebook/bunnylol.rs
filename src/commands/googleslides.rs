@@ -1,6 +1,6 @@
 /// Google Slides command handler
 /// Supports: gslides -> redirects to Google Slides
-use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct GoogleSlidesCommand;
 
@@ -11,8 +11,8 @@ impl BunnylolCommand for GoogleSlidesCommand {
         "https://docs.google.com/presentation/u/0/".to_string()
     }
 
-    fn get_info() -> CommandInfo {
-        CommandInfo {
+    fn get_info() -> BunnylolCommandInfo {
+        BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
             description: "Navigate to Google Slides".to_string(),
             example: "gslides".to_string(),
