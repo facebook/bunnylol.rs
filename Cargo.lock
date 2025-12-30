@@ -250,6 +250,7 @@ dependencies = [
  "clap",
  "leptos",
  "leptos_meta",
+ "libc",
  "open",
  "percent-encoding",
  "predicates",

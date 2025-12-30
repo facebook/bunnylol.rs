@@ -14,6 +14,9 @@ pub mod utils;
 #[cfg(feature = "server")]
 pub mod server;
 
+#[cfg(all(feature = "cli", target_os = "linux"))]
+pub mod systemd_installer;
+
 pub use bunnylol_command_registry::BunnylolCommandRegistry;
 pub use commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 pub use config::BunnylolConfig;
