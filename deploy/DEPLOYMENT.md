@@ -16,11 +16,12 @@ This guide covers deploying `bunnylol.rs` using either native service installati
 
 ## Quick Start: Automated Setup
 
-For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup script that installs Docker and deploys bunnylol.rs in one command.
+For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup script that installs Rust, bunnylol, and sets it up as a `systemd` service in one command.
 
 ### Prerequisites
 
-- Fresh Ubuntu server (22.04 LTS, 24.04 LTS, 25.04, or 25.10+)
+- Linux server running systemd
+- `cargo` installed
 - Root or sudo access
 - Internet connection
 
@@ -48,12 +49,15 @@ The automated setup script will:
 
 1. ✓ Verify you're running a supported Ubuntu version
 2. ✓ Update system packages
-3. ✓ Install Docker CE and Docker Compose
-4. ✓ Configure Docker to start on boot
-5. ✓ Clone the bunnylol.rs repository
-6. ✓ Deploy the application with `docker compose up -d --build`
+3. ✓ Install build prerequisites (build-essential, pkg-config, libssl-dev, etc.)
+4. ✓ Install Rust (rustup)
+5. ✓ Install bunnylol from crates.io (`cargo install bunnylol`)
+6. ✓ Install bunnylol as a `systemd` service
+7. ✓ Configure service to start on boot
+8. ✓ Start the service immediately
+9. ✓ Verify the installation
 
-After completion, bunnylol will be running on port 8000. The script is safe to run multiple times - it will skip already-installed components and update the repository if it already exists.
+After completion, bunnylol will be running on port 8000 as a `systemd` service. The script is safe to run multiple times - it will skip already-installed components and update Rust if it already exists.
 
 ---
 

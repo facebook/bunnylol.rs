@@ -7,8 +7,12 @@
 
 use clap::{Parser, Subcommand};
 
+// BunnylolConfig is needed by both server and CLI
+use bunnylol::BunnylolConfig;
+
+// CLI-only imports
 #[cfg(feature = "cli")]
-use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
+use bunnylol::{BunnylolCommandRegistry, History, utils};
 #[cfg(feature = "cli")]
 use tabled::{
     Table, Tabled,

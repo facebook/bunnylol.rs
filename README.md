@@ -24,18 +24,40 @@ $ bunnylol gh facebook/react
 
 ## Installation
 
-`bunnylol` is available on [crates.io](https://crates.io/crates/bunnylol):
+Clone and build from source:
 
 ```sh
-# Install both CLI and server
-$ cargo install bunnylol
+# Clone the repository
+$ git clone https://github.com/facebook/bunnylol.rs.git
+$ cd bunnylol.rs
 
-# Install just the CLI
-$ cargo install bunnylol --features cli --no-default-features
+# Install both CLI and server (3.9MB)
+$ cargo install --path .
 
-# Install just the server
-$ cargo install bunnylol --features server --no-default-features
+# Install just the CLI (1.4MB - recommended for terminal use only)
+$ cargo install --path . --features cli --no-default-features
+
+# Install just the server (3.6MB - recommended for web server deployments)
+$ cargo install --path . --features server --no-default-features
 ```
+
+<!-- `bunnylol` will be available on [crates.io](https://crates.io/crates/bunnylol): -->
+<!---->
+<!-- ```sh -->
+<!-- # Install both CLI and server (3.9MB) -->
+<!-- $ cargo install bunnylol -->
+<!---->
+<!-- # Install just the CLI (1.4MB - recommended for terminal use only) -->
+<!-- $ cargo install bunnylol --features cli --no-default-features -->
+<!---->
+<!-- # Install just the server (3.6MB - recommended for web server deployments) -->
+<!-- $ cargo install bunnylol --features server --no-default-features -->
+<!-- ``` -->
+
+**Which one should I use?**
+- **CLI only**: If you only want terminal shortcuts and don't need the web server (1.4MB, faster to compile)
+- **Server only**: For deploying on a server where you don't need CLI features (3.6MB)
+- **Both** (default): Get everything - use the CLI locally and run the web server (3.9MB)
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
@@ -268,28 +290,33 @@ $ cargo run -- serve
 
 ### Installing as a System Service
 
-For production use, install bunnylol as a system service that starts automatically on boot:
+For production use on **Linux**, install bunnylol as a `systemd` service that starts automatically on boot:
 
 ```sh
-# Install as system-level service (requires sudo on Linux/macOS)
-$ sudo bunnylol install-server --system
+# Install bunnylol first
+$ cargo install bunnylol
 
-# Or install as user-level service (runs as current user)
-$ bunnylol install-server
+# Install as system service (requires sudo, Linux only)
+$ sudo bunnylol service install
+
+# The installer will:
+# - Create /etc/systemd/system/bunnylol.service
+# - Enable autostart on boot
+# - Start the service immediately
 
 # Manage the service
-$ sudo bunnylol server status --system
-$ sudo bunnylol server logs --system -f
-$ sudo bunnylol server restart --system
+$ sudo bunnylol service status
+$ sudo bunnylol service logs -f
+$ sudo bunnylol service restart
 
 # Uninstall
-$ sudo bunnylol uninstall-server --system
+$ sudo bunnylol service uninstall
 ```
 
 The service installer works on:
-- **Linux**: systemd
-- **macOS**: launchd
-- **Windows**: Windows Service Manager
+- **Linux**: `systemd` (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)
+
+**macOS and Windows:** Use Docker instead (see above) or run `bunnylol serve` directly.
 
 For more details, see the [Deployment Guide](deploy/DEPLOYMENT.md).
 

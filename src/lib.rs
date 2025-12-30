@@ -11,11 +11,13 @@ pub mod config;
 pub mod history;
 pub mod utils;
 
-#[cfg(feature = "server")]
+// Server module is needed for both server runtime and CLI service management
+#[cfg(any(feature = "server", feature = "cli"))]
 pub mod server;
 
+// Re-export service from server module for CLI feature
 #[cfg(feature = "cli")]
-pub mod service;
+pub use server::service;
 
 pub use bunnylol_command_registry::BunnylolCommandRegistry;
 pub use commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
