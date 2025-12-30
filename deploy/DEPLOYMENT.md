@@ -170,7 +170,7 @@ $ bunnylol uninstall-server
 
 #### macOS (launchd)
 
-- Service file: `/Library/LaunchDaemons/rs.bunnylol.server.plist` (system) or `~/Library/LaunchAgents/rs.bunnylol.server.plist` (user)
+- Service file: `/Library/LaunchDaemons/com.facebook.bunnylol.plist` (system) or `~/Library/LaunchAgents/com.facebook.bunnylol.plist` (user)
 - Logs: Use Console.app or `sudo bunnylol server logs --system`
 - Binary location: `/usr/local/bin/bunnylol` (system) or `~/.local/bin/bunnylol` (user)
 
@@ -185,7 +185,7 @@ $ bunnylol uninstall-server
 
 Docker provides an alternative deployment method that's useful for containerized environments.
 
-### Using Docker Compose (Recommended)
+### Using Docker Compose
 
 The easiest way to deploy bunnylol with Docker is using Docker Compose:
 
