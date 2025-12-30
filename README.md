@@ -1,57 +1,119 @@
-# bunnylol.rs
+# `bunnylol.rs` -- Smart browser bookmarks with Rust
 
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![License][license-shield]][license-url]
+[![Contributors](https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/network/members)
+[![Stargazers](https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/stargazers)
+[![Issues](https://img.shields.io/github/issues/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/issues)
+[![License](https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square)](https://github.com/facebook/bunnylol.rs/blob/master/LICENSE)
 
-<br />
 <p align="center">
-    A tool that lets you write smart bookmarks (in Rust) and share them across all of your browsers.
-    <br />
-    A modern rust clone of <a href="https://github.com/ccheever/bunny1">bunny1  </a>.
+    A modern rust clone of <a href="https://github.com/ccheever/bunny1">bunny1</a>.
 </p>
+
+## Demo
+
+Enter `gh facebook/react` in your browser's address bar to open the React repository on GitHub.
+
+![bunnylol.rs demo](demo.gif)
+
+Or run the CLI:
+
+```sh
+$ bunnylol-cli gh facebook/react
+```
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
   - [Demo](#demo)
+  - [CLI Quickstart](#cli-quickstart)
+  - [Web Server Quickstart](#quickstart---web-server)
+  - [Setting bunnylol as Default Search Engine](#setting-bunnylol-to-be-your-default-search-engine)
+  - [Command Examples](#other-command-examples)
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
     - [Manual Setup](#manual-setup)
-    - [Running](#running)
-    - [Testing](#testing)
-  - [Usage](#usage)
-  - [Deployment](#deployment)
+  - [Deployment](#deployment-with-docker)
   - [Contributing](#contributing)
   - [License](#license)
-  - [Contact](#contact)
-  - [Acknowledgements](#acknowledgements)
+  - [Acknowledgments](#acknowledgements)
 
-## Demo
 
-![bunnylol.rs demo][product-screenshot]
 
-This is what `bunnylol.rs` looks like in action.
+## CLI Quickstart
 
-## Quickstart
+Prefer using the command line? Use **bunnylol-cli** to open URLs directly from your terminal!
 
-```
+### Installation
+
+```sh
 $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
-$ cargo run
+
+# Install the CLI globally
+$ cargo install --path . --bin bunnylol-cli --no-default-features --features cli
 ```
 
-Open your web browser and go to `http://localhost:8000/?cmd=fb` get redirected to Facebook.
+### Basic Usage
+
+```sh
+# Open GitHub
+$ bunnylol-cli gh
+
+# Open Instagram Reels
+$ bunnylol-cli ig reels
+
+# Open a specific GitHub repository
+$ bunnylol-cli gh facebook/react
+
+# Preview URL without opening browser (dry-run)
+$ bunnylol-cli --dry-run gh facebook/react
+# Output: https://github.com/facebook/react
+
+# List all available commands with a beautiful table
+$ bunnylol-cli list
+```
+
+### Quick Examples
+
+| CLI Command | What it does |
+|-------------|-------------|
+| `bunnylol-cli gh` | Open GitHub homepage |
+| `bunnylol-cli gh facebook/react` | Open facebook/react repository |
+| `bunnylol-cli ig reels` | Open Instagram Reels |
+| `bunnylol-cli tw @elonmusk` | Open Twitter profile |
+| `bunnylol-cli r r/rust` | Open r/rust subreddit |
+| `bunnylol-cli --dry-run meta ai` | Print Meta AI URL without opening |
+| `bunnylol-cli --help` | Show help information |
+| `bunnylol-cli --version` | Show version information |
+| `bunnylol-cli list` | Display all commands in a formatted table |
+
+### Recommended: Create a Shell Alias
+
+For even faster access, add an alias to your shell configuration:
+
+```sh
+# Add to ~/.bashrc or ~/.zshrc
+alias b="bunnylol-cli"
+
+# Then use it like this:
+$ b ig reels
+$ b gh facebook/react
+$ b list
+```
+
+## Quickstart - Web Server
+
+```sh
+$ git clone https://github.com/facebook/bunnylol.rs.git
+$ cd bunnylol.rs
+# Run with docker compose:
+$ docker compose up -d
+# Manual setup:
+$ cargo run --bin bunnylol-server
+```
+
+Open your web browser and navigate to `http://localhost:8000/?cmd=fb` to get redirected to Facebook.
 
 Open `http://localhost:8000/?cmd=gh facebook/bunnylol.rs` to be redirected to this repo.
 
@@ -138,7 +200,10 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 ### Built With
 
 * [Rust](https://www.rust-lang.org/)
-* [Rocket](https://rocket.rs/)
+* [Rocket](https://rocket.rs/) - Web framework
+* [Leptos](https://leptos.dev/) - Frontend framework for the bindings page
+* [clap](https://github.com/clap-rs/clap) - CLI argument parser
+* [tabled](https://github.com/zhiburt/tabled) - Beautiful terminal tables
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -153,7 +218,15 @@ Make sure you have [Rust installed](https://rust-lang.org/tools/install/).
 ```sh
 $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
-$ cargo run
+
+# Run the web server
+$ cargo run --bin bunnylol-server
+
+# OR run the CLI (in a separate terminal)
+$ cargo run --bin bunnylol-cli -- gh facebook/react
+
+# OR install the CLI globally for easier access
+$ cargo install --path . --bin bunnylol-cli --no-default-features --features cli
 ```
 
 
@@ -191,34 +264,16 @@ Docker makes it easy to deploy anywhere:
 
 For detailed deployment instructions, reverse proxy setup, and troubleshooting, see the **[Deployment Guide](deployment/DEPLOYMENT.md)**.
 
-<!-- CONTRIBUTING -->
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**. See [`CONTRIBUTING`](CONTRIBUTING.md) for more information.
 
-<!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
-<!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
+## Acknowledgments
 
 * [The Rust Community](https://www.rust-lang.org/community)
 * [Rocket.rs](https://rocket.rs/)
 * [@othneildrew](https://github.com/othneildrew) - for the [README template](https://github.com/othneildrew/Best-README-Template)
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square
-[contributors-url]: https://github.com/facebook/bunnylol.rs/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/facebook/bunnylol.rs.svg?style=flat-square
-[forks-url]: https://github.com/facebook/bunnylol.rs/network/members
-[stars-shield]: https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square
-[stars-url]: https://github.com/facebook/bunnylol.rs/stargazers
-[issues-shield]: https://img.shields.io/github/issues/facebook/bunnylol.rs.svg?style=flat-square
-[issues-url]: https://github.com/facebook/bunnylol.rs/issues
-[license-shield]: https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square
-[license-url]: https://github.com/facebook/bunnylol.rs/blob/master/LICENSE
-[product-screenshot]: demo.gif
