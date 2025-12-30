@@ -6,7 +6,7 @@
  */
 
 use clap::Parser;
-use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, utils};
+use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
 use tabled::{
     Table, Tabled,
     settings::{Style, Color, Modify, object::Columns},
@@ -75,6 +75,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Print URL
     println!("{}", url);
+
+    // Track command in history if enabled
+    if config.history.enabled {
+        if let Some(history) = History::new(&config) {
+            let username = whoami::username();
+            if let Err(e) = history.add(&full_args, &username) {
+                eprintln!("Warning: Failed to save command to history: {}", e);
+            }
+        }
+    }
 
     // Open in browser unless --dry-run
     if !cli.dry_run {
