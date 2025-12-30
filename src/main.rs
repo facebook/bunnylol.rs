@@ -9,13 +9,10 @@
 extern crate rocket;
 
 use rocket::response::Redirect;
-mod bunnylol_command_registry;
-mod commands;
 mod routes;
-mod utils;
 mod web;
 
-use bunnylol_command_registry::BunnylolCommandRegistry;
+use bunnylol::{BunnylolCommandRegistry, utils};
 
 // http://localhost:8000/?cmd=gh
 #[get("/?<cmd>")]

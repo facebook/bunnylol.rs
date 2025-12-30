@@ -6,10 +6,41 @@ edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "bunnylol"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bunnylol-server"
+path = "src/main.rs"
+required-features = ["server"]
+
+[[bin]]
+name = "bunnylol-cli"
+path = "src/cli.rs"
+required-features = ["cli"]
+
 [dependencies]
-rocket = { version = "0.5", features = ["json"] }
+# Shared dependencies
 percent-encoding = "2.3"
-tokio = { version = "1", features = ["macros"] }
 serde = { version = "1.0", features = ["derive"] }
-leptos = { version = "0.6", features = ["ssr"] }
-leptos_meta = { version = "0.6", features = ["ssr"] }
+
+# Web server dependencies (optional)
+rocket = { version = "0.5", features = ["json"], optional = true }
+tokio = { version = "1", features = ["macros"], optional = true }
+leptos = { version = "0.6", features = ["ssr"], optional = true }
+leptos_meta = { version = "0.6", features = ["ssr"], optional = true }
+
+# CLI dependencies (optional)
+clap = { version = "4.5", features = ["derive"], optional = true }
+open = { version = "5.0", optional = true }
+tabled = { version = "0.16", optional = true }
+
+[features]
+default = ["server"]
+server = ["rocket", "leptos", "leptos_meta", "tokio"]
+cli = ["clap", "open", "tabled"]
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
