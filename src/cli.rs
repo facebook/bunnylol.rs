@@ -97,7 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Open a URL in the browser, using the browser specified in config if available
 fn open_url(url: &str, config: &BunnylolConfig) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(browser) = &config.browser {
-        // Try to open with specified browser
+        // Open with specified browser
         open::with(url, browser).map_err(|e| {
             format!(
                 "Failed to open browser '{}': {}. URL printed above.",
