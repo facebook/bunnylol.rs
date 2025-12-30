@@ -17,7 +17,8 @@
       "Bash(cargo --version:*)",
       "Bash(rustc:*)",
       "Bash(cargo build:*)",
-      "Bash(./target/debug/bunnylol-cli:*)"
+      "Bash(./target/debug/bunnylol-cli:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": [],
     "ask": []

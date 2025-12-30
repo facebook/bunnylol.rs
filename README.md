@@ -27,6 +27,7 @@ $ bunnylol-cli gh facebook/react
 
   - [Demo](#demo)
   - [CLI Quickstart](#cli-quickstart)
+  - [CLI Configuration](#cli-configuration)
   - [Web Server Quickstart](#quickstart---web-server)
   - [Setting bunnylol as Default Search Engine](#setting-bunnylol-to-be-your-default-search-engine)
   - [Command Examples](#other-command-examples)
@@ -51,7 +52,7 @@ $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
 
 # Install the CLI globally
-$ cargo install --path . --bin bunnylol-cli --no-default-features --features cli
+$ cargo install --path . --bin bunnylol-cli
 ```
 
 ### Basic Usage
@@ -100,6 +101,138 @@ alias b="bunnylol-cli"
 $ b ig reels
 $ b gh facebook/react
 $ b list
+```
+
+## CLI Configuration
+
+The bunnylol CLI supports optional configuration via a TOML file following the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html).
+
+### Configuration File Location
+
+The config file is located at:
+- **Linux/macOS**: `~/.config/bunnylol/config.toml` (or `$XDG_CONFIG_HOME/bunnylol/config.toml` if set)
+- **Windows**: `%APPDATA%\bunnylol\config.toml`
+
+### Configuration Features
+
+The CLI works perfectly fine without any configuration file. However, you can customize the following features:
+
+#### 1. **Default Browser Selection**
+
+Specify which browser to open URLs in:
+
+```toml
+# ~/.config/bunnylol/config.toml
+browser = "firefox"  # or "chrome", "chromium", "safari", etc.
+```
+
+If not specified, the system default browser is used.
+
+#### 2. **Custom Command Aliases**
+
+Create your own personalized shortcuts:
+
+```toml
+[aliases]
+work = "gh mycompany"
+blog = "gh username/blog"
+dotfiles = "gh username/dotfiles"
+```
+
+Then use them like any built-in command:
+```sh
+$ bunnylol-cli work
+# Opens: https://github.com/mycompany
+
+$ bunnylol-cli blog
+# Opens: https://github.com/username/blog
+```
+
+#### 3. **Custom Default Search Engine**
+
+Override Google as the fallback search engine:
+
+```toml
+default_search = "ddg"  # Options: "google" (default), "ddg", "bing"
+```
+
+When a command isn't recognized, it will search using your configured engine instead of Google.
+
+#### 4. **Command History Tracking**
+
+Track your recently used commands (enabled by default):
+
+```toml
+[history]
+enabled = true
+max_entries = 1000
+```
+
+History is stored at:
+- **Linux/macOS**: `~/.local/share/bunnylol/history` (or `$XDG_DATA_HOME/bunnylol/history` if set)
+- **Windows**: `%APPDATA%\bunnylol\history`
+
+### Complete Configuration Example
+
+Here's a full example with all available options:
+
+```toml
+# ~/.config/bunnylol/config.toml
+
+# Browser to open URLs in (optional)
+browser = "firefox"
+
+# Custom command aliases (optional)
+[aliases]
+work = "gh mycompany"
+blog = "gh username/blog"
+dotfiles = "gh username/dotfiles"
+notes = "gh username/notes"
+
+# Default search engine when command not recognized (optional)
+# Options: "google" (default), "ddg", "bing"
+default_search = "ddg"
+
+# Command history settings (optional)
+[history]
+enabled = true
+max_entries = 1000
+```
+
+### Platform-Specific Directory Structure
+
+The CLI uses platform-appropriate directories for configuration and data:
+
+| Platform | Type | Path |
+|----------|------|------|
+| **Linux/macOS** | Config | `~/.config/bunnylol/config.toml`<br>(or `$XDG_CONFIG_HOME/bunnylol/config.toml`) |
+| **Linux/macOS** | Data | `~/.local/share/bunnylol/`<br>(or `$XDG_DATA_HOME/bunnylol/`) |
+| **Windows** | Config | `%APPDATA%\bunnylol\config.toml` |
+| **Windows** | Data | `%APPDATA%\bunnylol\` |
+
+### Creating Your First Config
+
+To get started with a config file:
+
+```sh
+# Create the config directory
+mkdir -p ~/.config/bunnylol
+
+# Create a basic config file
+cat > ~/.config/bunnylol/config.toml << 'EOF'
+# Set your preferred browser
+browser = "firefox"
+
+# Add custom aliases
+[aliases]
+work = "gh yourcompany"
+
+# Use DuckDuckGo for fallback searches
+default_search = "ddg"
+EOF
+
+# Test it out!
+bunnylol-cli work
 ```
 
 ## Quickstart - Web Server
@@ -226,8 +359,24 @@ $ cargo run --bin bunnylol-server
 $ cargo run --bin bunnylol-cli -- gh facebook/react
 
 # OR install the CLI globally for easier access
-$ cargo install --path . --bin bunnylol-cli --no-default-features --features cli
+$ cargo install --path . --bin bunnylol-cli
 ```
+
+#### Cargo Aliases (Recommended)
+
+For convenience, cargo aliases are configured in `.cargo/config.toml`:
+
+```sh
+# Build commands
+$ cargo build-cli       # Build CLI binary
+$ cargo build-server    # Build server binary
+
+# Run commands
+$ cargo run-cli -- gh facebook/react    # Run CLI with args
+$ cargo run-server                       # Run server
+```
+
+These aliases are simply shortcuts for `cargo build/run --bin bunnylol-cli/server`.
 
 
 ## Deployment with Docker

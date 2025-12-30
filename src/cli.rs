@@ -6,7 +6,7 @@
  */
 
 use clap::Parser;
-use bunnylol::{BunnylolCommandRegistry, utils};
+use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
 use tabled::{
     Table, Tabled,
     settings::{Style, Color, Modify, object::Columns},
@@ -45,6 +45,16 @@ struct Cli {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
+    // Load configuration
+    let config = match BunnylolConfig::load() {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("Warning: {}", e);
+            eprintln!("Continuing with default configuration...");
+            BunnylolConfig::default()
+        }
+    };
+
     // Check if --list flag is set OR if first command is "list"
     let should_list = cli.list || cli.command.first().map(|s| s.as_str()) == Some("list");
 
@@ -56,20 +66,50 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Join command parts (e.g., ["ig", "reels"] -> "ig reels")
     let full_args = cli.command.join(" ");
 
-    // Extract command and process
-    let command = utils::get_command_from_query_string(&full_args);
-    let url = BunnylolCommandRegistry::process_command(command, &full_args);
+    // Resolve command aliases
+    let resolved_args = config.resolve_command(&full_args);
+
+    // Extract command and process with config for custom search engine
+    let command = utils::get_command_from_query_string(&resolved_args);
+    let url = BunnylolCommandRegistry::process_command_with_config(command, &resolved_args, Some(&config));
 
     // Print URL
     println!("{}", url);
 
+    // Track command in history if enabled
+    if config.history.enabled {
+        if let Some(history) = History::new(&config) {
+            let username = whoami::username();
+            if let Err(e) = history.add(&full_args, &username) {
+                eprintln!("Warning: Failed to save command to history: {}", e);
+            }
+        }
+    }
+
     // Open in browser unless --dry-run
     if !cli.dry_run {
-        open::that(&url).map_err(|e| {
+        open_url(&url, &config)?;
+    }
+
+    Ok(())
+}
+
+/// Open a URL in the browser, using the browser specified in config if available
+fn open_url(url: &str, config: &BunnylolConfig) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(browser) = &config.browser {
+        // Try to open with specified browser
+        open::with(url, browser).map_err(|e| {
+            format!(
+                "Failed to open browser '{}': {}. URL printed above.",
+                browser, e
+            )
+        })?;
+    } else {
+        // Use system default browser
+        open::that(url).map_err(|e| {
             format!("Failed to open browser: {}. URL printed above.", e)
         })?;
     }
-
     Ok(())
 }
 

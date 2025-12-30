@@ -1,0 +1,5 @@
+[alias]
+build-cli = "build --bin bunnylol-cli"
+build-server = "build --bin bunnylol-server"
+run-cli = "run --bin bunnylol-cli"
+run-server = "run --bin bunnylol-server"

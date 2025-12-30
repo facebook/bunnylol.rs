@@ -7,7 +7,11 @@
 
 pub mod bunnylol_command_registry;
 pub mod commands;
+pub mod config;
+pub mod history;
 pub mod utils;
 
 pub use bunnylol_command_registry::BunnylolCommandRegistry;
 pub use commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
+pub use config::BunnylolConfig;
+pub use history::{History, HistoryEntry};

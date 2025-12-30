@@ -2,6 +2,14 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
+use std::collections::HashMap;
+use std::sync::OnceLock;
+
+// Type alias for command handler functions
+type CommandHandler = fn(&str) -> String;
+
+// Global command lookup table, initialized once on first access
+static COMMAND_LOOKUP: OnceLock<HashMap<&'static str, CommandHandler>> = OnceLock::new();
 
 static COMMAND_LOOKUP: OnceLock<HashMap<&'static str, fn(&str) -> String>> = OnceLock::new();
 static BINDINGS_DATA: OnceLock<Vec<BunnylolCommandInfo>> = OnceLock::new();
@@ -13,6 +21,114 @@ static BINDINGS_DATA: OnceLock<Vec<BunnylolCommandInfo>> = OnceLock::new();
 pub struct BunnylolCommandRegistry;
 
 impl BunnylolCommandRegistry {
+    /// Initialize the command lookup HashMap
+    /// Maps all command aliases to their handler functions
+    fn initialize_command_lookup() -> HashMap<&'static str, CommandHandler> {
+        use crate::commands::*;
+
+        let mut map = HashMap::new();
+
+        // Register all commands with their aliases
+        for alias in BindingsCommand::BINDINGS {
+            map.insert(*alias, BindingsCommand::process_args as CommandHandler);
+        }
+        for alias in GitHubCommand::BINDINGS {
+            map.insert(*alias, GitHubCommand::process_args as CommandHandler);
+        }
+        for alias in TwitterCommand::BINDINGS {
+            map.insert(*alias, TwitterCommand::process_args as CommandHandler);
+        }
+        for alias in RedditCommand::BINDINGS {
+            map.insert(*alias, RedditCommand::process_args as CommandHandler);
+        }
+        for alias in GmailCommand::BINDINGS {
+            map.insert(*alias, GmailCommand::process_args as CommandHandler);
+        }
+        for alias in DevBunnyCommand::BINDINGS {
+            map.insert(*alias, DevBunnyCommand::process_args as CommandHandler);
+        }
+        for alias in REICommand::BINDINGS {
+            map.insert(*alias, REICommand::process_args as CommandHandler);
+        }
+        for alias in InstagramCommand::BINDINGS {
+            map.insert(*alias, InstagramCommand::process_args as CommandHandler);
+        }
+        for alias in LinkedInCommand::BINDINGS {
+            map.insert(*alias, LinkedInCommand::process_args as CommandHandler);
+        }
+        for alias in FacebookCommand::BINDINGS {
+            map.insert(*alias, FacebookCommand::process_args as CommandHandler);
+        }
+        for alias in ThreadsCommand::BINDINGS {
+            map.insert(*alias, ThreadsCommand::process_args as CommandHandler);
+        }
+        for alias in WhatsAppCommand::BINDINGS {
+            map.insert(*alias, WhatsAppCommand::process_args as CommandHandler);
+        }
+        for alias in MetaCommand::BINDINGS {
+            map.insert(*alias, MetaCommand::process_args as CommandHandler);
+        }
+        for alias in CargoCommand::BINDINGS {
+            map.insert(*alias, CargoCommand::process_args as CommandHandler);
+        }
+        for alias in NpmCommand::BINDINGS {
+            map.insert(*alias, NpmCommand::process_args as CommandHandler);
+        }
+        for alias in OnePasswordCommand::BINDINGS {
+            map.insert(*alias, OnePasswordCommand::process_args as CommandHandler);
+        }
+        for alias in ClaudeCommand::BINDINGS {
+            map.insert(*alias, ClaudeCommand::process_args as CommandHandler);
+        }
+        for alias in ChatGPTCommand::BINDINGS {
+            map.insert(*alias, ChatGPTCommand::process_args as CommandHandler);
+        }
+        for alias in RustCommand::BINDINGS {
+            map.insert(*alias, RustCommand::process_args as CommandHandler);
+        }
+        for alias in HackCommand::BINDINGS {
+            map.insert(*alias, HackCommand::process_args as CommandHandler);
+        }
+        for alias in AmazonCommand::BINDINGS {
+            map.insert(*alias, AmazonCommand::process_args as CommandHandler);
+        }
+        for alias in YouTubeCommand::BINDINGS {
+            map.insert(*alias, YouTubeCommand::process_args as CommandHandler);
+        }
+        for alias in WikipediaCommand::BINDINGS {
+            map.insert(*alias, WikipediaCommand::process_args as CommandHandler);
+        }
+        for alias in DuckDuckGoCommand::BINDINGS {
+            map.insert(*alias, DuckDuckGoCommand::process_args as CommandHandler);
+        }
+        for alias in SchwabCommand::BINDINGS {
+            map.insert(*alias, SchwabCommand::process_args as CommandHandler);
+        }
+        for alias in SoundCloudCommand::BINDINGS {
+            map.insert(*alias, SoundCloudCommand::process_args as CommandHandler);
+        }
+        for alias in StockCommand::BINDINGS {
+            map.insert(*alias, StockCommand::process_args as CommandHandler);
+        }
+        for alias in GoogleDocsCommand::BINDINGS {
+            map.insert(*alias, GoogleDocsCommand::process_args as CommandHandler);
+        }
+        for alias in GoogleMapsCommand::BINDINGS {
+            map.insert(*alias, GoogleMapsCommand::process_args as CommandHandler);
+        }
+        for alias in GoogleSheetsCommand::BINDINGS {
+            map.insert(*alias, GoogleSheetsCommand::process_args as CommandHandler);
+        }
+        for alias in GoogleSlidesCommand::BINDINGS {
+            map.insert(*alias, GoogleSlidesCommand::process_args as CommandHandler);
+        }
+        for alias in GoogleChatCommand::BINDINGS {
+            map.insert(*alias, GoogleChatCommand::process_args as CommandHandler);
+        }
+
+        map
+    }
+
     /// Process commands that use special prefixes (like $ for stock tickers)
     fn process_prefix_commands(command: &str) -> Option<String> {
         use crate::commands::*;
@@ -137,6 +253,15 @@ impl BunnylolCommandRegistry {
 
     /// Process a command string and return the appropriate URL
     pub fn process_command(command: &str, full_args: &str) -> String {
+        Self::process_command_with_config(command, full_args, None)
+    }
+
+    /// Process a command string with optional config for custom search engine
+    pub fn process_command_with_config(
+        command: &str,
+        full_args: &str,
+        config: Option<&crate::config::BunnylolConfig>,
+    ) -> String {
         use crate::commands::*;
 
         // Check for prefix commands first (special case)
@@ -149,7 +274,14 @@ impl BunnylolCommandRegistry {
 
         match lookup.get(command) {
             Some(handler) => handler(full_args),
-            None => GoogleSearchCommand::process_args(full_args),
+            None => {
+                // Use configured search engine if provided, otherwise default to Google
+                if let Some(cfg) = config {
+                    cfg.get_search_url(full_args)
+                } else {
+                    GoogleSearchCommand::process_args(full_args)
+                }
+            }
         }
     }
 

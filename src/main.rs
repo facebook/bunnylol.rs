@@ -8,20 +8,48 @@
 #[macro_use]
 extern crate rocket;
 
+use rocket::State;
 use rocket::response::Redirect;
+use rocket::request::{self, Request, FromRequest};
 mod routes;
 mod web;
 
-use bunnylol::{BunnylolCommandRegistry, utils};
+use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
+
+// Request guard to extract client IP address
+struct ClientIP(String);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for ClientIP {
+    type Error = ();
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        let ip = req
+            .client_ip()
+            .map(|addr| addr.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        request::Outcome::Success(ClientIP(ip))
+    }
+}
 
 // http://localhost:8000/?cmd=gh
 #[get("/?<cmd>")]
-fn search(cmd: &str) -> Redirect {
+fn search(cmd: &str, config: &State<BunnylolConfig>, client_ip: ClientIP) -> Redirect {
     println!("bunnylol command: {}", cmd);
 
     let command = utils::get_command_from_query_string(cmd);
-    let redirect_url = BunnylolCommandRegistry::process_command(command, cmd);
+    let redirect_url =
+        BunnylolCommandRegistry::process_command_with_config(command, cmd, Some(config.inner()));
     println!("redirecting to: {}", redirect_url);
+
+    // Track command in history if enabled
+    if config.history.enabled {
+        if let Some(history) = History::new(config.inner()) {
+            if let Err(e) = history.add(cmd, &client_ip.0) {
+                eprintln!("Warning: Failed to save command to history: {}", e);
+            }
+        }
+    }
 
     Redirect::to(redirect_url)
 }
@@ -46,7 +74,20 @@ fn not_found() -> Redirect {
 
 #[rocket::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
+    // Load configuration once at startup
+    let config = BunnylolConfig::load().unwrap_or_else(|e| {
+        eprintln!("(ignorable) warning: Failed to load config: {}", e);
+        eprintln!("Using default configuration...");
+        BunnylolConfig::default()
+    });
+
+    println!(
+        "Bunnylol server starting with default search: {}",
+        config.default_search
+    );
+
     let _rocket = rocket::build()
+        .manage(config)
         .mount("/", routes![search, root, health, routes::bindings_web])
         .register("/", catchers![not_found])
         .launch()
