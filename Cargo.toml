@@ -3,6 +3,13 @@ name = "bunnylol"
 version = "0.1.0"
 authors = ["Joe Previte <jprevite@fb.com>", "Aaron Lichtman <alichtman@meta.com>"]
 edition = "2024"
+description = "Smart bookmark server and CLI: URL shortcuts for your browser's search bar and terminal"
+license = "MIT"
+repository = "https://github.com/facebook/bunnylol.rs"
+readme = "README.md"
+homepage = "https://github.com/facebook/bunnylol.rs"
+keywords = ["browser", "bookmarks", "shortcuts", "url", "search"]
+categories = ["command-line-utilities", "web-programming::http-server", "development-tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
