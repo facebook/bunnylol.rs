@@ -2,16 +2,12 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
-use std::collections::HashMap;
-use std::sync::OnceLock;
 
 // Type alias for command handler functions
 type CommandHandler = fn(&str) -> String;
 
 // Global command lookup table, initialized once on first access
 static COMMAND_LOOKUP: OnceLock<HashMap<&'static str, CommandHandler>> = OnceLock::new();
-
-static COMMAND_LOOKUP: OnceLock<HashMap<&'static str, fn(&str) -> String>> = OnceLock::new();
 static BINDINGS_DATA: OnceLock<Vec<BunnylolCommandInfo>> = OnceLock::new();
 
 /// Bunnylol Command Registry that manages all Bunnylol commands
@@ -142,113 +138,6 @@ impl BunnylolCommandRegistry {
         }
 
         None
-    }
-
-    /// Initialize the command lookup HashMap
-    fn initialize_command_lookup() -> HashMap<&'static str, fn(&str) -> String> {
-        use crate::commands::*;
-
-        let mut map = HashMap::new();
-
-        // Register all command bindings
-        for binding in BindingsCommand::BINDINGS {
-            map.insert(*binding, BindingsCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GitHubCommand::BINDINGS {
-            map.insert(*binding, GitHubCommand::process_args as fn(&str) -> String);
-        }
-        for binding in TwitterCommand::BINDINGS {
-            map.insert(*binding, TwitterCommand::process_args as fn(&str) -> String);
-        }
-        for binding in RedditCommand::BINDINGS {
-            map.insert(*binding, RedditCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GmailCommand::BINDINGS {
-            map.insert(*binding, GmailCommand::process_args as fn(&str) -> String);
-        }
-        for binding in DevBunnyCommand::BINDINGS {
-            map.insert(*binding, DevBunnyCommand::process_args as fn(&str) -> String);
-        }
-        for binding in REICommand::BINDINGS {
-            map.insert(*binding, REICommand::process_args as fn(&str) -> String);
-        }
-        for binding in InstagramCommand::BINDINGS {
-            map.insert(*binding, InstagramCommand::process_args as fn(&str) -> String);
-        }
-        for binding in LinkedInCommand::BINDINGS {
-            map.insert(*binding, LinkedInCommand::process_args as fn(&str) -> String);
-        }
-        for binding in FacebookCommand::BINDINGS {
-            map.insert(*binding, FacebookCommand::process_args as fn(&str) -> String);
-        }
-        for binding in ThreadsCommand::BINDINGS {
-            map.insert(*binding, ThreadsCommand::process_args as fn(&str) -> String);
-        }
-        for binding in WhatsAppCommand::BINDINGS {
-            map.insert(*binding, WhatsAppCommand::process_args as fn(&str) -> String);
-        }
-        for binding in MetaCommand::BINDINGS {
-            map.insert(*binding, MetaCommand::process_args as fn(&str) -> String);
-        }
-        for binding in CargoCommand::BINDINGS {
-            map.insert(*binding, CargoCommand::process_args as fn(&str) -> String);
-        }
-        for binding in NpmCommand::BINDINGS {
-            map.insert(*binding, NpmCommand::process_args as fn(&str) -> String);
-        }
-        for binding in OnePasswordCommand::BINDINGS {
-            map.insert(*binding, OnePasswordCommand::process_args as fn(&str) -> String);
-        }
-        for binding in ClaudeCommand::BINDINGS {
-            map.insert(*binding, ClaudeCommand::process_args as fn(&str) -> String);
-        }
-        for binding in ChatGPTCommand::BINDINGS {
-            map.insert(*binding, ChatGPTCommand::process_args as fn(&str) -> String);
-        }
-        for binding in RustCommand::BINDINGS {
-            map.insert(*binding, RustCommand::process_args as fn(&str) -> String);
-        }
-        for binding in HackCommand::BINDINGS {
-            map.insert(*binding, HackCommand::process_args as fn(&str) -> String);
-        }
-        for binding in AmazonCommand::BINDINGS {
-            map.insert(*binding, AmazonCommand::process_args as fn(&str) -> String);
-        }
-        for binding in YouTubeCommand::BINDINGS {
-            map.insert(*binding, YouTubeCommand::process_args as fn(&str) -> String);
-        }
-        for binding in WikipediaCommand::BINDINGS {
-            map.insert(*binding, WikipediaCommand::process_args as fn(&str) -> String);
-        }
-        for binding in DuckDuckGoCommand::BINDINGS {
-            map.insert(*binding, DuckDuckGoCommand::process_args as fn(&str) -> String);
-        }
-        for binding in SchwabCommand::BINDINGS {
-            map.insert(*binding, SchwabCommand::process_args as fn(&str) -> String);
-        }
-        for binding in SoundCloudCommand::BINDINGS {
-            map.insert(*binding, SoundCloudCommand::process_args as fn(&str) -> String);
-        }
-        for binding in StockCommand::BINDINGS {
-            map.insert(*binding, StockCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GoogleDocsCommand::BINDINGS {
-            map.insert(*binding, GoogleDocsCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GoogleMapsCommand::BINDINGS {
-            map.insert(*binding, GoogleMapsCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GoogleSheetsCommand::BINDINGS {
-            map.insert(*binding, GoogleSheetsCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GoogleSlidesCommand::BINDINGS {
-            map.insert(*binding, GoogleSlidesCommand::process_args as fn(&str) -> String);
-        }
-        for binding in GoogleChatCommand::BINDINGS {
-            map.insert(*binding, GoogleChatCommand::process_args as fn(&str) -> String);
-        }
-
-        map
     }
 
     /// Process a command string and return the appropriate URL

@@ -114,7 +114,7 @@ fn open_url(url: &str, config: &BunnylolConfig) -> Result<(), Box<dyn std::error
 }
 
 fn print_commands() {
-    let mut commands = BunnylolCommandRegistry::get_all_commands();
+    let mut commands = BunnylolCommandRegistry::get_all_commands().clone();
     commands.sort_by(|a, b| {
         a.bindings[0].to_lowercase().cmp(&b.bindings[0].to_lowercase())
     });
