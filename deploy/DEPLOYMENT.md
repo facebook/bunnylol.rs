@@ -65,23 +65,19 @@ The recommended deployment method for Linux and macOS is to install bunnylol as 
 
 - Rust (only needed if binary not in PATH)
 - Linux (systemd) or macOS (launchd) or Windows (Service Manager)
-- sudo/root access (for system-level installation)
+- sudo/root access
 
 ### Installation
-
-#### System-Level Service (Recommended)
-
-System-level installation runs the server as a dedicated service accessible across the network:
 
 ```bash
 # Install bunnylol first
 $ cargo install bunnylol
 
 # Install as system service (requires sudo)
-$ sudo bunnylol install-server --system
+$ sudo bunnylol service install
 
 # The installer will:
-# - Build the binary if needed
+# - Find the bunnylol binary in PATH
 # - Create service files (systemd/launchd/Windows Service)
 # - Configure autostart on boot
 # - Start the service immediately
@@ -91,45 +87,25 @@ Default configuration:
 - **Port**: 8000
 - **Address**: 0.0.0.0 (accessible from network)
 - **Autostart**: Enabled
-- **Service user**: root (system-level) or current user (user-level)
-
-#### User-Level Service
-
-User-level installation runs as your current user (localhost only):
-
-```bash
-$ bunnylol install-server
-
-# Default configuration for user-level:
-# - Port: 8000
-# - Address: 127.0.0.1 (localhost only)
-# - Runs as current user
-# - Autostart: Enabled
-```
+- **Run as**: root
 
 ### Managing the Service
 
 ```bash
 # Check service status
-$ sudo bunnylol server status --system
+$ sudo bunnylol service status
 
 # View logs (follow mode)
-$ sudo bunnylol server logs --system -f
+$ sudo bunnylol service logs -f
 
 # Restart the service
-$ sudo bunnylol server restart --system
+$ sudo bunnylol service restart
 
 # Stop the service
-$ sudo bunnylol server stop --system
+$ sudo bunnylol service stop
 
 # Start the service
-$ sudo bunnylol server start --system
-```
-
-For user-level services, omit `--system` and `sudo`:
-```bash
-$ bunnylol server status
-$ bunnylol server logs -f
+$ sudo bunnylol service start
 ```
 
 ### Custom Configuration
@@ -138,46 +114,43 @@ Customize port, address, and other settings during installation:
 
 ```bash
 # Custom port
-$ sudo bunnylol install-server --system --port 9000
+$ sudo bunnylol service install --port 9000
 
-# Custom address (e.g., localhost only for system service)
-$ sudo bunnylol install-server --system --address 127.0.0.1
+# Custom address (e.g., localhost only)
+$ sudo bunnylol service install --address 127.0.0.1
 
 # Don't autostart on boot
-$ sudo bunnylol install-server --system --no-autostart
+$ sudo bunnylol service install --no-autostart
 
 # Install but don't start immediately
-$ sudo bunnylol install-server --system --no-start
+$ sudo bunnylol service install --no-start
 ```
 
 ### Uninstalling
 
 ```bash
 # Uninstall system service
-$ sudo bunnylol uninstall-server --system
-
-# Uninstall user service
-$ bunnylol uninstall-server
+$ sudo bunnylol service uninstall
 ```
 
 ### Platform-Specific Details
 
 #### Linux (systemd)
 
-- Service file: `/etc/systemd/system/bunnylol.service` (system) or `~/.config/systemd/user/bunnylol.service` (user)
-- Logs: `journalctl -u bunnylol -f` or `sudo bunnylol server logs --system -f`
-- Binary location: `/usr/local/bin/bunnylol` (system) or `~/.local/bin/bunnylol` (user)
+- Service file: `/etc/systemd/system/bunnylol.service`
+- Logs: `journalctl -u bunnylol -f` or `sudo bunnylol service logs -f`
+- Binary location: `/usr/local/bin/bunnylol` (or wherever installed)
 
 #### macOS (launchd)
 
-- Service file: `/Library/LaunchDaemons/com.facebook.bunnylol.plist` (system) or `~/Library/LaunchAgents/com.facebook.bunnylol.plist` (user)
-- Logs: Use Console.app or `sudo bunnylol server logs --system`
-- Binary location: `/usr/local/bin/bunnylol` (system) or `~/.local/bin/bunnylol` (user)
+- Service file: `/Library/LaunchDaemons/com.facebook.bunnylol.plist`
+- Logs: Use Console.app or `sudo bunnylol service logs`
+- Binary location: `/usr/local/bin/bunnylol` (or wherever installed)
 
 #### Windows (Service Manager)
 
 - Managed through Windows Service Manager
-- Binary location: `C:\Program Files\bunnylol\` (system) or `%USERPROFILE%\.local\bin\` (user)
+- Binary location: `C:\Program Files\bunnylol\` or wherever installed
 
 ---
 

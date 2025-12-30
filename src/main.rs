@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use clap::{Parser, Subcommand, ArgGroup};
+use clap::{Parser, Subcommand};
 
 #[cfg(feature = "cli")]
 use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
@@ -63,16 +63,7 @@ enum Commands {
 #[derive(Subcommand)]
 enum ServiceAction {
     /// Install bunnylol server as a service
-    #[command(group = ArgGroup::new("service-level").required(true))]
     Install {
-        /// Install as system-level service (requires sudo, accessible network-wide)
-        #[arg(long, group = "service-level")]
-        system: bool,
-
-        /// Install as user-level service (no sudo, localhost only)
-        #[arg(long, group = "service-level")]
-        user: bool,
-
         /// Port to bind the server to
         #[arg(long, default_value = "8000")]
         port: u16,
@@ -94,40 +85,17 @@ enum ServiceAction {
         no_start: bool,
     },
     /// Uninstall bunnylol service
-    #[command(group = ArgGroup::new("service-level").required(true))]
-    Uninstall {
-        /// Uninstall system-level service
-        #[arg(long, group = "service-level")]
-        system: bool,
-
-        /// Uninstall user-level service
-        #[arg(long, group = "service-level")]
-        user: bool,
-    },
+    Uninstall,
     /// Start the server service
-    Start {
-        #[arg(long)]
-        system: bool,
-    },
+    Start,
     /// Stop the server service
-    Stop {
-        #[arg(long)]
-        system: bool,
-    },
+    Stop,
     /// Restart the server service
-    Restart {
-        #[arg(long)]
-        system: bool,
-    },
+    Restart,
     /// Show server status
-    Status {
-        #[arg(long)]
-        system: bool,
-    },
+    Status,
     /// Show server logs
     Logs {
-        #[arg(long)]
-        system: bool,
         #[arg(short, long)]
         follow: bool,
         #[arg(short = 'n', long, default_value = "20")]
@@ -178,26 +146,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             use bunnylol::service::*;
 
             match action {
-                ServiceAction::Install { system, user: _, port, address, force, no_autostart, no_start } => {
+                ServiceAction::Install { port, address, force, no_autostart, no_start } => {
                     let service_config = ServiceConfig {
                         port,
-                        address: address.unwrap_or_else(|| {
-                            if system { "0.0.0.0".to_string() } else { "127.0.0.1".to_string() }
-                        }),
+                        address: address.unwrap_or_else(|| "0.0.0.0".to_string()),
                         log_level: config.server.log_level.clone(),
-                        system_mode: system,
+                        system_mode: true,
                     };
 
                     install_service(service_config, force, !no_autostart, !no_start)?;
                 }
-                ServiceAction::Uninstall { system, user: _ } => {
-                    uninstall_service(system)?;
+                ServiceAction::Uninstall => {
+                    uninstall_service(true)?;
                 }
-                ServiceAction::Start { system } => start_service(system)?,
-                ServiceAction::Stop { system } => stop_service(system)?,
-                ServiceAction::Restart { system } => restart_service(system)?,
-                ServiceAction::Status { system } => service_status(system)?,
-                ServiceAction::Logs { system, follow, lines } => service_logs(system, follow, lines)?,
+                ServiceAction::Start => start_service(true)?,
+                ServiceAction::Stop => stop_service(true)?,
+                ServiceAction::Restart => restart_service(true)?,
+                ServiceAction::Status => service_status(true)?,
+                ServiceAction::Logs { follow, lines } => service_logs(true, follow, lines)?,
             }
             Ok(())
         }

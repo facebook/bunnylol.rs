@@ -110,8 +110,7 @@ fn setup_manager(system_mode: bool) -> Result<(Box<dyn ServiceManager>, ServiceL
 
 /// Install bunnylol service using service-manager crate
 pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, start_now: bool) -> Result<(), ServiceError> {
-    let service_type = if config.system_mode { "system" } else { "user" };
-    println!("Installing bunnylol {} service...", service_type);
+    println!("Installing bunnylol system service...");
     println!();
 
     // Require binary to be installed and on PATH
@@ -121,22 +120,12 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
     // Print service file location based on platform
     #[cfg(target_os = "linux")]
     {
-        let service_path = if config.system_mode {
-            "/etc/systemd/system/bunnylol.service"
-        } else {
-            "~/.config/systemd/user/bunnylol.service"
-        };
-        println!("✓ Service file will be created at: {}", service_path);
+        println!("✓ Service file will be created at: /etc/systemd/system/bunnylol.service");
     }
 
     #[cfg(target_os = "macos")]
     {
-        let plist_path = if config.system_mode {
-            format!("/Library/LaunchDaemons/{}.plist", SERVICE_LABEL)
-        } else {
-            format!("~/Library/LaunchAgents/{}.plist", SERVICE_LABEL)
-        };
-        println!("✓ Service file will be created at: {}", plist_path);
+        println!("✓ Service file will be created at: /Library/LaunchDaemons/{}.plist", SERVICE_LABEL);
     }
 
     #[cfg(target_os = "windows")]
@@ -154,7 +143,7 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
     println!("  Log level:   {}", config.log_level);
     println!("  Autostart:   {}", if autostart { "enabled" } else { "disabled" });
     println!("  Start now:   {}", if start_now { "yes" } else { "no" });
-    println!("  User:        {}", if config.system_mode { "root" } else { "current user" });
+    println!("  Run as:      root");
     println!();
 
     let (manager, label) = setup_manager(config.system_mode)?;
@@ -223,39 +212,28 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
 
     println!();
     println!("Manage service:");
-    println!("  bunnylol service status{}", if config.system_mode { " --system" } else { "" });
-    println!("  bunnylol service logs{}", if config.system_mode { " --system" } else { "" });
-    println!("  bunnylol service restart{}", if config.system_mode { " --system" } else { "" });
-    println!("  bunnylol service uninstall{}", if config.system_mode { " --system" } else { "" });
+    println!("  bunnylol service status");
+    println!("  bunnylol service logs");
+    println!("  bunnylol service restart");
+    println!("  bunnylol service uninstall");
 
     Ok(())
 }
 
 /// Uninstall bunnylol service
 pub fn uninstall_service(system_mode: bool) -> Result<(), ServiceError> {
-    let service_type = if system_mode { "system" } else { "user" };
-    println!("Uninstalling bunnylol {} service...", service_type);
+    println!("Uninstalling bunnylol system service...");
     println!();
 
     // Print service file location based on platform
     #[cfg(target_os = "linux")]
     {
-        let service_path = if system_mode {
-            "/etc/systemd/system/bunnylol.service"
-        } else {
-            "~/.config/systemd/user/bunnylol.service"
-        };
-        println!("Service file: {}", service_path);
+        println!("Service file: /etc/systemd/system/bunnylol.service");
     }
 
     #[cfg(target_os = "macos")]
     {
-        let plist_path = if system_mode {
-            format!("/Library/LaunchDaemons/{}.plist", SERVICE_LABEL)
-        } else {
-            format!("~/Library/LaunchAgents/{}.plist", SERVICE_LABEL)
-        };
-        println!("Service file: {}", plist_path);
+        println!("Service file: /Library/LaunchDaemons/{}.plist", SERVICE_LABEL);
     }
 
     #[cfg(target_os = "windows")]
