@@ -1,0 +1,234 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::fs;
+
+/// Configuration for bunnylol CLI
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BunnylolConfig {
+    /// Browser to open URLs in (optional)
+    /// Examples: "firefox", "chrome", "chromium", "safari"
+    #[serde(default)]
+    pub browser: Option<String>,
+
+    /// Default search engine when command not recognized (optional)
+    /// Options: "google" (default), "ddg", "bing"
+    #[serde(default = "default_search_engine")]
+    pub default_search: String,
+
+    /// Custom command aliases
+    #[serde(default)]
+    pub aliases: HashMap<String, String>,
+
+    /// Command history settings
+    #[serde(default)]
+    pub history: HistoryConfig,
+}
+
+impl Default for BunnylolConfig {
+    fn default() -> Self {
+        Self {
+            browser: None,
+            default_search: default_search_engine(),
+            aliases: HashMap::new(),
+            history: HistoryConfig::default(),
+        }
+    }
+}
+
+/// Configuration for command history
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HistoryConfig {
+    /// Whether history tracking is enabled
+    #[serde(default = "default_history_enabled")]
+    pub enabled: bool,
+
+    /// Maximum number of history entries to keep
+    #[serde(default = "default_max_entries")]
+    pub max_entries: usize,
+}
+
+impl Default for HistoryConfig {
+    fn default() -> Self {
+        Self {
+            enabled: default_history_enabled(),
+            max_entries: default_max_entries(),
+        }
+    }
+}
+
+fn default_search_engine() -> String {
+    "google".to_string()
+}
+
+fn default_history_enabled() -> bool {
+    true
+}
+
+fn default_max_entries() -> usize {
+    1000
+}
+
+impl BunnylolConfig {
+    /// Get the XDG base directories for bunnylol
+    fn get_xdg_dirs() -> Option<xdg::BaseDirectories> {
+        xdg::BaseDirectories::with_prefix("bunnylol").ok()
+    }
+
+    /// Get the XDG config directory path for bunnylol
+    /// Returns: $XDG_CONFIG_HOME/bunnylol (defaults to ~/.config/bunnylol)
+    pub fn get_config_dir() -> Option<PathBuf> {
+        Self::get_xdg_dirs().map(|xdg| xdg.get_config_home())
+    }
+
+    /// Get the XDG data directory path for bunnylol
+    /// Returns: $XDG_DATA_HOME/bunnylol (defaults to ~/.local/share/bunnylol)
+    pub fn get_data_dir() -> Option<PathBuf> {
+        Self::get_xdg_dirs().map(|xdg| xdg.get_data_home())
+    }
+
+    /// Get the XDG cache directory path for bunnylol
+    /// Returns: $XDG_CACHE_HOME/bunnylol (defaults to ~/.cache/bunnylol)
+    pub fn get_cache_dir() -> Option<PathBuf> {
+        Self::get_xdg_dirs().map(|xdg| xdg.get_cache_home())
+    }
+
+    /// Get the full path to the config file
+    /// Returns: $XDG_CONFIG_HOME/bunnylol/config.toml
+    pub fn get_config_path() -> Option<PathBuf> {
+        Self::get_config_dir().map(|dir| dir.join("config.toml"))
+    }
+
+    /// Get the full path to the history file
+    /// Returns: $XDG_DATA_HOME/bunnylol/history
+    pub fn get_history_path() -> Option<PathBuf> {
+        Self::get_data_dir().map(|dir| dir.join("history"))
+    }
+
+    /// Load configuration from the config file
+    /// If the file doesn't exist, returns default configuration
+    /// If the file exists but is invalid, returns an error
+    pub fn load() -> Result<Self, String> {
+        let config_path = match Self::get_config_path() {
+            Some(path) => path,
+            None => return Ok(Self::default()),
+        };
+
+        // If config file doesn't exist, return default config
+        if !config_path.exists() {
+            return Ok(Self::default());
+        }
+
+        // Read and parse the config file
+        let contents = fs::read_to_string(&config_path)
+            .map_err(|e| format!("Failed to read config file {:?}: {}", config_path, e))?;
+
+        toml::from_str(&contents)
+            .map_err(|e| format!("Failed to parse config file {:?}: {}", config_path, e))
+    }
+
+    /// Resolve a command, checking aliases first
+    /// Returns the resolved command (either from alias or original)
+    pub fn resolve_command(&self, command: &str) -> String {
+        self.aliases
+            .get(command)
+            .cloned()
+            .unwrap_or_else(|| command.to_string())
+    }
+
+    /// Get the search engine URL for a query
+    pub fn get_search_url(&self, query: &str) -> String {
+        let encoded_query = percent_encoding::utf8_percent_encode(
+            query,
+            percent_encoding::NON_ALPHANUMERIC,
+        )
+        .to_string();
+
+        match self.default_search.as_str() {
+            "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
+            "bing" => format!("https://www.bing.com/search?q={}", encoded_query),
+            _ => format!("https://www.google.com/search?q={}", encoded_query), // Default to Google
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = BunnylolConfig::default();
+        assert_eq!(config.browser, None);
+        assert_eq!(config.default_search, "google");
+        assert!(config.aliases.is_empty());
+        assert!(config.history.enabled);
+        assert_eq!(config.history.max_entries, 1000);
+    }
+
+    #[test]
+    fn test_resolve_command_with_alias() {
+        let mut config = BunnylolConfig::default();
+        config.aliases.insert("work".to_string(), "gh mycompany".to_string());
+
+        assert_eq!(config.resolve_command("work"), "gh mycompany");
+        assert_eq!(config.resolve_command("ig"), "ig"); // No alias
+    }
+
+    #[test]
+    fn test_get_search_url_google() {
+        let config = BunnylolConfig::default();
+        let url = config.get_search_url("hello world");
+        assert!(url.starts_with("https://www.google.com/search?q="));
+        assert!(url.contains("hello"));
+        assert!(url.contains("world"));
+    }
+
+    #[test]
+    fn test_get_search_url_ddg() {
+        let mut config = BunnylolConfig::default();
+        config.default_search = "ddg".to_string();
+        let url = config.get_search_url("test query");
+        assert!(url.starts_with("https://duckduckgo.com/?q="));
+    }
+
+    #[test]
+    fn test_get_search_url_bing() {
+        let mut config = BunnylolConfig::default();
+        config.default_search = "bing".to_string();
+        let url = config.get_search_url("test query");
+        assert!(url.starts_with("https://www.bing.com/search?q="));
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_valid_toml() {
+        let toml_str = r#"
+            browser = "firefox"
+            default_search = "ddg"
+
+            [aliases]
+            work = "gh mycompany"
+            blog = "gh username/blog"
+
+            [history]
+            enabled = false
+            max_entries = 500
+        "#;
+
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.browser, Some("firefox".to_string()));
+        assert_eq!(config.default_search, "ddg");
+        assert_eq!(config.aliases.get("work"), Some(&"gh mycompany".to_string()));
+        assert_eq!(config.aliases.get("blog"), Some(&"gh username/blog".to_string()));
+        assert!(!config.history.enabled);
+        assert_eq!(config.history.max_entries, 500);
+    }
+}

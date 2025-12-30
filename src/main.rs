@@ -8,19 +8,21 @@
 #[macro_use]
 extern crate rocket;
 
+use rocket::State;
 use rocket::response::Redirect;
 mod routes;
 mod web;
 
-use bunnylol::{BunnylolCommandRegistry, utils};
+use bunnylol::{BunnylolCommandRegistry, BunnylolConfig, utils};
 
 // http://localhost:8000/?cmd=gh
 #[get("/?<cmd>")]
-fn search(cmd: &str) -> Redirect {
+fn search(cmd: &str, config: &State<BunnylolConfig>) -> Redirect {
     println!("bunnylol command: {}", cmd);
 
     let command = utils::get_command_from_query_string(cmd);
-    let redirect_url = BunnylolCommandRegistry::process_command(command, cmd);
+    let redirect_url =
+        BunnylolCommandRegistry::process_command_with_config(command, cmd, Some(config.inner()));
     println!("redirecting to: {}", redirect_url);
 
     Redirect::to(redirect_url)
@@ -46,7 +48,20 @@ fn not_found() -> Redirect {
 
 #[rocket::main]
 async fn main() -> Result<(), Box<rocket::Error>> {
+    // Load configuration once at startup
+    let config = BunnylolConfig::load().unwrap_or_else(|e| {
+        eprintln!("(ignorable) warning: Failed to load config: {}", e);
+        eprintln!("Using default configuration...");
+        BunnylolConfig::default()
+    });
+
+    println!(
+        "Bunnylol server starting with default search: {}",
+        config.default_search
+    );
+
     let _rocket = rocket::build()
+        .manage(config)
         .mount("/", routes![search, root, health, routes::bindings_web])
         .register("/", catchers![not_found])
         .launch()

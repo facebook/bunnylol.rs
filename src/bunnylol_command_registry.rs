@@ -23,7 +23,17 @@ impl BunnylolCommandRegistry {
     }
 
     /// Process a command string and return the appropriate URL
+    /// If config is provided, uses the configured default search engine for fallback
     pub fn process_command(command: &str, full_args: &str) -> String {
+        Self::process_command_with_config(command, full_args, None)
+    }
+
+    /// Process a command string with optional config for custom search engine
+    pub fn process_command_with_config(
+        command: &str,
+        full_args: &str,
+        config: Option<&crate::config::BunnylolConfig>,
+    ) -> String {
         use crate::commands::*;
 
         // Check for prefix commands first
@@ -66,7 +76,14 @@ impl BunnylolCommandRegistry {
             cmd if GoogleSheetsCommand::matches_command(cmd) => GoogleSheetsCommand::process_args(full_args),
             cmd if GoogleSlidesCommand::matches_command(cmd) => GoogleSlidesCommand::process_args(full_args),
             cmd if GoogleChatCommand::matches_command(cmd) => GoogleChatCommand::process_args(full_args),
-            _ => GoogleSearchCommand::process_args(full_args),
+            _ => {
+                // Use configured search engine if provided, otherwise default to Google
+                if let Some(cfg) = config {
+                    cfg.get_search_url(full_args)
+                } else {
+                    GoogleSearchCommand::process_args(full_args)
+                }
+            }
         }
     }
 
