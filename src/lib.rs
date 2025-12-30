@@ -15,7 +15,7 @@ pub mod utils;
 pub mod server;
 
 #[cfg(feature = "cli")]
-pub mod service_installer;
+pub mod service;
 
 pub use bunnylol_command_registry::BunnylolCommandRegistry;
 pub use commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};

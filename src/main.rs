@@ -113,16 +113,6 @@ enum ServerAction {
         #[arg(long)]
         system: bool,
     },
-    /// Enable server to start on boot
-    Enable {
-        #[arg(long)]
-        system: bool,
-    },
-    /// Disable server from starting on boot
-    Disable {
-        #[arg(long)]
-        system: bool,
-    },
     /// Show server status
     Status {
         #[arg(long)]
@@ -179,7 +169,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         #[cfg(feature = "cli")]
         Some(Commands::InstallServer { system, port, address, force, no_autostart, no_start }) => {
-            use bunnylol::service_installer::{ServiceConfig, install_service};
+            use bunnylol::service::{ServiceConfig, install_service};
 
             let service_config = ServiceConfig {
                 port,
@@ -196,21 +186,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         #[cfg(feature = "cli")]
         Some(Commands::UninstallServer { system }) => {
-            use bunnylol::service_installer::uninstall_service;
+            use bunnylol::service::uninstall_service;
             uninstall_service(system)?;
             Ok(())
         }
 
         #[cfg(feature = "cli")]
         Some(Commands::Server { action }) => {
-            use bunnylol::service_installer::*;
+            use bunnylol::service::*;
 
             match action {
                 ServerAction::Start { system } => start_service(system)?,
                 ServerAction::Stop { system } => stop_service(system)?,
                 ServerAction::Restart { system } => restart_service(system)?,
-                ServerAction::Enable { system } => enable_service(system)?,
-                ServerAction::Disable { system } => disable_service(system)?,
                 ServerAction::Status { system } => service_status(system)?,
                 ServerAction::Logs { system, follow, lines } => service_logs(system, follow, lines)?,
             }
