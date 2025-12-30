@@ -10,7 +10,8 @@ This guide provides context about the bunnylol.rs repository structure and patte
 - **Language:** Rust (2024 edition)
 - **Web Framework:** Rocket 0.5 (async)
 - **Frontend:** Leptos 0.6 (SSR for bindings page)
-- **Deployment:** Docker (compose v2)
+- **CLI:** clap 4.5 with subcommands
+- **Deployment:** Native services (systemd/launchd/Windows Service) or Docker (compose v2)
 
 **Key Features:**
 - Smart URL routing with command patterns (e.g., `gh username/repo` → GitHub)
@@ -18,13 +19,20 @@ This guide provides context about the bunnylol.rs repository structure and patte
 - Subcommand support (e.g., `meta pay`, `ig reels`)
 - Default Google search fallback
 - Web portal to view all command bindings
+- Unified CLI with command execution and server management
 
 ## Repository Structure
 
 ```
 bunnylol.rs/
 ├── src/
-│   ├── main.rs                          # Rocket server setup and routing
+│   ├── main.rs                          # CLI entry point and dispatcher
+│   ├── lib.rs                           # Library exports
+│   ├── config.rs                        # Configuration (server, aliases, history)
+│   ├── server/
+│   │   ├── mod.rs                       # Rocket server setup and routing
+│   │   ├── routes.rs                    # HTTP route handlers
+│   │   └── web.rs                       # Web response helpers
 │   ├── commands/
 │   │   ├── mod.rs                       # Module exports
 │   │   ├── github.rs                    # Example: gh command
@@ -34,8 +42,13 @@ bunnylol.rs/
 │   ├── utils/
 │   │   ├── bunnylol_command.rs          # Core trait & registry
 │   │   └── url_encoding.rs              # URL building helpers
-│   └── components/
-│       └── bindings_page.rs             # Leptos UI for /bindings
+│   ├── components/
+│   │   └── bindings_page.rs             # Leptos UI for /bindings
+│   └── service_installer/               # Cross-platform service installation
+│       ├── mod.rs
+│       ├── installer.rs                 # Install/uninstall services
+│       ├── manager.rs                   # Service management (start/stop/logs)
+│       └── error.rs                     # Error types
 ├── Cargo.toml
 ├── docker-compose.yml
 ├── Dockerfile
@@ -197,17 +210,24 @@ fn test_instagram_command_reels() {
 
 ```bash
 # Development
-cargo run                    # Starts server on localhost:8000
-cargo build                  # Build without running
-cargo check                  # Fast syntax check
+cargo run -- serve            # Starts server on localhost:8000
+cargo run -- gh facebook/react # Execute a command
+cargo build                   # Build without running
+cargo check                   # Fast syntax check
 
 # Docker
-docker compose up -d         # Run on port 8000
+docker compose up -d          # Run on port 8000
 BUNNYLOL_PORT=9000 docker compose up  # Custom port
 
 # Testing
-cargo test                   # Run all tests
-cargo test --test ''         # (Don't use - this errors)
+cargo test                    # Run all tests
+cargo test --test ''          # (Don't use - this errors)
+
+# Service Installation (cross-platform: Linux/macOS/Windows)
+cargo install --path .
+sudo bunnylol install-server --system  # System-level service
+bunnylol install-server                # User-level service
+sudo bunnylol server status --system   # Check status
 ```
 
 ## Key Implementation Details
@@ -280,6 +300,13 @@ Add parsing logic in `process_args()` (see `reddit.rs` for `r/` pattern)
 
 ## Recent Changes
 
+- 2025-12-30: **Major refactor** - Merged binaries, added cross-platform service installation
+  - Unified `bunnylol-server` and `bunnylol-cli` into single `bunnylol` binary
+  - Server now runs with `bunnylol serve` subcommand
+  - Added cross-platform service installation (systemd/launchd/Windows Service)
+  - New service management commands: `install-server`, `server start/stop/status/logs`, etc.
+  - Moved server code to `src/server/` module
+  - Added `ServerConfig` to centralize server configuration
 - 2025-12-29: Added `meta pay`, `ig reels`, `ig messages/msg/chat` subcommands
 - See git log for full history: `git log --oneline`
 
@@ -312,4 +339,4 @@ Add parsing logic in `process_args()` (see `reddit.rs` for `r/` pattern)
 
 ---
 
-*This guide is intended for AI assistants working on this codebase. Last updated: 2025-12-29*
+*This guide is intended for AI assistants working on this codebase. Last updated: 2025-12-30*
