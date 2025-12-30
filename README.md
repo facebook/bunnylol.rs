@@ -19,7 +19,7 @@ Enter `gh facebook/react` in your browser's address bar to open the React reposi
 Or run the CLI:
 
 ```sh
-$ bunnylol-cli gh facebook/react
+$ bunnylol gh facebook/react
 ```
 
 ## Installation
@@ -45,6 +45,7 @@ $ cargo install bunnylol --features server --no-default-features
   - [CLI Quickstart](#cli-quickstart)
   - [CLI Configuration](#cli-configuration)
   - [Web Server Quickstart](#quickstart---web-server)
+    - [Installing as a System Service](#installing-as-a-system-service)
   - [Setting bunnylol as Default Search Engine](#setting-bunnylol-to-be-your-default-search-engine)
   - [Command Examples](#other-command-examples)
     - [Built With](#built-with)
@@ -59,41 +60,41 @@ $ cargo install bunnylol --features server --no-default-features
 
 ## CLI Quickstart
 
-Prefer using the command line? Use `bunnylol-cli` to open URLs directly from your terminal!
+Use `bunnylol` to open URLs directly from your terminal!
 
 ### Basic Usage
 
 ```sh
 # Open GitHub
-$ bunnylol-cli gh
+$ bunnylol gh
 
 # Open Instagram Reels
-$ bunnylol-cli ig reels
+$ bunnylol ig reels
 
 # Open a specific GitHub repository
-$ bunnylol-cli gh facebook/react
+$ bunnylol gh facebook/react
 
 # Preview URL without opening browser (dry-run)
-$ bunnylol-cli --dry-run gh facebook/react
+$ bunnylol --dry-run gh facebook/react
 # Output: https://github.com/facebook/react
 
 # List all available commands with a beautiful table
-$ bunnylol-cli list
+$ bunnylol list
 ```
 
 ### Quick Examples
 
 | CLI Command | What it does |
 |-------------|-------------|
-| `bunnylol-cli gh` | Open GitHub homepage |
-| `bunnylol-cli gh facebook/react` | Open facebook/react repository |
-| `bunnylol-cli ig reels` | Open Instagram Reels |
-| `bunnylol-cli tw @elonmusk` | Open Twitter profile |
-| `bunnylol-cli r r/rust` | Open r/rust subreddit |
-| `bunnylol-cli --dry-run meta ai` | Print Meta AI URL without opening |
-| `bunnylol-cli --help` | Show help information |
-| `bunnylol-cli --version` | Show version information |
-| `bunnylol-cli list` | Display all commands in a formatted table |
+| `bunnylol gh` | Open GitHub homepage |
+| `bunnylol gh facebook/react` | Open facebook/react repository |
+| `bunnylol ig reels` | Open Instagram Reels |
+| `bunnylol tw @elonmusk` | Open Twitter profile |
+| `bunnylol r r/rust` | Open r/rust subreddit |
+| `bunnylol --dry-run meta ai` | Print Meta AI URL without opening |
+| `bunnylol --help` | Show help information |
+| `bunnylol --version` | Show version information |
+| `bunnylol list` | Display all commands in a formatted table |
 
 ### Recommended: Create a Shell Alias
 
@@ -101,7 +102,7 @@ For even faster access, add an alias to your shell configuration:
 
 ```sh
 # Add to ~/.bashrc or ~/.zshrc
-alias b="bunnylol-cli"
+alias b="bunnylol"
 
 # Then use it like this:
 $ b ig reels
@@ -147,10 +148,10 @@ dotfiles = "gh username/dotfiles"
 
 Then use them like any built-in command:
 ```sh
-$ bunnylol-cli work
+$ bunnylol work
 # Opens: https://github.com/mycompany
 
-$ bunnylol-cli blog
+$ bunnylol blog
 # Opens: https://github.com/username/blog
 ```
 
@@ -238,7 +239,7 @@ default_search = "ddg"
 EOF
 
 # Test it out!
-bunnylol-cli work
+bunnylol work
 ```
 
 ## Quickstart - Web Server
@@ -246,7 +247,7 @@ bunnylol-cli work
 After [installing](#installation) bunnylol, start the server:
 
 ```sh
-$ bunnylol-server
+$ bunnylol serve
 ```
 
 Or use Docker:
@@ -262,8 +263,35 @@ Or build from source:
 ```sh
 $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
-$ cargo run --bin bunnylol-server
+$ cargo run -- serve
 ```
+
+### Installing as a System Service
+
+For production use, install bunnylol as a system service that starts automatically on boot:
+
+```sh
+# Install as system-level service (requires sudo on Linux/macOS)
+$ sudo bunnylol install-server --system
+
+# Or install as user-level service (runs as current user)
+$ bunnylol install-server
+
+# Manage the service
+$ sudo bunnylol server status --system
+$ sudo bunnylol server logs --system -f
+$ sudo bunnylol server restart --system
+
+# Uninstall
+$ sudo bunnylol uninstall-server --system
+```
+
+The service installer works on:
+- **Linux**: systemd
+- **macOS**: launchd
+- **Windows**: Windows Service Manager
+
+For more details, see the [Deployment Guide](deploy/DEPLOYMENT.md).
 
 Open your web browser and navigate to `http://localhost:8000/?cmd=fb` to get redirected to Facebook.
 
@@ -373,31 +401,14 @@ $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
 
 # Run the web server
-$ cargo run --bin bunnylol-server
+$ cargo run -- serve
 
 # OR run the CLI (in a separate terminal)
-$ cargo run --bin bunnylol-cli -- gh facebook/react
+$ cargo run -- gh facebook/react
 
-# OR install the CLI globally for easier access
-$ cargo install --path . --bin bunnylol-cli
+# OR install globally for easier access
+$ cargo install --path .
 ```
-
-#### Cargo Aliases (Recommended)
-
-For convenience, cargo aliases are configured in `.cargo/config.toml`:
-
-```sh
-# Build commands
-$ cargo build-cli       # Build CLI binary
-$ cargo build-server    # Build server binary
-
-# Run commands
-$ cargo run-cli -- gh facebook/react    # Run CLI with args
-$ cargo run-server                       # Run server
-```
-
-These aliases are simply shortcuts for `cargo build/run --bin bunnylol-cli/server`.
-
 
 ## Deployment with Docker
 

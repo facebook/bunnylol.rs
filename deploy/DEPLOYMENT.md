@@ -1,10 +1,11 @@
 # Deployment Guide for Bunnylol
 
-This guide covers deploying `bunnylol.rs` using Docker.
+This guide covers deploying `bunnylol.rs` using either native service installation or Docker.
 
 ## Table of Contents
 
 - [Quick Start: Automated Setup](#quick-start-automated-setup)
+- [Native Service Installation](#native-service-installation)
 - [Docker Deployment](#docker-deployment)
 - [Rebuilding and Redeploying](#rebuilding-and-redeploying)
 - [Auto-Deployment](#auto-deployment)
@@ -56,7 +57,133 @@ After completion, bunnylol will be running on port 8000. The script is safe to r
 
 ---
 
+## Native Service Installation
+
+The recommended deployment method for Linux and macOS is to install bunnylol as a native system service. This provides better integration with your OS and doesn't require Docker.
+
+### Prerequisites
+
+- Rust (only needed if binary not in PATH)
+- Linux (systemd) or macOS (launchd) or Windows (Service Manager)
+- sudo/root access (for system-level installation)
+
+### Installation
+
+#### System-Level Service (Recommended)
+
+System-level installation runs the server as a dedicated service accessible across the network:
+
+```bash
+# Install bunnylol first
+$ cargo install bunnylol
+
+# Install as system service (requires sudo)
+$ sudo bunnylol install-server --system
+
+# The installer will:
+# - Build the binary if needed
+# - Create service files (systemd/launchd/Windows Service)
+# - Configure autostart on boot
+# - Start the service immediately
+```
+
+Default configuration:
+- **Port**: 8000
+- **Address**: 0.0.0.0 (accessible from network)
+- **Autostart**: Enabled
+- **Service user** (Linux): `bunnylol` system user
+
+#### User-Level Service
+
+User-level installation runs as your current user (localhost only):
+
+```bash
+$ bunnylol install-server
+
+# Default configuration for user-level:
+# - Port: 8000
+# - Address: 127.0.0.1 (localhost only)
+# - Runs as current user
+# - Autostart: Enabled
+```
+
+### Managing the Service
+
+```bash
+# Check service status
+$ sudo bunnylol server status --system
+
+# View logs (follow mode)
+$ sudo bunnylol server logs --system -f
+
+# Restart the service
+$ sudo bunnylol server restart --system
+
+# Stop the service
+$ sudo bunnylol server stop --system
+
+# Start the service
+$ sudo bunnylol server start --system
+```
+
+For user-level services, omit `--system` and `sudo`:
+```bash
+$ bunnylol server status
+$ bunnylol server logs -f
+```
+
+### Custom Configuration
+
+Customize port, address, and other settings during installation:
+
+```bash
+# Custom port
+$ sudo bunnylol install-server --system --port 9000
+
+# Custom address (e.g., localhost only for system service)
+$ sudo bunnylol install-server --system --address 127.0.0.1
+
+# Don't autostart on boot
+$ sudo bunnylol install-server --system --no-autostart
+
+# Install but don't start immediately
+$ sudo bunnylol install-server --system --no-start
+```
+
+### Uninstalling
+
+```bash
+# Uninstall system service
+$ sudo bunnylol uninstall-server --system
+
+# Uninstall user service
+$ bunnylol uninstall-server
+```
+
+### Platform-Specific Details
+
+#### Linux (systemd)
+
+- Service file: `/etc/systemd/system/bunnylol.service` (system) or `~/.config/systemd/user/bunnylol.service` (user)
+- Logs: `journalctl -u bunnylol -f` or `sudo bunnylol server logs --system -f`
+- Binary location: `/usr/local/bin/bunnylol` (system) or `~/.local/bin/bunnylol` (user)
+
+#### macOS (launchd)
+
+- Service file: `/Library/LaunchDaemons/rs.bunnylol.server.plist` (system) or `~/Library/LaunchAgents/rs.bunnylol.server.plist` (user)
+- Logs: Use Console.app or `sudo bunnylol server logs --system`
+- Binary location: `/usr/local/bin/bunnylol` (system) or `~/.local/bin/bunnylol` (user)
+
+#### Windows (Service Manager)
+
+- Managed through Windows Service Manager
+- Binary location: `C:\Program Files\bunnylol\` (system) or `%USERPROFILE%\.local\bin\` (user)
+
+---
+
 ## Docker Deployment
+
+Docker provides an alternative deployment method that's useful for containerized environments.
 
 ### Using Docker Compose (Recommended)
 
