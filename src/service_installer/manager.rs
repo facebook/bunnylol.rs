@@ -9,7 +9,7 @@ use service_manager::*;
 use std::process::Command;
 use super::error::InstallError;
 
-const SERVICE_LABEL: &str = "rs.bunnylol.server";
+const SERVICE_LABEL: &str = "com.facebook.bunnylol";
 
 /// Start the bunnylol service
 pub fn start_service(system_mode: bool) -> Result<(), InstallError> {
@@ -80,6 +80,7 @@ pub fn restart_service(system_mode: bool) -> Result<(), InstallError> {
 }
 
 /// Get the status of the bunnylol service (platform-specific)
+#[allow(unused_variables)]
 pub fn service_status(system_mode: bool) -> Result<(), InstallError> {
     // Platform-specific status check
     #[cfg(target_os = "linux")]
@@ -101,14 +102,8 @@ pub fn service_status(system_mode: bool) -> Result<(), InstallError> {
 
     #[cfg(target_os = "macos")]
     {
-        let label = if system_mode {
-            "rs.bunnylol.server"
-        } else {
-            "rs.bunnylol.server"
-        };
-
         let status = Command::new("launchctl")
-            .args(&["list", label])
+            .args(&["list", SERVICE_LABEL])
             .status()
             .map_err(|e| InstallError::ServiceManagerError(e.to_string()))?;
 

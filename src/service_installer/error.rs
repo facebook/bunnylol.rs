@@ -11,7 +11,6 @@ use std::fmt;
 pub enum InstallError {
     ServiceManagerError(String),
     BinaryNotFound,
-    BuildFailed(String),
     ServiceStartFailed(String),
     IoError(std::io::Error),
 }
@@ -23,10 +22,11 @@ impl fmt::Display for InstallError {
                 write!(f, "service manager error: {}", msg)
             }
             InstallError::BinaryNotFound => {
-                write!(f, "bunnylol binary not found in PATH or target/release/")
-            }
-            InstallError::BuildFailed(msg) => {
-                write!(f, "failed to build bunnylol: {}", msg)
+                write!(f, "bunnylol binary not found in PATH\n\n\
+                    Please install bunnylol first:\n  \
+                    cargo install bunnylol\n\n\
+                    Or install from the current directory:\n  \
+                    cargo install --path .")
             }
             InstallError::ServiceStartFailed(msg) => {
                 write!(f, "service installed but failed to start: {}", msg)

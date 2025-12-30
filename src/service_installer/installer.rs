@@ -7,7 +7,6 @@
 
 use std::ffi::OsString;
 use std::path::PathBuf;
-use std::process::Command;
 use service_manager::*;
 
 use super::error::InstallError;
@@ -31,62 +30,18 @@ impl Default for ServiceConfig {
     }
 }
 
-/// Find bunnylol binary (check PATH, then target/release/)
-fn find_binary() -> Option<PathBuf> {
-    // Check if in PATH
-    if let Ok(output) = Command::new("which").arg("bunnylol").output() {
-        if output.status.success() {
-            if let Ok(path) = String::from_utf8(output.stdout) {
-                return Some(PathBuf::from(path.trim()));
-            }
-        }
-    }
-
-    // Check target/release/
-    let release_path = std::path::Path::new("target/release/bunnylol");
-    if release_path.exists() {
-        return Some(release_path.to_path_buf());
-    }
-
-    None
-}
-
-/// Build bunnylol binary
-fn build_binary() -> Result<PathBuf, InstallError> {
-    println!("Building bunnylol binary...");
-    let output = Command::new("cargo")
-        .args(&["build", "--release"])
-        .output()
-        .map_err(|e| InstallError::BuildFailed(e.to_string()))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(InstallError::BuildFailed(stderr.to_string()));
-    }
-
-    let binary_path = std::path::Path::new("target/release/bunnylol");
-    if binary_path.exists() {
-        Ok(binary_path.to_path_buf())
-    } else {
-        Err(InstallError::BinaryNotFound)
-    }
+/// Find bunnylol binary in PATH
+fn find_binary_in_path() -> Result<PathBuf, InstallError> {
+    which::which("bunnylol").map_err(|_| InstallError::BinaryNotFound)
 }
 
 /// Install bunnylol service using service-manager crate
 pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, start_now: bool) -> Result<(), InstallError> {
     println!("Installing bunnylol service...");
 
-    // Find or build binary
-    let binary_path = match find_binary() {
-        Some(path) => {
-            println!("✓ Found bunnylol binary at {}", path.display());
-            path
-        }
-        None => {
-            println!("Binary not found, building from source...");
-            build_binary()?
-        }
-    };
+    // Require binary to be installed and on PATH
+    let binary_path = find_binary_in_path()?;
+    println!("✓ Found bunnylol binary at {}", binary_path.display());
 
     // Get the native service manager for this platform
     let mut manager = <dyn ServiceManager>::native()
@@ -103,7 +58,7 @@ pub fn install_service(config: ServiceConfig, _force: bool, autostart: bool, sta
         .map_err(|e| InstallError::ServiceManagerError(format!("Failed to set service level: {}", e)))?;
 
     // Create service label (reverse domain notation)
-    let label: ServiceLabel = "rs.bunnylol.server"
+    let label: ServiceLabel = "com.facebook.bunnylol"
         .parse()
         .map_err(|e| InstallError::ServiceManagerError(format!("Invalid label: {}", e)))?;
 
@@ -195,7 +150,7 @@ pub fn uninstall_service(system_mode: bool) -> Result<(), InstallError> {
         .map_err(|e| InstallError::ServiceManagerError(format!("Failed to set service level: {}", e)))?;
 
     // Create service label
-    let label: ServiceLabel = "rs.bunnylol.server"
+    let label: ServiceLabel = "com.facebook.bunnylol"
         .parse()
         .map_err(|e| InstallError::ServiceManagerError(format!("Invalid label: {}", e)))?;
 
