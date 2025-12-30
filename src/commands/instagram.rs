@@ -1,5 +1,7 @@
 /// Instagram command handler
 /// Supports: ig, instagram, ig @[username], ig [search terms]
+/// Supports: ig reels -> redirects to Instagram Reels
+/// Supports: ig messages/msg/chat -> redirects to Instagram Direct Inbox
 use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
@@ -23,11 +25,18 @@ impl BunnylolCommand for InstagramCommand {
         if query.is_empty() {
             "https://www.instagram.com".to_string()
         } else {
-            // Check if it looks like an Instagram profile
-            if query.starts_with('@') {
-                Self::construct_profile_url(&query[1..])
-            } else {
-                Self::construct_search_url(query)
+            // Check for specific subcommands first
+            match query {
+                "reels" => "https://www.instagram.com/reels/".to_string(),
+                "messages" | "msg" | "chat" => "https://www.instagram.com/direct/inbox/".to_string(),
+                _ => {
+                    // Check if it looks like an Instagram profile
+                    if query.starts_with('@') {
+                        Self::construct_profile_url(&query[1..])
+                    } else {
+                        Self::construct_search_url(query)
+                    }
+                }
             }
         }
     }
@@ -35,7 +44,7 @@ impl BunnylolCommand for InstagramCommand {
     fn get_info() -> CommandInfo {
         CommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Instagram profiles or search Instagram".to_string(),
+            description: "Navigate to Instagram profiles, search Instagram, or access Reels/Messages".to_string(),
             example: "ig @instagram".to_string(),
         }
     }
@@ -90,6 +99,38 @@ mod tests {
         assert_eq!(
             InstagramCommand::process_args("instagram travel photography"),
             "https://www.instagram.com/explore/search/keyword?q=travel%20photography"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_reels() {
+        assert_eq!(
+            InstagramCommand::process_args("ig reels"),
+            "https://www.instagram.com/reels/"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_messages() {
+        assert_eq!(
+            InstagramCommand::process_args("ig messages"),
+            "https://www.instagram.com/direct/inbox/"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_msg() {
+        assert_eq!(
+            InstagramCommand::process_args("ig msg"),
+            "https://www.instagram.com/direct/inbox/"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_chat() {
+        assert_eq!(
+            InstagramCommand::process_args("ig chat"),
+            "https://www.instagram.com/direct/inbox/"
         );
     }
 }
