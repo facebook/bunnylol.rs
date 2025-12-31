@@ -2,7 +2,7 @@ use predicates::prelude::*;
 
 #[test]
 fn test_cli_help() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--help")
         .assert()
         .success()
@@ -11,7 +11,7 @@ fn test_cli_help() {
 
 #[test]
 fn test_cli_version() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--version")
         .assert()
         .success()
@@ -20,7 +20,7 @@ fn test_cli_version() {
 
 #[test]
 fn test_cli_list_commands_flag() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--list")
         .assert()
         .success()
@@ -32,7 +32,7 @@ fn test_cli_list_commands_flag() {
 
 #[test]
 fn test_cli_list_commands_as_command() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("list")
         .assert()
         .success()
@@ -44,7 +44,7 @@ fn test_cli_list_commands_as_command() {
 
 #[test]
 fn test_cli_dry_run_github() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
         .arg("gh")
         .assert()
@@ -54,7 +54,7 @@ fn test_cli_dry_run_github() {
 
 #[test]
 fn test_cli_dry_run_instagram_reels() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
         .arg("ig")
         .arg("reels")
@@ -65,7 +65,7 @@ fn test_cli_dry_run_instagram_reels() {
 
 #[test]
 fn test_cli_dry_run_github_repo() {
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol-cli");
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
         .arg("gh")
         .arg("facebook/react")

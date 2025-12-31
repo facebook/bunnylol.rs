@@ -24,8 +24,13 @@ impl BunnylolCommand for TwitterCommand {
             "https://twitter.com".to_string()
         } else {
             // Check if it looks like a Twitter profile
-            if query.starts_with('@') {
-                Self::construct_profile_url(&query[1..])
+            if let Some(username) = query.strip_prefix('@') {
+                if !username.is_empty() {
+                    Self::construct_profile_url(username)
+                } else {
+                    // Just '@' with no username - go to homepage
+                    "https://twitter.com".to_string()
+                }
             } else {
                 Self::construct_search_url(query)
             }
@@ -80,5 +85,10 @@ mod tests {
             TwitterCommand::construct_search_url("hello world"),
             "https://twitter.com/search?q=hello%20world"
         );
+    }
+
+    #[test]
+    fn test_twitter_command_empty_username() {
+        assert_eq!(TwitterCommand::process_args("tw @"), "https://twitter.com");
     }
 }

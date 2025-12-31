@@ -18,9 +18,7 @@ impl BunnylolCommand for RedditCommand {
             "https://reddit.com".to_string()
         } else {
             // Check if it starts with r/ (subreddit pattern)
-            if query.starts_with("r/") {
-                let subreddit_part = &query[2..]; // Remove "r/" prefix
-
+            if let Some(subreddit_part) = query.strip_prefix("r/") {
                 // Check if there are search terms after the subreddit
                 if let Some(space_idx) = subreddit_part.find(' ') {
                     let subreddit = &subreddit_part[..space_idx];

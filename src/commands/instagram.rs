@@ -31,8 +31,13 @@ impl BunnylolCommand for InstagramCommand {
                 "messages" | "msg" | "chat" => "https://www.instagram.com/direct/inbox/".to_string(),
                 _ => {
                     // Check if it looks like an Instagram profile
-                    if query.starts_with('@') {
-                        Self::construct_profile_url(&query[1..])
+                    if let Some(username) = query.strip_prefix('@') {
+                        if !username.is_empty() {
+                            Self::construct_profile_url(username)
+                        } else {
+                            // Just '@' with no username - go to homepage
+                            "https://www.instagram.com".to_string()
+                        }
                     } else {
                         Self::construct_search_url(query)
                     }
@@ -131,6 +136,14 @@ mod tests {
         assert_eq!(
             InstagramCommand::process_args("ig chat"),
             "https://www.instagram.com/direct/inbox/"
+        );
+    }
+
+    #[test]
+    fn test_instagram_command_empty_username() {
+        assert_eq!(
+            InstagramCommand::process_args("ig @"),
+            "https://www.instagram.com"
         );
     }
 }

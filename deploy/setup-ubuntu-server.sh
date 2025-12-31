@@ -3,7 +3,7 @@
 #############################################################################
 # Ubuntu Server Setup Script for bunnylol.rs
 #############################################################################
-# This script sets up Docker and deploys bunnylol.rs on a fresh Ubuntu server
+# This script installs Rust, bunnylol, and sets it up as a systemd service
 #
 # Usage:
 #   sudo ./setup-ubuntu-server.sh
@@ -23,8 +23,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_URL="https://github.com/alichtman/bunnylol.rs.git"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/bunnylol.rs}"
+RUSTUP_INIT_URL="https://sh.rustup.rs"
 
 #############################################################################
 # Helper Functions
@@ -103,114 +102,102 @@ check_ubuntu_version() {
 update_system() {
     log_info "Updating system packages..."
     apt update
+    apt upgrade -y
     log_success "System packages updated"
 }
 
 install_prerequisites() {
     log_info "Installing prerequisites..."
-    apt install -y ca-certificates curl
+    apt install -y \
+        curl \
+        build-essential \
+        pkg-config \
+        libssl-dev \
+        ca-certificates
     log_success "Prerequisites installed"
 }
 
-install_docker() {
-    # Check if Docker is already installed
-    if command -v docker &> /dev/null; then
-        log_warning "Docker is already installed ($(docker --version))"
+install_rust() {
+    # Check if Rust is already installed
+    if command -v rustc &> /dev/null; then
+        log_warning "Rust is already installed ($(rustc --version))"
+        log_info "Updating Rust..."
+        sudo -u "${SUDO_USER:-$USER}" rustup update
         return 0
     fi
 
-    log_info "Installing Docker..."
+    log_info "Installing Rust..."
 
-    # Add Docker's official GPG key
-    log_info "Adding Docker's official GPG key..."
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-    chmod a+r /etc/apt/keyrings/docker.asc
+    # Install rustup as the non-root user if run with sudo
+    if [ -n "${SUDO_USER:-}" ]; then
+        log_info "Installing Rust for user: $SUDO_USER"
+        sudo -u "$SUDO_USER" sh -c "curl --proto '=https' --tlsv1.2 -sSf $RUSTUP_INIT_URL | sh -s -- -y"
 
-    # Add Docker repository to Apt sources
-    log_info "Adding Docker repository..."
-    cat > /etc/apt/sources.list.d/docker.sources <<EOF
-Types: deb
-URIs: https://download.docker.com/linux/ubuntu
-Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-Components: stable
-Signed-By: /etc/apt/keyrings/docker.asc
-EOF
+        # Source cargo env for this script
+        export PATH="/home/$SUDO_USER/.cargo/bin:$PATH"
+    else
+        log_info "Installing Rust for root user"
+        curl --proto '=https' --tlsv1.2 -sSf $RUSTUP_INIT_URL | sh -s -- -y
 
-    # Update package index with Docker packages
-    log_info "Updating package index..."
-    apt update
+        # Source cargo env for this script
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
 
-    # Install Docker Engine and plugins
-    log_info "Installing Docker Engine and plugins..."
-    apt install -y \
-        docker-ce \
-        docker-ce-cli \
-        containerd.io \
-        docker-buildx-plugin \
-        docker-compose-v2
-
-    log_success "Docker installed successfully"
+    log_success "Rust installed successfully"
 }
 
-configure_docker() {
-    log_info "Configuring Docker service..."
+install_bunnylol() {
+    log_info "Installing bunnylol from crates.io..."
 
-    # Enable Docker service to start on boot
-    systemctl enable docker
-
-    # Start Docker service
-    systemctl start docker
-
-    # Verify Docker is running
-    if systemctl is-active --quiet docker; then
-        log_success "Docker service is running"
+    # Install as the non-root user if run with sudo
+    if [ -n "${SUDO_USER:-}" ]; then
+        sudo -u "$SUDO_USER" bash -c "source ~/.cargo/env && cargo install bunnylol"
     else
-        log_error "Docker service failed to start"
+        source "$HOME/.cargo/env"
+        cargo install bunnylol
+    fi
+
+    # Verify installation
+    if command -v bunnylol &> /dev/null; then
+        log_success "bunnylol installed successfully ($(bunnylol --version))"
+    else
+        log_error "bunnylol installation failed - binary not found in PATH"
         exit 1
     fi
 }
 
-clone_or_update_repo() {
-    log_info "Setting up bunnylol.rs repository..."
+install_service() {
+    log_info "Installing bunnylol as systemd service..."
 
-    if [ -d "$INSTALL_DIR" ]; then
-        log_warning "Directory $INSTALL_DIR already exists"
-        log_info "Updating repository..."
-        cd "$INSTALL_DIR"
-        git pull
-    else
-        log_info "Cloning repository to $INSTALL_DIR..."
-        git clone "$REPO_URL" "$INSTALL_DIR"
-        cd "$INSTALL_DIR"
-    fi
+    # The bunnylol binary should be in the user's PATH
+    # We need to install the service as root
+    bunnylol service install
 
-    log_success "Repository ready at $INSTALL_DIR"
+    log_success "Bunnylol service installed and started"
 }
 
-deploy_application() {
-    log_info "Deploying application with Docker Compose..."
+verify_installation() {
+    log_info "Verifying installation..."
 
-    cd "$INSTALL_DIR"
-
-    # Deploy/update the application
-    # docker compose up -d performs rolling updates if containers are already running
-    log_info "Starting containers (or updating if already running)..."
-    docker compose up -d --build
-
-    # Wait a moment for containers to start
-    sleep 3
-
-    # Check container status
-    if docker compose ps | grep -q "Up"; then
-        log_success "Application deployed successfully!"
-        echo ""
-        docker compose ps
+    # Check if service is running
+    if systemctl is-active --quiet bunnylol; then
+        log_success "Bunnylol service is running"
     else
-        log_error "Application deployment may have failed"
-        log_info "Container status:"
-        docker compose ps
+        log_error "Bunnylol service is not running"
+        systemctl status bunnylol
         exit 1
+    fi
+
+    # Wait a moment for the service to be ready
+    sleep 2
+
+    # Test the endpoint
+    log_info "Testing HTTP endpoint..."
+    if curl -f http://localhost:8000/health &> /dev/null; then
+        log_success "HTTP endpoint is responding"
+    else
+        log_warning "HTTP endpoint may not be ready yet"
+        log_info "Check status with: sudo bunnylol service status"
     fi
 }
 
@@ -223,12 +210,18 @@ show_completion_message() {
     echo -e "Application is running at: ${BLUE}http://$(hostname -I | awk '{print $1}'):8000${NC}"
     echo ""
     echo "Useful commands:"
-    echo "  - View logs:       cd $INSTALL_DIR && docker compose logs -f"
-    echo "  - Stop app:        cd $INSTALL_DIR && docker compose down"
-    echo "  - Start app:       cd $INSTALL_DIR && docker compose up -d"
-    echo "  - Restart app:     cd $INSTALL_DIR && docker compose restart"
-    echo "  - View status:     cd $INSTALL_DIR && docker compose ps"
-    echo "  - Update & redeploy: cd $INSTALL_DIR && git pull && docker compose up -d --build"
+    echo "  - View status:     sudo bunnylol service status"
+    echo "  - View logs:       sudo bunnylol service logs"
+    echo "  - Follow logs:     sudo bunnylol service logs -f"
+    echo "  - Restart service: sudo bunnylol service restart"
+    echo "  - Stop service:    sudo bunnylol service stop"
+    echo "  - Start service:   sudo bunnylol service start"
+    echo "  - Uninstall:       sudo bunnylol service uninstall"
+    echo ""
+    echo "Service details:"
+    echo "  - Service file:    /etc/systemd/system/bunnylol.service"
+    echo "  - Autostart:       Enabled (starts on boot)"
+    echo "  - Running as:      root"
     echo ""
 }
 
@@ -244,10 +237,10 @@ main() {
     check_ubuntu_version
     update_system
     install_prerequisites
-    install_docker
-    configure_docker
-    clone_or_update_repo
-    deploy_application
+    install_rust
+    install_bunnylol
+    install_service
+    verify_installation
     show_completion_message
 }
 

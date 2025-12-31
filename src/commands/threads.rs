@@ -24,8 +24,13 @@ impl BunnylolCommand for ThreadsCommand {
             "https://www.threads.net".to_string()
         } else {
             // Check if it looks like a Threads profile
-            if query.starts_with('@') {
-                Self::construct_profile_url(&query[1..])
+            if let Some(username) = query.strip_prefix('@') {
+                if !username.is_empty() {
+                    Self::construct_profile_url(username)
+                } else {
+                    // Just '@' with no username - go to homepage
+                    "https://www.threads.net".to_string()
+                }
             } else {
                 Self::construct_search_url(query)
             }
@@ -66,6 +71,14 @@ mod tests {
         assert_eq!(
             ThreadsCommand::process_args("threads tech news"),
             "https://www.threads.net/search?q=tech%20news"
+        );
+    }
+
+    #[test]
+    fn test_threads_command_empty_username() {
+        assert_eq!(
+            ThreadsCommand::process_args("threads @"),
+            "https://www.threads.net"
         );
     }
 }

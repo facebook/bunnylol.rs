@@ -10,7 +10,7 @@ use std::sync::OnceLock;
 use leptos::*;
 use rocket::response::content::RawHtml;
 
-use crate::web::BindingsPage;
+use super::web::BindingsPage;
 
 static BINDINGS_HTML_CACHE: OnceLock<String> = OnceLock::new();
 
@@ -23,7 +23,7 @@ fn render_bindings_page() -> String {
 }
 
 // http://localhost:8000/bindings (Leptos SSR)
-#[get("/bindings")]
+#[rocket::get("/bindings")]
 pub fn bindings_web() -> RawHtml<String> {
     let html = BINDINGS_HTML_CACHE.get_or_init(render_bindings_page);
     RawHtml(html.clone())

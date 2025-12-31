@@ -1,10 +1,11 @@
-# Deployment Guide for Bunnylol
+# Server Deployment Guide for Bunnylol
 
-This guide covers deploying `bunnylol.rs` using Docker.
+This guide covers deploying `bunnylol.rs` using either native service installation or Docker.
 
 ## Table of Contents
 
 - [Quick Start: Automated Setup](#quick-start-automated-setup)
+- [Native Service Installation](#native-service-installation)
 - [Docker Deployment](#docker-deployment)
 - [Rebuilding and Redeploying](#rebuilding-and-redeploying)
 - [Auto-Deployment](#auto-deployment)
@@ -15,11 +16,12 @@ This guide covers deploying `bunnylol.rs` using Docker.
 
 ## Quick Start: Automated Setup
 
-For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup script that installs Docker and deploys bunnylol.rs in one command.
+For new Ubuntu cloud machines (Ubuntu 22.04+), we provide an automated setup script that installs Rust, bunnylol, and sets it up as a `systemd` service in one command.
 
 ### Prerequisites
 
-- Fresh Ubuntu server (22.04 LTS, 24.04 LTS, 25.04, or 25.10+)
+- Linux server running systemd
+- `cargo` installed
 - Root or sudo access
 - Internet connection
 
@@ -47,18 +49,127 @@ The automated setup script will:
 
 1. ✓ Verify you're running a supported Ubuntu version
 2. ✓ Update system packages
-3. ✓ Install Docker CE and Docker Compose
-4. ✓ Configure Docker to start on boot
-5. ✓ Clone the bunnylol.rs repository
-6. ✓ Deploy the application with `docker compose up -d --build`
+3. ✓ Install build prerequisites (build-essential, pkg-config, libssl-dev, etc.)
+4. ✓ Install Rust (rustup)
+5. ✓ Install bunnylol from crates.io (`cargo install bunnylol`)
+6. ✓ Install bunnylol as a `systemd` service
+7. ✓ Configure service to start on boot
+8. ✓ Start the service immediately
+9. ✓ Verify the installation
 
-After completion, bunnylol will be running on port 8000. The script is safe to run multiple times - it will skip already-installed components and update the repository if it already exists.
+After completion, bunnylol will be running on port 8000 as a `systemd` service. The script is safe to run multiple times - it will skip already-installed components and update Rust if it already exists.
+
+---
+
+## Native Service Installation
+
+The recommended deployment method for **Linux** is to install bunnylol as a native `systemd` service. This provides better integration with your OS and doesn't require Docker.
+
+**Note:** Native service installation is only supported on Linux (`systemd`). For macOS and Windows, please use [Docker Deployment](#docker-deployment) instead.
+
+### Prerequisites
+
+- Rust (only needed if binary not in PATH)
+- **Linux with `systemd`** (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)
+- sudo/root access
+
+### Installation
+
+```bash
+# Install bunnylol first
+$ cargo install bunnylol
+
+# Install as system service (requires sudo)
+$ sudo bunnylol service install
+
+# The installer will:
+# - Find the bunnylol binary in PATH
+# - Create systemd service file at /etc/systemd/system/bunnylol.service
+# - Configure autostart on boot (always enabled)
+# - Start the service immediately
+```
+
+Default configuration:
+- **Port**: 8000
+- **Address**: 0.0.0.0 (accessible from network)
+- **Autostart**: Enabled (always)
+- **Run as**: root
+- **Auto-restart**: On failure (5 second delay)
+
+### Managing the Service
+
+```bash
+# Check service status
+$ sudo bunnylol service status
+
+# View logs (last 20 lines)
+$ sudo bunnylol service logs
+
+# View logs (follow mode)
+$ sudo bunnylol service logs -f
+
+# View more lines
+$ sudo bunnylol service logs -n 100
+
+# Restart the service
+$ sudo bunnylol service restart
+
+# Stop the service
+$ sudo bunnylol service stop
+
+# Start the service
+$ sudo bunnylol service start
+```
+
+### Custom Configuration
+
+Customize port and address during installation:
+
+```bash
+# Custom port
+$ sudo bunnylol service install --port 9000
+
+# Custom address (e.g., localhost only)
+$ sudo bunnylol service install --address 127.0.0.1
+
+# Both custom port and address
+$ sudo bunnylol service install --port 9000 --address 127.0.0.1
+```
+
+**Note:** The service always autostarts on boot and starts immediately after installation. These behaviors cannot be disabled as they are the primary purpose of installing a service.
+
+### Uninstalling
+
+```bash
+# Uninstall system service (stops service and removes systemd files)
+$ sudo bunnylol service uninstall
+```
+
+### Platform-Specific Details
+
+#### Linux (`systemd`)
+
+- Service file: `/etc/systemd/system/bunnylol.service`
+- Logs: `journalctl -u bunnylol -f` or `sudo bunnylol service logs -f`
+- Binary location: Detected automatically from PATH (typically `/usr/local/bin/bunnylol`)
+- Service runs as: root
+- Restart policy: On failure with 5 second delay
+
+#### macOS / Windows
+
+Native service installation is **not supported** on macOS or Windows.
+
+Recommended alternatives:**
+ **Docker**: Use `docker compose up -d` (see [Docker Deployment](#docker-deployment))
+ **Direct run**: Use `bunnylol serve` (runs in foreground, doesn't auto-start on boot)
 
 ---
 
 ## Docker Deployment
 
-### Using Docker Compose (Recommended)
+Docker provides an alternative deployment method that's useful for containerized environments.
+
+### Using Docker Compose
 
 The easiest way to deploy bunnylol with Docker is using Docker Compose:
 
