@@ -16,6 +16,7 @@ categories = ["command-line-utilities", "web-programming::http-server", "develop
 [lib]
 name = "bunnylol"
 path = "src/lib.rs"
+crate-type = ["rlib", "dylib"]  # Enable dynamic linking for faster dev builds
 
 [[bin]]
 name = "bunnylol"
