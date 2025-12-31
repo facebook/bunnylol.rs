@@ -4,6 +4,23 @@ This directory contains the Prometheus + Grafana monitoring setup for Bunnylol.
 
 ## Quick Start
 
+### Option 1: Using bunnylol config file (Recommended)
+
+1. **Add password to your bunnylol config:**
+
+   Edit `~/.config/bunnylol/config.toml`:
+   ```toml
+   [monitoring]
+   grafana_password = "your_secure_password"
+   ```
+
+2. **Launch with helper script:**
+   ```bash
+   ./monitoring/launch.sh
+   ```
+
+### Option 2: Using .env file
+
 1. **Copy environment file:**
    ```bash
    cp .env.example .env
@@ -19,10 +36,11 @@ This directory contains the Prometheus + Grafana monitoring setup for Bunnylol.
    docker compose --profile monitoring up -d
    ```
 
-4. **Access dashboards:**
-   - **Grafana:** http://localhost:3000 (username: `admin`, password: from `.env`)
-   - **Prometheus:** http://localhost:9090
-   - **Bunnylol:** http://localhost:8000
+### Accessing Dashboards
+
+- **Grafana:** http://localhost:3000 (username: `admin`, password: from config)
+- **Prometheus:** http://localhost:9090
+- **Bunnylol:** http://localhost:8000
 
 ## What You Get
 

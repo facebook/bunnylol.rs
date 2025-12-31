@@ -34,6 +34,10 @@ pub struct BunnylolConfig {
     /// Server configuration (for bunnylol serve)
     #[serde(default)]
     pub server: ServerConfig,
+
+    /// Monitoring configuration (for Grafana/Prometheus)
+    #[serde(default)]
+    pub monitoring: MonitoringConfig,
 }
 
 impl Default for BunnylolConfig {
@@ -44,6 +48,7 @@ impl Default for BunnylolConfig {
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
+            monitoring: MonitoringConfig::default(),
         }
     }
 }
@@ -93,6 +98,14 @@ impl Default for ServerConfig {
             log_level: default_log_level(),
         }
     }
+}
+
+/// Configuration for monitoring stack (Grafana/Prometheus)
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct MonitoringConfig {
+    /// Grafana admin password
+    #[serde(default)]
+    pub grafana_password: Option<String>,
 }
 
 fn default_search_engine() -> String {
