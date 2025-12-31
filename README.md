@@ -111,7 +111,7 @@ $ bunnylol list
 | `bunnylol gh` | Open GitHub homepage |
 | `bunnylol gh facebook/react` | Open facebook/react repository |
 | `bunnylol ig reels` | Open Instagram Reels |
-| `bunnylol tw @elonmusk` | Open Twitter profile |
+| `bunnylol tw @facebook` | Open Twitter profile |
 | `bunnylol r r/rust` | Open r/rust subreddit |
 | `bunnylol --dry-run meta ai` | Print Meta AI URL without opening |
 | `bunnylol --help` | Show help information |
