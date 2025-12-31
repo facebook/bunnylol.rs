@@ -136,15 +136,20 @@ Located in `src/utils/url_encoding.rs`:
    pub use self::your_command::YourCommand;
    ```
 
-3. **Register in `src/utils/bunnylol_command.rs`**:
-   - Add to `process_command()` match statement:
-     ```rust
-     cmd if YourCommand::matches_command(cmd) => YourCommand::process_args(full_args),
-     ```
-   - Add to `get_all_commands()`:
-     ```rust
-     YourCommand::get_info(),
-     ```
+3. **Register in `src/bunnylol_command_registry.rs`** - Add to the `register_commands!` macro:
+   ```rust
+   register_commands! {
+       crate::commands::BindingsCommand,
+       // ... other commands ...
+       crate::commands::YourCommand,  // ADD YOUR COMMAND HERE
+   }
+   ```
+
+   **IMPORTANT:** The `register_commands!` macro automatically generates both:
+   - `initialize_command_lookup()` - Maps aliases to handlers
+   - `get_all_commands_impl()` - Lists all commands for /bindings page
+
+   You only need to add your command once to the macro, and it will be registered everywhere.
 
 ### Adding Subcommands to Existing Commands
 
