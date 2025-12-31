@@ -11,13 +11,14 @@ echo ""
 echo "🎨 Formatting code..."
 cargo fmt --all
 
-# Re-add any Rust files that were formatted to ensure changes are committed
-STAGED_RS_FILES=$(git diff --name-only --cached | grep '\.rs$' || true)
-if [ -n "$STAGED_RS_FILES" ]; then
-    echo "$STAGED_RS_FILES" | xargs git add
-    echo "✅ Code formatted and re-staged"
+# Re-add any Rust files that were modified by formatting
+FORMATTED_FILES=$(git diff --name-only | grep '\.rs$' || true)
+if [ -n "$FORMATTED_FILES" ]; then
+    echo "$FORMATTED_FILES" | xargs git add
+    FILE_COUNT=$(echo "$FORMATTED_FILES" | wc -l | tr -d ' ')
+    echo "✅ Formatted and re-staged $FILE_COUNT file(s)"
 else
-    echo "✅ No Rust files to format"
+    echo "✅ No files needed formatting"
 fi
 
 # Run cargo check (fast compilation check)

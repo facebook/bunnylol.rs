@@ -6,6 +6,19 @@ use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
 pub struct NodeCommand;
 
+impl NodeCommand {
+    /// Validates if a string is a valid Node.js module name
+    /// Module names can contain alphanumeric characters, underscores, hyphens, and dots
+    fn is_valid_module_name(name: &str) -> bool {
+        !name.is_empty()
+            && name
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.')
+            && !name.starts_with('.')
+            && !name.starts_with('-')
+    }
+}
+
 impl BunnylolCommand for NodeCommand {
     const BINDINGS: &'static [&'static str] = &["node", "nodejs"];
 
@@ -13,11 +26,11 @@ impl BunnylolCommand for NodeCommand {
         let query = Self::get_command_args(args);
         if query.is_empty() {
             "https://nodejs.org/api/".to_string()
-        } else if !query.contains(' ') {
-            // Single word queries are treated as module names
+        } else if !query.contains(' ') && Self::is_valid_module_name(query) {
+            // Single word queries with valid module names are treated as module names
             format!("https://nodejs.org/api/{}.html", query)
         } else {
-            // Multi-word queries just go to base docs (no search available)
+            // Multi-word queries or invalid module names just go to base docs
             "https://nodejs.org/api/".to_string()
         }
     }
@@ -66,6 +79,49 @@ mod tests {
         assert_eq!(
             NodeCommand::process_args("node file system"),
             "https://nodejs.org/api/"
+        );
+    }
+
+    #[test]
+    fn test_node_command_invalid_module_names() {
+        // Path traversal attempts should go to base docs
+        assert_eq!(
+            NodeCommand::process_args("node ../../../etc/passwd"),
+            "https://nodejs.org/api/"
+        );
+        // Special characters should go to base docs
+        assert_eq!(
+            NodeCommand::process_args("node <script>"),
+            "https://nodejs.org/api/"
+        );
+        // Starting with dot should go to base docs
+        assert_eq!(
+            NodeCommand::process_args("node .hidden"),
+            "https://nodejs.org/api/"
+        );
+        // Starting with hyphen should go to base docs
+        assert_eq!(
+            NodeCommand::process_args("node -flag"),
+            "https://nodejs.org/api/"
+        );
+    }
+
+    #[test]
+    fn test_node_command_valid_module_names() {
+        // Valid modules with hyphens
+        assert_eq!(
+            NodeCommand::process_args("node node-fetch"),
+            "https://nodejs.org/api/node-fetch.html"
+        );
+        // Valid modules with underscores
+        assert_eq!(
+            NodeCommand::process_args("node async_hooks"),
+            "https://nodejs.org/api/async_hooks.html"
+        );
+        // Valid modules with dots (like node:fs.promises)
+        assert_eq!(
+            NodeCommand::process_args("node fs.promises"),
+            "https://nodejs.org/api/fs.promises.html"
         );
     }
 }

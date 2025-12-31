@@ -16,8 +16,19 @@ impl BunnylolCommand for GitlabCommand {
         if query.is_empty() {
             "https://gitlab.com".to_string()
         } else if query.contains('/') {
-            // If query contains '/', treat it as a project path
-            format!("https://gitlab.com/{}", query)
+            // Validate and encode project path (user/project format)
+            let parts: Vec<&str> = query.split('/').collect();
+            if parts.len() == 2 && !parts[0].is_empty() && !parts[1].is_empty() {
+                // Valid user/project format - encode each part
+                format!(
+                    "https://gitlab.com/{}/{}",
+                    encode_url(parts[0]),
+                    encode_url(parts[1])
+                )
+            } else {
+                // Invalid path format (e.g., foo//bar or foo/bar/baz), fall back to search
+                format!("https://gitlab.com/search?search={}", encode_url(query))
+            }
         } else {
             // Otherwise, treat it as a search query
             format!("https://gitlab.com/search?search={}", encode_url(query))
@@ -64,6 +75,44 @@ mod tests {
         assert_eq!(
             GitlabCommand::process_args("gl rust async"),
             "https://gitlab.com/search?search=rust%20async"
+        );
+    }
+
+    #[test]
+    fn test_gitlab_command_invalid_paths() {
+        // Multiple slashes should fall back to search
+        assert_eq!(
+            GitlabCommand::process_args("gl org/team/project"),
+            "https://gitlab.com/search?search=org/team/project"
+        );
+        // Double slash should fall back to search
+        assert_eq!(
+            GitlabCommand::process_args("gl foo//bar"),
+            "https://gitlab.com/search?search=foo//bar"
+        );
+        // Leading slash should fall back to search
+        assert_eq!(
+            GitlabCommand::process_args("gl /foo"),
+            "https://gitlab.com/search?search=/foo"
+        );
+        // Trailing slash should fall back to search
+        assert_eq!(
+            GitlabCommand::process_args("gl foo/"),
+            "https://gitlab.com/search?search=foo/"
+        );
+    }
+
+    #[test]
+    fn test_gitlab_command_special_chars() {
+        // Special characters should be encoded in paths
+        assert_eq!(
+            GitlabCommand::process_args("gl user-name/project-name"),
+            "https://gitlab.com/user-name/project-name"
+        );
+        // Spaces in project names should be encoded
+        assert_eq!(
+            GitlabCommand::process_args("gl user/my project"),
+            "https://gitlab.com/user/my%20project"
         );
     }
 }
