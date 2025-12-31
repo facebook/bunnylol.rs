@@ -1,20 +1,29 @@
 #!/bin/bash
 # Pre-commit hook for bunnylol.rs
-# Runs tests and formatting checks before allowing commit
+# Runs formatting, tests, and checks before allowing commit
 
 set -e
 
 echo "Running pre-commit checks..."
 echo ""
 
+# Format code automatically (moved to first for best UX)
+echo "🎨 Formatting code..."
+cargo fmt --all
+
+# Re-add any Rust files that were formatted to ensure changes are committed
+STAGED_RS_FILES=$(git diff --name-only --cached | grep '\.rs$' || true)
+if [ -n "$STAGED_RS_FILES" ]; then
+    echo "$STAGED_RS_FILES" | xargs git add
+    echo "✅ Code formatted and re-staged"
+else
+    echo "✅ No Rust files to format"
+fi
+
 # Run cargo check (fast compilation check)
+echo ""
 echo "🔍 Running cargo check..."
 cargo check --all-features
-
-# Check formatting
-echo ""
-echo "📝 Checking code formatting..."
-cargo fmt --all -- --check
 
 # Run clippy (linter)
 echo ""
