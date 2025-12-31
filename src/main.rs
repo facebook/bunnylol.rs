@@ -67,7 +67,11 @@ enum Commands {
 #[derive(Subcommand)]
 enum ServiceAction {
     /// Install bunnylol server as a service (uses config file for port/address)
-    Install,
+    Install {
+        /// Allow network access (bind to 0.0.0.0). Default: localhost only (127.0.0.1)
+        #[arg(short, long)]
+        network: bool,
+    },
     /// Uninstall bunnylol service
     Uninstall,
     /// Start the server service
@@ -130,11 +134,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             use bunnylol::service::*;
 
             let result = match action {
-                ServiceAction::Install => {
-                    let service_config = ServiceConfig {
-                        port: config.server.port,
-                        address: config.server.address.clone(),
-                        log_level: config.server.log_level.clone(),
+                ServiceAction::Install { network } => {
+                    // Use ServiceConfig with appropriate address based on --network flag
+                    let mut service_config = ServiceConfig::default();
+                    service_config.address = if network {
+                        "0.0.0.0".to_string()  // Network access
+                    } else {
+                        "127.0.0.1".to_string()  // Localhost only (secure default)
                     };
 
                     install_systemd_service(service_config)

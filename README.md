@@ -305,10 +305,15 @@ For production use on **Linux**, install bunnylol as a `systemd` service that st
 $ cargo install bunnylol
 
 # Install as system service (requires sudo, Linux only)
+# Default: localhost only (127.0.0.1)
 $ sudo bunnylol service install
+
+# For network access (production servers)
+$ sudo bunnylol service install --network
 
 # The installer will:
 # - Create /etc/systemd/system/bunnylol.service
+# - Create /etc/bunnylol/config.toml with server settings
 # - Enable autostart on boot
 # - Start the service immediately
 
@@ -320,6 +325,10 @@ $ sudo bunnylol service restart
 # Uninstall
 $ sudo bunnylol service uninstall
 ```
+
+**Network Access:**
+- **Without `--network`** (default): Binds to `127.0.0.1` (localhost only, secure default)
+- **With `--network`**: Binds to `0.0.0.0` (accessible from network, for production servers)
 
 The service installer works on:
 - **Linux**: `systemd` (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)

@@ -80,25 +80,32 @@ The recommended deployment method for **Linux** is to install bunnylol as a nati
 $ cargo install bunnylol
 
 # Install as system service (requires sudo, Linux only)
+# Default: localhost only (127.0.0.1)
 $ sudo bunnylol service install
+
+# For network access (production servers)
+$ sudo bunnylol service install --network
 
 # The installer will:
 # - Find the bunnylol binary in PATH
 # - Create systemd service file at /etc/systemd/system/bunnylol.service
 # - Create config file at /etc/bunnylol/config.toml (if not exists)
-# - Use settings from /etc/bunnylol/config.toml
 # - Configure autostart on boot (always enabled)
 # - Start the service immediately
 ```
 
+**Network Access:**
+- **Without `--network`** (default): Binds to `127.0.0.1` (localhost only, secure default)
+- **With `--network`**: Binds to `0.0.0.0` (accessible from network, for production servers)
+
 Configuration is managed through the system config file at `/etc/bunnylol/config.toml`:
 - **Port**: 8000 (default)
-- **Address**: 127.0.0.1 (localhost only by default)
+- **Address**: 127.0.0.1 (default) or 0.0.0.0 (with `--network` flag)
 - **Autostart**: Enabled (always)
 - **Run as**: root
 - **Auto-restart**: On failure (5 second delay)
 
-To customize these settings, edit `~/.config/bunnylol/config.toml` and restart the service.
+To customize these settings after installation, edit `/etc/bunnylol/config.toml` and restart the service.
 
 ### Managing the Service
 
@@ -132,9 +139,13 @@ Server settings for the system service are configured in `/etc/bunnylol/config.t
 ```toml
 [server]
 port = 8000              # Change to your preferred port
-address = "127.0.0.1"    # Change to "0.0.0.0" for network access
+address = "127.0.0.1"    # Use "127.0.0.1" for localhost, "0.0.0.0" for network access
 log_level = "normal"     # Options: normal, debug, critical
 ```
+
+**Network Access:**
+- `address = "127.0.0.1"` - Localhost only (secure default, installed without `--network`)
+- `address = "0.0.0.0"` - Network accessible (production servers, installed with `--network`)
 
 After editing the config file, restart the service:
 

@@ -98,7 +98,7 @@ impl Default for ServiceConfig {
     fn default() -> Self {
         Self {
             port: 8000,
-            address: "0.0.0.0".to_string(),
+            address: "127.0.0.1".to_string(),  // Localhost only by default (secure)
             log_level: "normal".to_string(),
         }
     }
