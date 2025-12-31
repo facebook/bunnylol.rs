@@ -50,6 +50,7 @@ impl BunnylolCommandRegistry {
     register_commands! {
         crate::commands::BindingsCommand,
         crate::commands::GitHubCommand,
+        crate::commands::GitlabCommand,
         crate::commands::TwitterCommand,
         crate::commands::RedditCommand,
         crate::commands::GmailCommand,
@@ -81,6 +82,19 @@ impl BunnylolCommandRegistry {
         crate::commands::GoogleSlidesCommand,
         crate::commands::GoogleChatCommand,
         crate::commands::GoogleSearchCommand,
+        crate::commands::BrewCommand,
+        crate::commands::ChocoCommand,
+        crate::commands::DockerhubCommand,
+        crate::commands::GodocsCommand,
+        crate::commands::GopkgCommand,
+        crate::commands::MdnCommand,
+        crate::commands::NodeCommand,
+        crate::commands::NugetCommand,
+        crate::commands::PackagistCommand,
+        crate::commands::PypiCommand,
+        crate::commands::PythonCommand,
+        crate::commands::RubygemsCommand,
+        crate::commands::StackOverflowCommand,
     }
 
     /// Process commands that use special prefixes (like $ for stock tickers)
@@ -154,10 +168,10 @@ mod cache_tests {
         assert!(lookup.contains_key("r"));
         assert!(lookup.contains_key("reddit"));
 
-        // Verify we have 55+ total bindings (31 commands with multiple aliases each)
+        // Verify we have 83+ total bindings (47 commands with multiple aliases each)
         assert!(
-            lookup.len() >= 55,
-            "Expected at least 55 bindings, got {}",
+            lookup.len() >= 83,
+            "Expected at least 83 bindings, got {}",
             lookup.len()
         );
     }
@@ -182,7 +196,7 @@ mod cache_tests {
         let commands = BunnylolCommandRegistry::get_all_commands();
 
         // Verify we have all expected commands
-        assert_eq!(commands.len(), 33, "Expected 33 commands");
+        assert_eq!(commands.len(), 47, "Expected 47 commands");
 
         // Verify cache returns same pointer (not regenerated)
         let commands2 = BunnylolCommandRegistry::get_all_commands();
