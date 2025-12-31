@@ -96,23 +96,12 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         "Bunnylol server starting with default search: {}",
         config.default_search
     );
-    println!("Server configured for {}:{}", config.server.address, config.server.port);
-
-    // Configure Rocket with address and port from config
-    // Environment variables can override config file values
-    let address = std::env::var("ROCKET_ADDRESS")
-        .unwrap_or_else(|_| config.server.address.clone());
-    let port: u16 = std::env::var("ROCKET_PORT")
-        .ok()
-        .and_then(|p| p.parse().ok())
-        .unwrap_or(config.server.port);
-    let log_level = std::env::var("ROCKET_LOG_LEVEL")
-        .unwrap_or_else(|_| config.server.log_level.clone());
+    println!("Server listening on {}:{}", config.server.address, config.server.port);
 
     let figment = rocket::Config::figment()
-        .merge(("address", address))
-        .merge(("port", port))
-        .merge(("log_level", log_level));
+        .merge(("address", config.server.address.clone()))
+        .merge(("port", config.server.port))
+        .merge(("log_level", config.server.log_level.clone()));
 
     let _rocket = rocket::custom(figment)
         .manage(config)

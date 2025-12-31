@@ -18,8 +18,8 @@ RUN mkdir -p src
 # Copy source code
 COPY src ./src
 
-# Build the application
-RUN cargo build --release
+# Build the application (server only)
+RUN cargo build --release --no-default-features --features server
 
 # Stage 2: Runtime image
 FROM debian:bookworm-slim
@@ -34,14 +34,18 @@ RUN apt-get update && \
 # Copy the built binary from builder
 COPY --from=builder /app/target/release/bunnylol /app/bunnylol
 
-# Create a non-root user
+# Create bunnylol user and system config directory
 RUN useradd -m -u 1000 bunnylol && \
-    chown -R bunnylol:bunnylol /app
+    mkdir -p /etc/bunnylol
+
+# Copy Docker-specific config template
+COPY config.toml.docker /etc/bunnylol/config.toml
+
+# Set ownership
+RUN chown -R bunnylol:bunnylol /app /etc/bunnylol
 
 USER bunnylol
 
-# Set environment variables
-ENV ROCKET_ADDRESS=0.0.0.0
-
 # Run the application
+# Config file at /etc/bunnylol/config.toml sets address to 0.0.0.0 for Docker
 CMD ["/app/bunnylol", "serve"]

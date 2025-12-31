@@ -144,8 +144,41 @@ impl BunnylolConfig {
     }
 
     /// Get the full path to the config file
-    /// Returns: $XDG_CONFIG_HOME/bunnylol/config.toml
+    /// Returns: /etc/bunnylol/config.toml (system-wide, preferred)
+    ///       or $XDG_CONFIG_HOME/bunnylol/config.toml (user-specific fallback)
     pub fn get_config_path() -> Option<PathBuf> {
+        // Check system-wide config first
+        let system_config = PathBuf::from("/etc/bunnylol/config.toml");
+        let user_config = Self::get_config_dir().map(|dir| dir.join("config.toml"));
+
+        if system_config.exists() {
+            // Warn if both configs exist
+            if let Some(ref user_path) = user_config {
+                if user_path.exists() {
+                    eprintln!("Warning: Found config files at both locations:");
+                    eprintln!("  - {}", system_config.display());
+                    eprintln!("  - {}", user_path.display());
+                    eprintln!("Using system config: {}", system_config.display());
+                }
+            }
+            return Some(system_config);
+        }
+
+        // Fall back to user config
+        user_config
+    }
+
+    /// Get the full path to the config file for writing
+    /// Returns: /etc/bunnylol/config.toml if writable (running as root)
+    ///       or $XDG_CONFIG_HOME/bunnylol/config.toml otherwise
+    pub fn get_config_path_for_writing() -> Option<PathBuf> {
+        // If running as root (or /etc/bunnylol exists and is writable), use system config
+        let system_config_dir = PathBuf::from("/etc/bunnylol");
+        if system_config_dir.exists() || std::fs::create_dir_all(&system_config_dir).is_ok() {
+            return Some(system_config_dir.join("config.toml"));
+        }
+
+        // Otherwise use user config
         Self::get_config_dir().map(|dir| dir.join("config.toml"))
     }
 
@@ -161,22 +194,23 @@ impl BunnylolConfig {
     pub fn load() -> Result<Self, String> {
         let config_path = match Self::get_config_path() {
             Some(path) => path,
-            None => return Ok(Self::default()),
+            None => {
+                // No config exists, try to create one
+                if let Some(write_path) = Self::get_config_path_for_writing() {
+                    let default_config = Self::default();
+                    if let Err(e) = default_config.write_to_file(&write_path) {
+                        eprintln!("Warning: Failed to write default config file: {}", e);
+                        eprintln!("Continuing with default configuration...");
+                    } else {
+                        println!("Created default config file at: {}", write_path.display());
+                    }
+                    return Ok(default_config);
+                }
+                return Ok(Self::default());
+            }
         };
 
-        // If config file doesn't exist, create it with default config
-        if !config_path.exists() {
-            let default_config = Self::default();
-            if let Err(e) = default_config.write_to_file(&config_path) {
-                eprintln!("Warning: Failed to write default config file: {}", e);
-                eprintln!("Continuing with default configuration...");
-            } else {
-                println!("Created default config file at: {}", config_path.display());
-            }
-            return Ok(default_config);
-        }
-
-        // Read and parse the config file
+        // Config exists, read it
         let contents = fs::read_to_string(&config_path)
             .map_err(|e| format!("Failed to read config file {:?}: {}", config_path, e))?;
 
@@ -185,7 +219,7 @@ impl BunnylolConfig {
     }
 
     /// Write configuration to a file
-    fn write_to_file(&self, path: &PathBuf) -> Result<(), String> {
+    pub fn write_to_file(&self, path: &PathBuf) -> Result<(), String> {
         // Create parent directory if it doesn't exist
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)

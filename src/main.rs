@@ -41,11 +41,11 @@ enum Commands {
     /// Run the bunnylol web server
     #[cfg(feature = "server")]
     Serve {
-        /// Port to bind the server to (overrides config)
+        /// Port to bind the server to (overrides config file)
         #[arg(short, long)]
         port: Option<u16>,
 
-        /// Address to bind to (overrides config)
+        /// Address to bind to (overrides config file)
         #[arg(short, long)]
         address: Option<String>,
     },
@@ -66,16 +66,8 @@ enum Commands {
 #[cfg(feature = "cli")]
 #[derive(Subcommand)]
 enum ServiceAction {
-    /// Install bunnylol server as a service
-    Install {
-        /// Port to bind the server to
-        #[arg(long, default_value = "8000")]
-        port: u16,
-
-        /// Address to bind to
-        #[arg(long)]
-        address: Option<String>,
-    },
+    /// Install bunnylol server as a service (uses config file for port/address)
+    Install,
     /// Uninstall bunnylol service
     Uninstall,
     /// Start the server service
@@ -138,10 +130,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             use bunnylol::service::*;
 
             let result = match action {
-                ServiceAction::Install { port, address } => {
+                ServiceAction::Install => {
                     let service_config = ServiceConfig {
-                        port,
-                        address: address.unwrap_or_else(|| "0.0.0.0".to_string()),
+                        port: config.server.port,
+                        address: config.server.address.clone(),
                         log_level: config.server.log_level.clone(),
                     };
 
