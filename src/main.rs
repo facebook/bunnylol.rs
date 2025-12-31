@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 
 // BunnylolConfig is needed by both server and CLI
 use bunnylol::BunnylolConfig;
@@ -25,6 +25,7 @@ use tabled::{
     about = "Smart bookmark server and CLI - URL shortcuts for your browser's search bar and terminal"
 )]
 #[command(version)]
+#[command(override_usage = "bunnylol [OPTIONS] [BINDING] [ARGS]")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -191,11 +192,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .collect();
 
             if args.is_empty() {
-                // No command provided, print help
-                eprintln!("Error: No command provided\n");
-                eprintln!("Usage: bunnylol [OPTIONS] [COMMAND]\n");
-                eprintln!("Run 'bunnylol --help' for more information");
-                std::process::exit(1);
+                // No command provided, print full help
+                Cli::command().print_help().unwrap();
+                println!(); // Add newline after help
+                std::process::exit(0);
             }
 
             execute_command(args, &config, cli.dry_run)?;
