@@ -19,7 +19,8 @@ fn render_bindings_page() -> String {
         view! {
             <BindingsPage />
         }
-    }).to_string()
+    })
+    .to_string()
 }
 
 // http://localhost:8000/bindings (Leptos SSR)

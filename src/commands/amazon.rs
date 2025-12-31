@@ -21,8 +21,11 @@ impl BunnylolCommand for AmazonCommand {
             "https://amazon.com/".to_string()
         } else {
             match query {
-                "orders" => "https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first".to_string(),
-                "account" => "https://www.amazon.com/gp/css/homepage.html?ref_=nav_youraccount_btn".to_string(),
+                "orders" => {
+                    "https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first".to_string()
+                }
+                "account" => "https://www.amazon.com/gp/css/homepage.html?ref_=nav_youraccount_btn"
+                    .to_string(),
                 "messages" => "https://www.amazon.com/gp/message".to_string(),
                 "cart" => "https://www.amazon.com/gp/cart/view.html/".to_string(),
                 "pay" | "wallet" => "https://www.amazon.com/cpe/yourpayments/wallet".to_string(),
@@ -49,10 +52,7 @@ mod tests {
         assert_eq!(AmazonCommand::process_args("az"), "https://amazon.com/");
         assert_eq!(AmazonCommand::process_args("amzn"), "https://amazon.com/");
         assert_eq!(AmazonCommand::process_args("azn"), "https://amazon.com/");
-        assert_eq!(
-            AmazonCommand::process_args("amazon"),
-            "https://amazon.com/"
-        );
+        assert_eq!(AmazonCommand::process_args("amazon"), "https://amazon.com/");
     }
 
     #[test]

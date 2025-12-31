@@ -1,10 +1,10 @@
+pub mod amazon;
+pub mod bindings;
 /// Command module exports
 ///
 /// This module re-exports all the individual command implementations
 /// for easy importing in the registry.
 pub mod bunnylol_command;
-pub mod amazon;
-pub mod bindings;
 pub mod cargo;
 pub mod chatgpt;
 pub mod claude;

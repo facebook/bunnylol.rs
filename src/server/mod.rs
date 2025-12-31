@@ -19,9 +19,9 @@ pub mod service;
 #[cfg(feature = "server")]
 use rocket::State;
 #[cfg(feature = "server")]
-use rocket::response::Redirect;
+use rocket::request::{self, FromRequest, Request};
 #[cfg(feature = "server")]
-use rocket::request::{self, Request, FromRequest};
+use rocket::response::Redirect;
 
 #[cfg(feature = "server")]
 use crate::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
@@ -48,12 +48,19 @@ mod server_impl {
 
     // http://localhost:8000/?cmd=gh
     #[rocket::get("/?<cmd>")]
-    pub(super) fn search(cmd: &str, config: &State<BunnylolConfig>, client_ip: ClientIP) -> Redirect {
+    pub(super) fn search(
+        cmd: &str,
+        config: &State<BunnylolConfig>,
+        client_ip: ClientIP,
+    ) -> Redirect {
         println!("bunnylol command: {}", cmd);
 
         let command = utils::get_command_from_query_string(cmd);
-        let redirect_url =
-            BunnylolCommandRegistry::process_command_with_config(command, cmd, Some(config.inner()));
+        let redirect_url = BunnylolCommandRegistry::process_command_with_config(
+            command,
+            cmd,
+            Some(config.inner()),
+        );
         println!("redirecting to: {}", redirect_url);
 
         // Track command in history if enabled
@@ -96,7 +103,10 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         "Bunnylol server starting with default search: {}",
         config.default_search
     );
-    println!("Server listening on {}:{}", config.server.address, config.server.port);
+    println!(
+        "Server listening on {}:{}",
+        config.server.address, config.server.port
+    );
 
     let figment = rocket::Config::figment()
         .merge(("address", config.server.address.clone()))
@@ -106,7 +116,10 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
 
     let _rocket = rocket::custom(figment)
         .manage(config)
-        .mount("/", rocket::routes![search, root, health, routes::bindings_web])
+        .mount(
+            "/",
+            rocket::routes![search, root, health, routes::bindings_web],
+        )
         .register("/", rocket::catchers![not_found])
         .launch()
         .await?;

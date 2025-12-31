@@ -29,7 +29,11 @@ impl HistoryEntry {
             .as_secs()
             .to_string();
 
-        Self { command, timestamp, user }
+        Self {
+            command,
+            timestamp,
+            user,
+        }
     }
 
     /// Parse a history entry from a line in the history file
@@ -96,10 +100,7 @@ impl History {
         // Trim to max_entries
         if entries.len() > self.max_entries {
             let skip_count = entries.len() - self.max_entries;
-            entries = entries
-                .into_iter()
-                .skip(skip_count)
-                .collect();
+            entries = entries.into_iter().skip(skip_count).collect();
         }
 
         // Write back to file
@@ -149,8 +150,7 @@ impl History {
     /// Clear all history
     pub fn clear(&self) -> Result<(), String> {
         if self.path.exists() {
-            fs::remove_file(&self.path)
-                .map_err(|e| format!("Failed to clear history: {}", e))?;
+            fs::remove_file(&self.path).map_err(|e| format!("Failed to clear history: {}", e))?;
         }
         Ok(())
     }

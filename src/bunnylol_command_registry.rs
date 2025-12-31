@@ -235,7 +235,11 @@ mod cache_tests {
         assert!(lookup.contains_key("reddit"));
 
         // Verify we have 55+ total bindings (31 commands with multiple aliases each)
-        assert!(lookup.len() >= 55, "Expected at least 55 bindings, got {}", lookup.len());
+        assert!(
+            lookup.len() >= 55,
+            "Expected at least 55 bindings, got {}",
+            lookup.len()
+        );
     }
 
     #[test]
@@ -262,6 +266,9 @@ mod cache_tests {
 
         // Verify cache returns same pointer (not regenerated)
         let commands2 = BunnylolCommandRegistry::get_all_commands();
-        assert!(std::ptr::eq(commands, commands2), "Cache should return same reference");
+        assert!(
+            std::ptr::eq(commands, commands2),
+            "Cache should return same reference"
+        );
     }
 }

@@ -98,7 +98,7 @@ impl Default for ServiceConfig {
     fn default() -> Self {
         Self {
             port: 8000,
-            address: "127.0.0.1".to_string(),  // Localhost only by default (secure)
+            address: "127.0.0.1".to_string(), // Localhost only by default (secure)
             log_level: "normal".to_string(),
         }
     }
@@ -156,8 +156,9 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
         println!("✓ Found existing config file: /etc/bunnylol/config.toml");
 
         // Load existing config
-        let mut existing_config = BunnylolConfig::load()
-            .map_err(|e| ServiceError::ConfigError(format!("Failed to load existing config: {}", e)))?;
+        let mut existing_config = BunnylolConfig::load().map_err(|e| {
+            ServiceError::ConfigError(format!("Failed to load existing config: {}", e))
+        })?;
 
         let current_address = existing_config.server.address.clone();
         println!("  Current address: {}", current_address);
@@ -171,7 +172,10 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
 
             println!("✓ Updating address in config file (preserving other settings)...");
             if let Err(e) = existing_config.write_to_file(&system_config_path) {
-                return Err(ServiceError::ConfigError(format!("Failed to write config: {}", e)));
+                return Err(ServiceError::ConfigError(format!(
+                    "Failed to write config: {}",
+                    e
+                )));
             }
         }
     } else {
@@ -185,7 +189,10 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
 
         // Write config file
         if let Err(e) = default_config.write_to_file(&system_config_path) {
-            return Err(ServiceError::ConfigError(format!("Failed to write config: {}", e)));
+            return Err(ServiceError::ConfigError(format!(
+                "Failed to write config: {}",
+                e
+            )));
         }
     }
 
@@ -196,9 +203,18 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
     println!("  Binary:      {}", binary_path.display());
     println!("  Command:     bunnylol serve");
     println!("  Config:      /etc/bunnylol/config.toml");
-    println!("    Port:      {} (can be changed in config file)", config.port);
-    println!("    Address:   {} (can be changed in config file)", config.address);
-    println!("    Log level: {} (can be changed in config file)", config.log_level);
+    println!(
+        "    Port:      {} (can be changed in config file)",
+        config.port
+    );
+    println!(
+        "    Address:   {} (can be changed in config file)",
+        config.address
+    );
+    println!(
+        "    Log level: {} (can be changed in config file)",
+        config.log_level
+    );
     println!("  Run as:      root");
     println!("  Autostart:   enabled");
     println!();
@@ -242,7 +258,10 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
     println!();
     println!("🎉 Bunnylol server installed successfully!");
     println!();
-    println!("Server URL (from config): http://{}:{}", config.address, config.port);
+    println!(
+        "Server URL (from config): http://{}:{}",
+        config.address, config.port
+    );
     println!(
         "Add to browser search: http://{}:{}/?cmd=%s",
         config.address, config.port

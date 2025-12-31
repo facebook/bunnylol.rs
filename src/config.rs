@@ -7,8 +7,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 
 /// Configuration for bunnylol CLI
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -230,8 +230,7 @@ impl BunnylolConfig {
         let toml_content = self.to_toml_with_comments();
 
         // Write to file
-        fs::write(path, toml_content)
-            .map_err(|e| format!("Failed to write config file: {}", e))
+        fs::write(path, toml_content).map_err(|e| format!("Failed to write config file: {}", e))
     }
 
     /// Convert config to TOML string with helpful comments
@@ -299,11 +298,9 @@ log_level = "{}"
 
     /// Get the search engine URL for a query
     pub fn get_search_url(&self, query: &str) -> String {
-        let encoded_query = percent_encoding::utf8_percent_encode(
-            query,
-            percent_encoding::NON_ALPHANUMERIC,
-        )
-        .to_string();
+        let encoded_query =
+            percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC)
+                .to_string();
 
         match self.default_search.as_str() {
             "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
@@ -333,7 +330,9 @@ mod tests {
     #[test]
     fn test_resolve_command_with_alias() {
         let mut config = BunnylolConfig::default();
-        config.aliases.insert("work".to_string(), "gh mycompany".to_string());
+        config
+            .aliases
+            .insert("work".to_string(), "gh mycompany".to_string());
 
         assert_eq!(config.resolve_command("work"), "gh mycompany");
         assert_eq!(config.resolve_command("ig"), "ig"); // No alias
@@ -396,8 +395,14 @@ mod tests {
         let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(config.browser, Some("firefox".to_string()));
         assert_eq!(config.default_search, "ddg");
-        assert_eq!(config.aliases.get("work"), Some(&"gh mycompany".to_string()));
-        assert_eq!(config.aliases.get("blog"), Some(&"gh username/blog".to_string()));
+        assert_eq!(
+            config.aliases.get("work"),
+            Some(&"gh mycompany".to_string())
+        );
+        assert_eq!(
+            config.aliases.get("blog"),
+            Some(&"gh username/blog".to_string())
+        );
         assert!(!config.history.enabled);
         assert_eq!(config.history.max_entries, 500);
         assert_eq!(config.server.port, 9000);
