@@ -307,10 +307,10 @@ fn print_commands() {
     let mut table = Table::new(rows);
     table
         .with(Style::rounded())
-        .with(Modify::new(Columns::single(0)).with(Color::FG_BRIGHT_CYAN))
-        .with(Modify::new(Columns::single(1)).with(Color::FG_YELLOW))
-        .with(Modify::new(Columns::single(2)).with(Color::FG_WHITE))
-        .with(Modify::new(Columns::single(3)).with(Color::FG_BRIGHT_GREEN));
+        .with(Modify::new(Columns::new(0..=0)).with(Color::FG_BRIGHT_CYAN))
+        .with(Modify::new(Columns::new(1..=1)).with(Color::FG_YELLOW))
+        .with(Modify::new(Columns::new(2..=2)).with(Color::FG_WHITE))
+        .with(Modify::new(Columns::new(3..=3)).with(Color::FG_BRIGHT_GREEN));
 
     println!("\n{}\n", table);
     println!("💡 Tip: Use 'bunnylol <command>' to open URLs in your browser");

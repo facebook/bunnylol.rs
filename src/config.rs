@@ -122,25 +122,25 @@ fn default_log_level() -> String {
 impl BunnylolConfig {
     /// Get the XDG base directories for bunnylol
     fn get_xdg_dirs() -> Option<xdg::BaseDirectories> {
-        xdg::BaseDirectories::with_prefix("bunnylol").ok()
+        Some(xdg::BaseDirectories::with_prefix("bunnylol"))
     }
 
     /// Get the XDG config directory path for bunnylol
     /// Returns: $XDG_CONFIG_HOME/bunnylol (defaults to ~/.config/bunnylol)
     pub fn get_config_dir() -> Option<PathBuf> {
-        Self::get_xdg_dirs().map(|xdg| xdg.get_config_home())
+        Self::get_xdg_dirs().and_then(|xdg| xdg.get_config_home())
     }
 
     /// Get the XDG data directory path for bunnylol
     /// Returns: $XDG_DATA_HOME/bunnylol (defaults to ~/.local/share/bunnylol)
     pub fn get_data_dir() -> Option<PathBuf> {
-        Self::get_xdg_dirs().map(|xdg| xdg.get_data_home())
+        Self::get_xdg_dirs().and_then(|xdg| xdg.get_data_home())
     }
 
     /// Get the XDG cache directory path for bunnylol
     /// Returns: $XDG_CACHE_HOME/bunnylol (defaults to ~/.cache/bunnylol)
     pub fn get_cache_dir() -> Option<PathBuf> {
-        Self::get_xdg_dirs().map(|xdg| xdg.get_cache_home())
+        Self::get_xdg_dirs().and_then(|xdg| xdg.get_cache_home())
     }
 
     /// Get the full path to the config file
