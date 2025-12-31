@@ -7,3 +7,7 @@
 # Docker volumes
 data/
 .claude/internet-mode-used_DO_NOT_REMOVE_MANUALLY_SECURITY_RISK
+
+# Watchman
+.watchmanconfig
+.watchman-cookie-*
