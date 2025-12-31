@@ -14,6 +14,8 @@ use bunnylol::BunnylolConfig;
 #[cfg(feature = "cli")]
 use bunnylol::{BunnylolCommandRegistry, History, utils};
 #[cfg(feature = "cli")]
+use clap_complete::generate;
+#[cfg(feature = "cli")]
 use tabled::{
     Table, Tabled,
     settings::{Color, Modify, Style, Width, object::Columns},
@@ -56,6 +58,14 @@ enum Commands {
     /// List all available command bindings
     #[cfg(feature = "cli")]
     Bindings,
+
+    /// Generate shell completion scripts
+    #[cfg(feature = "cli")]
+    Completion {
+        /// Shell to generate completions for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
 
     /// Manage bunnylol service
     #[cfg(feature = "cli")]
@@ -139,6 +149,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "cli")]
         Some(Commands::Bindings) => {
             print_commands();
+            Ok(())
+        }
+
+        #[cfg(feature = "cli")]
+        Some(Commands::Completion { shell }) => {
+            let mut cmd = Cli::command();
+            generate(shell, &mut cmd, "bunnylol", &mut std::io::stdout());
             Ok(())
         }
 

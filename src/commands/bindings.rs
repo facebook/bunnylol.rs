@@ -12,13 +12,7 @@ pub struct BindingsCommand;
 
 impl BunnylolCommand for BindingsCommand {
     const BINDINGS: &'static [&'static str] = &[
-        "bindings",
-        "commmands",
-        "list",
-        "bunny",
-        "cmd",
-        "cmds",
-        "help",
+        "bindings", "commands", "list", "bunny", "cmd", "cmds", "help",
     ];
 
     fn process_args(_args: &str) -> String {
@@ -41,6 +35,11 @@ mod tests {
     #[test]
     fn test_bindings_command() {
         assert_eq!(BindingsCommand::process_args("bindings"), "/bindings");
+    }
+
+    #[test]
+    fn test_commands_command() {
+        assert_eq!(BindingsCommand::process_args("commands"), "/bindings");
     }
 
     #[test]
