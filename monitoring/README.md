@@ -38,9 +38,13 @@ This directory contains the Prometheus + Grafana monitoring setup for Bunnylol.
 
 ### Accessing Dashboards
 
-- **Grafana:** http://localhost:3000 (username: `admin`, password: from config)
+- **Grafana:** http://localhost:3000 (no login required - anonymous viewer access)
 - **Prometheus:** http://localhost:9090
 - **Bunnylol:** http://localhost:8000
+
+**Note:** Grafana is configured with anonymous read-only access for convenience. If you want to make changes to dashboards, login with:
+- Username: `admin`
+- Password: Set in config or `.env` (defaults to `admin` if not set)
 
 ## What You Get
 
