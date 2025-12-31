@@ -121,6 +121,9 @@ impl BunnylolCommandRegistry {
         for alias in GoogleChatCommand::BINDINGS {
             map.insert(*alias, GoogleChatCommand::process_args as CommandHandler);
         }
+        for alias in GoogleSearchCommand::BINDINGS {
+            map.insert(*alias, GoogleSearchCommand::process_args as CommandHandler);
+        }
 
         map
     }

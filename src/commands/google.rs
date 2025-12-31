@@ -6,7 +6,7 @@ use crate::utils::url_encoding::build_search_url;
 pub struct GoogleSearchCommand;
 
 impl BunnylolCommand for GoogleSearchCommand {
-    const BINDINGS: &'static [&'static str] = &["g", ""];
+    const BINDINGS: &'static [&'static str] = &["g"];
 
     fn process_args(args: &str) -> String {
         let query = Self::get_command_args(args);
