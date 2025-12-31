@@ -143,17 +143,41 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
         SERVICE_NAME
     );
 
-    // Create config file at /etc/bunnylol/config.toml if it doesn't exist
+    // Create or update config file at /etc/bunnylol/config.toml
     let system_config_path = PathBuf::from("/etc/bunnylol/config.toml");
-    if !system_config_path.exists() {
+
+    // Create directory if needed
+    std::fs::create_dir_all("/etc/bunnylol")
+        .map_err(|e| ServiceError::ConfigError(format!("Failed to create /etc/bunnylol: {}", e)))?;
+
+    use crate::config::BunnylolConfig;
+
+    if system_config_path.exists() {
+        println!("✓ Found existing config file: /etc/bunnylol/config.toml");
+
+        // Load existing config
+        let mut existing_config = BunnylolConfig::load()
+            .map_err(|e| ServiceError::ConfigError(format!("Failed to load existing config: {}", e)))?;
+
+        let current_address = existing_config.server.address.clone();
+        println!("  Current address: {}", current_address);
+        println!("  New address:     {}", config.address);
+
+        if current_address == config.address {
+            println!("✓ Config already has correct address, no changes needed");
+        } else {
+            // Update only the address field, preserve everything else
+            existing_config.server.address = config.address.clone();
+
+            println!("✓ Updating address in config file (preserving other settings)...");
+            if let Err(e) = existing_config.write_to_file(&system_config_path) {
+                return Err(ServiceError::ConfigError(format!("Failed to write config: {}", e)));
+            }
+        }
+    } else {
         println!("✓ Creating system config file: /etc/bunnylol/config.toml");
 
-        // Create directory
-        std::fs::create_dir_all("/etc/bunnylol")
-            .map_err(|e| ServiceError::ConfigError(format!("Failed to create /etc/bunnylol: {}", e)))?;
-
-        // Create config from the provided ServiceConfig
-        use crate::config::BunnylolConfig;
+        // Create new config with provided ServiceConfig settings
         let mut default_config = BunnylolConfig::default();
         default_config.server.port = config.port;
         default_config.server.address = config.address.clone();
@@ -163,8 +187,6 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
         if let Err(e) = default_config.write_to_file(&system_config_path) {
             return Err(ServiceError::ConfigError(format!("Failed to write config: {}", e)));
         }
-    } else {
-        println!("✓ Using existing config file: /etc/bunnylol/config.toml");
     }
 
     println!();
