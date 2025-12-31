@@ -15,7 +15,8 @@ To install the pre-commit hook that runs tests before each commit:
 The pre-commit hook will:
 1. Run `cargo check --all-features` (fast compilation check)
 2. Run `cargo fmt --all -- --check` (formatting check)
-3. Run `cargo test --all-features` (full test suite)
+3. Run `cargo clippy --all-features -- -D warnings` (linter)
+4. Run `cargo test --all-features` (full test suite)
 
 If any of these fail, the commit will be blocked.
 

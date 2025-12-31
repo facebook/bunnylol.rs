@@ -16,6 +16,11 @@ echo ""
 echo "📝 Checking code formatting..."
 cargo fmt --all -- --check
 
+# Run clippy (linter)
+echo ""
+echo "🔧 Running cargo clippy..."
+cargo clippy --all-features -- -D warnings
+
 # Run tests
 echo ""
 echo "🧪 Running cargo test..."

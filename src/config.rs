@@ -153,13 +153,13 @@ impl BunnylolConfig {
 
         if system_config.exists() {
             // Warn if both configs exist
-            if let Some(ref user_path) = user_config {
-                if user_path.exists() {
-                    eprintln!("Warning: Found config files at both locations:");
-                    eprintln!("  - {}", system_config.display());
-                    eprintln!("  - {}", user_path.display());
-                    eprintln!("Using system config: {}", system_config.display());
-                }
+            if let Some(ref user_path) = user_config
+                && user_path.exists()
+            {
+                eprintln!("Warning: Found config files at both locations:");
+                eprintln!("  - {}", system_config.display());
+                eprintln!("  - {}", user_path.display());
+                eprintln!("Using system config: {}", system_config.display());
             }
             return Some(system_config);
         }

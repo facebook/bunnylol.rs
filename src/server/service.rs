@@ -399,7 +399,7 @@ pub fn restart_service() -> Result<(), ServiceError> {
 #[cfg(target_os = "linux")]
 pub fn service_status() -> Result<(), ServiceError> {
     let cmd = Command::new("systemctl")
-        .args(&["status", SERVICE_NAME])
+        .args(["status", SERVICE_NAME])
         .status()
         .map_err(|e| ServiceError::ServiceManagerError(e.to_string()))?;
 
@@ -422,7 +422,7 @@ pub fn service_status() -> Result<(), ServiceError> {
 #[cfg(target_os = "linux")]
 pub fn service_logs(follow: bool, lines: u32) -> Result<(), ServiceError> {
     let mut cmd = Command::new("journalctl");
-    cmd.args(&["-u", SERVICE_NAME, "-n", &lines.to_string()]);
+    cmd.args(["-u", SERVICE_NAME, "-n", &lines.to_string()]);
     if follow {
         cmd.arg("-f");
     }

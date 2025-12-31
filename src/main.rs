@@ -138,11 +138,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let result = match action {
                 ServiceAction::Install { network } => {
                     // Use ServiceConfig with appropriate address based on --network flag
-                    let mut service_config = ServiceConfig::default();
-                    service_config.address = if network {
-                        "0.0.0.0".to_string() // Network access
-                    } else {
-                        "127.0.0.1".to_string() // Localhost only (secure default)
+                    let service_config = ServiceConfig {
+                        address: if network {
+                            "0.0.0.0".to_string() // Network access
+                        } else {
+                            "127.0.0.1".to_string() // Localhost only (secure default)
+                        },
+                        ..Default::default()
                     };
 
                     install_systemd_service(service_config)
