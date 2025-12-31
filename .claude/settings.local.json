@@ -21,7 +21,11 @@
       "Bash(gh issue list:*)",
       "Bash(timeout 5 cargo run:*)",
       "Bash(./target/debug/bunnylol service start:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(for commit in 14c9eca d0e5b4a dc63bc4)",
+      "Bash(do echo \"=== $commit ===\")",
+      "Bash(done)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

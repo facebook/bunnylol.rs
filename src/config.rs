@@ -85,7 +85,15 @@ pub struct ServerConfig {
     pub log_level: String,
 
     /// Public-facing URL for display in the bindings page
-    /// Examples: "bunny.alichtman.com", "https://bunny.example.com"
+    ///
+    /// Smart defaults when protocol is omitted:
+    /// - "bunny.example.com" → "https://bunny.example.com"
+    /// - "localhost" or "127.0.0.1" or "0.0.0.0" → "http://localhost" (or IP)
+    ///
+    /// You can also specify the full URL to override:
+    /// - "https://bunny.example.com" → used as-is
+    /// - "http://bunny.local" → used as-is
+    ///
     /// If not set, defaults to http://localhost:{port}
     #[serde(default)]
     pub server_display_url: Option<String>,
@@ -105,10 +113,9 @@ impl Default for ServerConfig {
 impl ServerConfig {
     /// Get the display URL for the server, normalized with protocol
     ///
-    /// If server_display_url is configured, normalizes it:
-    /// - "bunny.example.com" → "https://bunny.example.com"
-    /// - "https://bunny.example.com" → "https://bunny.example.com" (unchanged)
-    /// - "http://localhost:8000" → "http://localhost:8000" (unchanged)
+    /// Smart defaults when protocol is omitted:
+    /// - Public domains (e.g., "bunny.example.com") → "https://bunny.example.com"
+    /// - Local addresses (localhost, 127.0.0.1, 0.0.0.0) → "http://localhost" (or IP)
     ///
     /// If server_display_url is not set, returns "http://localhost:{port}"
     pub fn get_display_url(&self) -> String {
@@ -119,8 +126,17 @@ impl ServerConfig {
                 if url.starts_with("http://") || url.starts_with("https://") {
                     url.to_string()
                 } else {
-                    // No protocol, prepend https://
-                    format!("https://{}", url)
+                    // Bare domain/IP - apply smart defaults
+                    if url.starts_with("localhost")
+                        || url.starts_with("127.0.0.1")
+                        || url.starts_with("0.0.0.0")
+                    {
+                        // Local addresses default to http://
+                        format!("http://{}", url)
+                    } else {
+                        // Public domains default to https://
+                        format!("https://{}", url)
+                    }
                 }
             }
             None => {
@@ -299,8 +315,13 @@ max_entries = {}
 
 # Server configuration (for bunnylol serve)
 # server_display_url: Public-facing URL shown in the bindings page
-#   - Accepts domain (e.g., "bunny.example.com") or full URL (e.g., "https://bunny.example.com")
-#   - If not set, defaults to http://localhost:{{port}}
+#   Smart defaults when protocol is omitted:
+#     - "bunny.example.com" → "https://bunny.example.com"
+#     - "localhost" or "127.0.0.1" or "0.0.0.0" → "http://localhost" (or IP)
+#   You can also specify the full URL:
+#     - "https://bunny.example.com" → used as-is
+#     - "http://bunny.local" → used as-is
+#   If not set, defaults to http://localhost:{{port}}
 [server]
 port = {}
 address = "{}"
@@ -501,6 +522,41 @@ mod tests {
         let mut config = ServerConfig::default();
         config.server_display_url = Some("  bunny.example.com  ".to_string());
         assert_eq!(config.get_display_url(), "https://bunny.example.com");
+    }
+
+    #[test]
+    fn test_get_display_url_localhost_bare() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("localhost".to_string());
+        assert_eq!(config.get_display_url(), "http://localhost");
+    }
+
+    #[test]
+    fn test_get_display_url_localhost_with_port() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("localhost:8000".to_string());
+        assert_eq!(config.get_display_url(), "http://localhost:8000");
+    }
+
+    #[test]
+    fn test_get_display_url_127_0_0_1() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("127.0.0.1".to_string());
+        assert_eq!(config.get_display_url(), "http://127.0.0.1");
+    }
+
+    #[test]
+    fn test_get_display_url_127_0_0_1_with_port() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("127.0.0.1:8000".to_string());
+        assert_eq!(config.get_display_url(), "http://127.0.0.1:8000");
+    }
+
+    #[test]
+    fn test_get_display_url_0_0_0_0() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("0.0.0.0:8000".to_string());
+        assert_eq!(config.get_display_url(), "http://0.0.0.0:8000");
     }
 
     #[test]

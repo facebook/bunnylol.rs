@@ -7,8 +7,6 @@
 
 // Server runtime (routes, web UI) - only needed for server feature
 #[cfg(feature = "server")]
-pub mod routes;
-#[cfg(feature = "server")]
 pub mod web;
 
 // Service management - only needed for CLI feature
@@ -49,35 +47,39 @@ mod server_impl {
     // http://localhost:8000/?cmd=gh
     #[rocket::get("/?<cmd>")]
     pub(super) fn search(
-        cmd: &str,
+        cmd: Option<&str>,
         config: &State<BunnylolConfig>,
         client_ip: ClientIP,
-    ) -> Redirect {
-        println!("bunnylol command: {}", cmd);
+    ) -> Result<Redirect, rocket::response::content::RawHtml<String>> {
+        match cmd {
+            Some(cmd_str) => {
+                println!("bunnylol command: {}", cmd_str);
 
-        let command = utils::get_command_from_query_string(cmd);
-        let redirect_url = BunnylolCommandRegistry::process_command_with_config(
-            command,
-            cmd,
-            Some(config.inner()),
-        );
-        println!("redirecting to: {}", redirect_url);
+                let command = utils::get_command_from_query_string(cmd_str);
+                let redirect_url = BunnylolCommandRegistry::process_command_with_config(
+                    command,
+                    cmd_str,
+                    Some(config.inner()),
+                );
+                println!("redirecting to: {}", redirect_url);
 
-        // Track command in history if enabled
-        if config.history.enabled
-            && let Some(history) = History::new(config.inner())
-            && let Err(e) = history.add(cmd, &client_ip.0)
-        {
-            eprintln!("Warning: Failed to save command to history: {}", e);
+                // Track command in history if enabled
+                if config.history.enabled
+                    && let Some(history) = History::new(config.inner())
+                    && let Err(e) = history.add(cmd_str, &client_ip.0)
+                {
+                    eprintln!("Warning: Failed to save command to history: {}", e);
+                }
+
+                Ok(Redirect::to(redirect_url))
+            }
+            None => {
+                // No cmd parameter, show landing page
+                Err(rocket::response::content::RawHtml(
+                    web::render_landing_page_html(config.inner()),
+                ))
+            }
         }
-
-        Redirect::to(redirect_url)
-    }
-
-    // Root path without query parameters -> redirect to bindings
-    #[rocket::get("/", rank = 2)]
-    pub(super) fn root() -> Redirect {
-        Redirect::to("/bindings")
     }
 
     // Health check endpoint for Docker healthcheck (no verbose logging)
@@ -86,10 +88,18 @@ mod server_impl {
         "ok"
     }
 
-    // Catch 404 errors and redirect to bindings page
+    // Catch 404 errors and show landing page
     #[rocket::catch(404)]
-    pub(super) fn not_found() -> Redirect {
-        Redirect::to("/bindings")
+    pub(super) fn not_found(req: &rocket::Request) -> rocket::response::content::RawHtml<String> {
+        // Get config from request state
+        if let Some(config) = req.rocket().state::<BunnylolConfig>() {
+            rocket::response::content::RawHtml(web::render_landing_page_html(config))
+        } else {
+            // Fallback if config is not available (shouldn't happen)
+            rocket::response::content::RawHtml(
+                "<html><body><h1>404 Not Found</h1></body></html>".to_string(),
+            )
+        }
     }
 }
 
@@ -116,10 +126,7 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
 
     let _rocket = rocket::custom(figment)
         .manage(config)
-        .mount(
-            "/",
-            rocket::routes![search, root, health, routes::bindings_web],
-        )
+        .mount("/", rocket::routes![search, health])
         .register("/", rocket::catchers![not_found])
         .launch()
         .await?;
