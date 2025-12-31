@@ -1,7 +1,7 @@
 # `bunnylol.rs` -- Smart browser bookmarks with Rust
 
-[![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
-[![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
+<!-- [![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol) -->
+<!-- [![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol) -->
 [![Contributors](https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/graphs/contributors)
 [![Stargazers](https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/stargazers)
 [![License](https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square)](https://github.com/facebook/bunnylol.rs/blob/master/LICENSE)
