@@ -52,6 +52,10 @@ enum Commands {
         address: Option<String>,
     },
 
+    /// List all available command bindings
+    #[cfg(feature = "cli")]
+    Bindings,
+
     /// Manage bunnylol service
     #[cfg(feature = "cli")]
     Service {
@@ -132,6 +136,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         #[cfg(feature = "cli")]
+        Some(Commands::Bindings) => {
+            print_commands();
+            Ok(())
+        }
+
+        #[cfg(feature = "cli")]
         Some(Commands::Service { action }) => {
             use bunnylol::service::*;
 
@@ -207,7 +217,7 @@ fn execute_command(
     config: &BunnylolConfig,
     dry_run: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Check if first arg is "list"
+    // Special case: "list" should print commands table, not execute as a command
     if args.first().map(|s| s.as_str()) == Some("list") {
         print_commands();
         return Ok(());
