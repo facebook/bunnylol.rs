@@ -101,7 +101,8 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
     let figment = rocket::Config::figment()
         .merge(("address", config.server.address.clone()))
         .merge(("port", config.server.port))
-        .merge(("log_level", config.server.log_level.clone()));
+        .merge(("log_level", config.server.log_level.clone()))
+        .merge(("ident", format!("Bunnylol/{}", env!("CARGO_PKG_VERSION"))));
 
     let _rocket = rocket::custom(figment)
         .manage(config)
