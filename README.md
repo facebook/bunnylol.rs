@@ -247,31 +247,6 @@ The CLI uses platform-appropriate directories for configuration and data:
 | **Windows** | Config | `%APPDATA%\bunnylol\config.toml` |
 | **Windows** | Data | `%APPDATA%\bunnylol\` |
 
-### Creating Your First Config
-
-To get started with a config file:
-
-```sh
-# Create the config directory
-mkdir -p ~/.config/bunnylol
-
-# Create a basic config file
-cat > ~/.config/bunnylol/config.toml << 'EOF'
-# Set your preferred browser
-browser = "firefox"
-
-# Add custom aliases
-[aliases]
-work = "gh yourcompany"
-
-# Use DuckDuckGo for fallback searches
-default_search = "ddg"
-EOF
-
-# Test it out!
-bunnylol work
-```
-
 ## Quickstart - Web Server
 
 After [installing](#installation) bunnylol, start the server:
