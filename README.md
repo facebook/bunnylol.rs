@@ -1,7 +1,7 @@
 # `bunnylol.rs` -- Smart browser bookmarks with Rust
 
-<!-- [![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol) -->
-<!-- [![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol) -->
+[![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
+[![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
 [![Contributors](https://img.shields.io/github/contributors/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/graphs/contributors)
 [![Stargazers](https://img.shields.io/github/stars/facebook/bunnylol.rs.svg?style=flat-square)](https://github.com/facebook/bunnylol.rs/stargazers)
 [![License](https://img.shields.io/github/license/facebook/bunnylol.rs?style=flat-square)](https://github.com/facebook/bunnylol.rs/blob/master/LICENSE)
@@ -24,7 +24,20 @@ $ bunnylol gh facebook/react
 
 ## Installation
 
-Clone and build from source:
+Install from [crates.io](https://crates.io/crates/bunnylol):
+
+```sh
+# Install both CLI and server (3.9MB)
+$ cargo install bunnylol
+
+# Install just the CLI (1.4MB - recommended for terminal use only)
+$ cargo install bunnylol --features cli --no-default-features
+
+# Install just the server (3.6MB - recommended for web server deployments)
+$ cargo install bunnylol --features server --no-default-features
+```
+
+Or build from source:
 
 ```sh
 # Clone the repository
@@ -40,19 +53,6 @@ $ cargo install --path . --features cli --no-default-features
 # Install just the server (3.6MB - recommended for web server deployments)
 $ cargo install --path . --features server --no-default-features
 ```
-
-<!-- `bunnylol` will be available on [crates.io](https://crates.io/crates/bunnylol): -->
-<!---->
-<!-- ```sh -->
-<!-- # Install both CLI and server (3.9MB) -->
-<!-- $ cargo install bunnylol -->
-<!---->
-<!-- # Install just the CLI (1.4MB - recommended for terminal use only) -->
-<!-- $ cargo install bunnylol --features cli --no-default-features -->
-<!---->
-<!-- # Install just the server (3.6MB - recommended for web server deployments) -->
-<!-- $ cargo install bunnylol --features server --no-default-features -->
-<!-- ``` -->
 
 **Which one should I use?**
 - **CLI only**: If you only want terminal shortcuts and don't need the web server (1.4MB, faster to compile)
