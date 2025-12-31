@@ -69,7 +69,7 @@ $ cargo install --path . --features server --no-default-features
   - [Web Server Quickstart](#quickstart---web-server)
     - [Installing as a System Service](#installing-as-a-system-service)
   - [Setting bunnylol as Default Search Engine](#setting-bunnylol-to-be-your-default-search-engine)
-  - [Command Examples](#other-command-examples)
+  - [Command Reference](#command-reference)
     - [Built With](#built-with)
   - [Getting Started](#getting-started)
     - [Manual Setup](#manual-setup)
@@ -339,64 +339,113 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 - [Guide for managing default search engines in Firefox for Android](https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android)
 
 <!-- USAGE EXAMPLES -->
-## Other Command Examples
+## Command Reference
 
-| Command | Usage Example | Description |
-|---------|--------------|-------------|
-| `bindings`, `commmands`, `list` | `bindings` | View all Bunnylol command bindings in a web portal |
-| `gh` | `gh` | Redirects to github.com |
-| `gh` | `gh username` | Redirects to github.com/username |
-| `gh` | `gh username/repo` | Redirects to github.com/username/repo |
-| `tw` | `tw` | Redirects to twitter.com |
-| `tw` | `tw @username` | Redirects to twitter.com/username |
-| `tw` | `tw search terms` | Searches Twitter for "search terms" |
-| `r`, `reddit` | `r` | Redirects to reddit.com |
-| `r`, `reddit` | `r search terms` | Searches Reddit for "search terms" |
-| `r`, `reddit` | `r r/subreddit` | Redirects to reddit.com/r/subreddit |
-| `r`, `reddit` | `r r/subreddit search terms` | Searches within a subreddit for "search terms" |
-| `mail`, `gmail` | `mail` | Redirects to mail.google.com |
-| `rei` | `rei` | Redirects to www.rei.com |
-| `rei` | `rei search terms` | Searches REI for "search terms" |
-| `fb` | `fb` | Redirects to facebook.com |
-| `fb` | `fb page` | Redirects to facebook.com/page |
-| `fb` | `fb search terms` | Searches Facebook for "search terms" |
-| `ig`, `instagram` | `ig` | Redirects to instagram.com |
-| `ig`, `instagram` | `ig @username` | Redirects to instagram.com/username |
-| `ig`, `instagram` | `ig search terms` | Searches Instagram for "search terms" |
-| `threads` | `threads` | Redirects to threads.net |
-| `threads` | `threads @username` | Redirects to threads.net/@username |
-| `threads` | `threads search terms` | Searches Threads for "search terms" |
-| `wa`, `whatsapp` | `wa` | Redirects to whatsapp.com |
-| `meta`, `metaai` | `meta` | Redirects to meta.com |
-| `meta`, `metaai` | `meta accounts` | Redirects to Meta Accounts Center |
-| `meta`, `metaai` | `meta ai` or `metaai` | Redirects to meta.ai |
-| `cargo`, `crates` | `cargo` | Redirects to crates.io |
-| `cargo`, `crates` | `cargo serde` | Searches crates.io for "serde" |
-| `cargo`, `crates` | `cargo settings` | Redirects to crates.io/settings/profile |
-| `cargo`, `crates` | `cargo tokens` | Redirects to crates.io/settings/tokens |
-| `npm`, `npmjs` | `npm` | Redirects to npmjs.com |
-| `npm`, `npmjs` | `npm react` | Searches npmjs.com for "react" |
-| `claude` | `claude` | Redirects to claude.ai |
-| `chatgpt` | `chatgpt` | Redirects to chatgpt.com |
-| `rust` | `rust` | Redirects to Rust std documentation |
-| `rust` | `rust HashMap` | Searches Rust std docs for "HashMap" |
-| `hack` | `hack` | Redirects to Hack documentation |
-| `hack` | `hack async` | Searches Hack docs for "async" |
-| `az`, `amzn`, `azn`, `amazon` | `az` | Redirects to amazon.com |
-| `az`, `amzn`, `azn`, `amazon` | `az headphones` | Searches Amazon for "headphones" |
-| `yt`, `youtube` | `yt` | Redirects to youtube.com |
-| `yt`, `youtube` | `yt search terms` | Searches YouTube for videos |
-| `yt`, `youtube` | `yt studio` | Redirects to YouTube Studio |
-| `yt`, `youtube` | `yt subscriptions` or `yt subs` | Redirects to YouTube subscriptions feed |
-| `docs`, `gdoc` | `docs` | Redirects to Google Docs |
-| `gsheets` | `gsheets` | Redirects to Google Sheets |
-| `gslides` | `gslides` | Redirects to Google Slides |
-| `gchat` | `gchat` | Redirects to Google Chat |
-| `devbunny` | `devbunny command` | Redirects to localhost:8000/?cmd=command (for testing) |
-| `g` | `g search terms` | Searches Google for "search terms" |
-| (default) | `any search terms` | Searches Google for "any search terms" (default fallback) |
+<details>
+<summary><strong>📚 Click to view all available commands</strong></summary>
+
+<br>
+
+### Development & Package Managers
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `gh` | — | Navigate to GitHub repositories | `gh facebook/react` |
+| `gitlab` | `gl` | Navigate to GitLab projects or search GitLab | `gitlab gitlab-org/gitlab` |
+| `cargo` | `crates` | Navigate to crates.io or search for Rust crates | `cargo serde` |
+| `npm` | `npmjs` | Navigate to npmjs.com or search for npm packages | `npm react` |
+| `pypi` | `pip` | Navigate to pypi.org or search for Python packages | `pypi requests` |
+| `rubygems` | `gem`, `gems` | Navigate to rubygems.org or search for Ruby gems | `gem rails` |
+| `go` | `golang`, `gopkg` | Navigate to pkg.go.dev or search for Go packages | `go http` |
+| `nuget` | — | Navigate to nuget.org or search for .NET packages | `nuget newtonsoft` |
+| `packagist` | `composer` | Navigate to packagist.org or search for PHP packages | `packagist symfony` |
+| `brew` | `homebrew` | Navigate to formulae.brew.sh or search for Homebrew packages | `brew wget` |
+| `choco` | `chocolatey` | Navigate to community.chocolatey.org or search for Windows packages | `choco git` |
+| `dockerhub` | `docker` | Navigate to Docker Hub or search for container images | `docker nginx` |
+
+### Programming Documentation
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `rust` | — | Navigate to Rust documentation or search Rust std docs | `rust HashMap` |
+| `python` | `pydocs`, `py` | Navigate to Python documentation or search for Python resources | `python list` |
+| `node` | `nodejs` | Navigate to Node.js API documentation or specific module docs | `node fs` |
+| `godocs` | — | Navigate to Go language documentation | `godocs` |
+| `hack` | — | Navigate to Hack documentation or search Hack docs | `hack async` |
+| `mdn` | — | Navigate to MDN Web Docs or search for web development resources | `mdn flexbox` |
+| `stackoverflow` | `so` | Navigate to Stack Overflow or search for programming questions | `so rust ownership` |
+
+### Social Media
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `ig` | `instagram` | Navigate to Instagram profiles, search, or access Reels/Messages | `ig @instagram` |
+| `tw` | — | Navigate to Twitter profiles or search Twitter | `tw @MetaOpenSource` |
+| `threads` | — | Navigate to Threads profiles or search Threads | `threads @zuck` |
+| `fb` | — | Navigate to Facebook pages or search Facebook | `fb Meta` |
+| `li` | `linkedin` | Navigate to LinkedIn or search | `li software engineer` |
+| `reddit` | `r` | Navigate to Reddit or search subreddits | `r r/rust` |
+| `yt` | `youtube` | Navigate to YouTube or search for videos (supports: `studio`, `subs`) | `yt rust programming` |
+| `wa` | `whatsapp` | Navigate to WhatsApp | `wa` |
+
+### Google Services
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `g` | (default) | Search Google (default fallback for any unrecognized command) | `g rust programming` |
+| `gmail` | `mail` | Navigate to Gmail | `mail` |
+| `docs` | `gdoc` | Navigate to Google Docs | `docs` |
+| `gsheets` | — | Navigate to Google Sheets | `gsheets` |
+| `gslides` | — | Navigate to Google Slides | `gslides` |
+| `gchat` | — | Navigate to Google Chat | `gchat` |
+| `gmaps` | `maps` | Navigate to Google Maps or search for a location | `gmaps san francisco` |
+
+### Meta / AI Services
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `meta` | `metaai` | Navigate to Meta, Meta AI, Meta Accounts Center, or Meta Pay | `meta accounts` |
+| `claude` | — | Navigate to Claude AI (supports: `billing`, `cost`, `artifacts`, `chats`, `projects`) | `claude projects` |
+| `chatgpt` | — | Navigate to ChatGPT | `chatgpt` |
+
+### Shopping & Finance
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `az` | `amzn`, `azn`, `amazon` | Navigate to Amazon or search for products | `az headphones` |
+| `rei` | — | Navigate to REI or search for outdoor gear | `rei hiking boots` |
+| `schwab` | — | Charles Schwab shortcuts (`billpay`, `orders`, `trade`, `transfer`, `security`, `contact`) | `schwab trade` |
+| `stock` | `stocks`, `finance`, `$<ticker>` | Look up stock prices on Yahoo Finance | `stock META` or `$META` |
+
+### Other Services
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `1password` | `1p`, `onepassword` | 1Password home page | `1p` |
+| `soundcloud` | `sc` | Navigate to SoundCloud (supports: `likes`) | `sc edm` |
+| `wiki` | `wikipedia` | Search on Wikipedia | `wiki rust programming` |
+| `ddg` | `duckduckgo` | Search DuckDuckGo | `ddg rust programming` |
+
+### Bunnylol Development Tools
+
+| Command | Aliases | Description | Example |
+|---------|---------|-------------|---------|
+| `bindings` | `commmands`, `list`, `bunny`, `cmd`, `cmds`, `help` | View all Bunnylol command bindings in a web portal | `bindings` |
+| `devbunny` | — | Test Bunnylol commands in development | `devbunny gh facebook` |
+
+### Special Syntax
+
+- **Stock tickers**: Prefix with `$` → `$AAPL` redirects to Yahoo Finance
+- **Twitter profiles**: Prefix with `@` → `tw @username`
+- **Instagram profiles**: Prefix with `@` → `ig @username`
+- **Threads profiles**: Prefix with `@` → `threads @username`
+- **Subreddits**: Use `r/` prefix → `r r/rust`
+- **Default fallback**: Any unrecognized command searches Google
+
+</details>
 
 ### Built With
+
 
 * [Rust](https://www.rust-lang.org/)
 * [Rocket](https://rocket.rs/) - Web framework
