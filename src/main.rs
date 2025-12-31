@@ -16,7 +16,7 @@ use bunnylol::{BunnylolCommandRegistry, History, utils};
 #[cfg(feature = "cli")]
 use tabled::{
     Table, Tabled,
-    settings::{Color, Modify, Style, object::Columns},
+    settings::{Color, Modify, Style, Width, object::Columns},
 };
 
 #[derive(Parser)]
@@ -314,13 +314,42 @@ fn print_commands() {
         })
         .collect();
 
+    // Get terminal width and calculate column widths dynamically
+    let term_width = terminal_size::terminal_size()
+        .map(|(w, _)| w.0 as usize)
+        .unwrap_or(120); // Default to 120 if terminal size unavailable
+
+    // Use all available width minus 2 for safety
+    let available_width = term_width.saturating_sub(2);
+
+    // Calculate widths: Command(15) + Aliases(dynamic) + Description(40-50%) + Example(25-30%)
+    let command_width = 15;
+    let example_width = (available_width as f32 * 0.25).max(20.0) as usize;
+    let description_width = (available_width as f32 * 0.45).max(30.0) as usize;
+    let aliases_width = available_width
+        .saturating_sub(command_width)
+        .saturating_sub(description_width)
+        .saturating_sub(example_width);
+
     let mut table = Table::new(rows);
     table
         .with(Style::rounded())
         .with(Modify::new(Columns::new(0..=0)).with(Color::FG_BRIGHT_CYAN))
-        .with(Modify::new(Columns::new(1..=1)).with(Color::FG_YELLOW))
-        .with(Modify::new(Columns::new(2..=2)).with(Color::FG_WHITE))
-        .with(Modify::new(Columns::new(3..=3)).with(Color::FG_BRIGHT_GREEN));
+        .with(
+            Modify::new(Columns::new(1..=1))
+                .with(Color::FG_YELLOW)
+                .with(Width::wrap(aliases_width)),
+        )
+        .with(
+            Modify::new(Columns::new(2..=2))
+                .with(Color::FG_WHITE)
+                .with(Width::wrap(description_width)),
+        )
+        .with(
+            Modify::new(Columns::new(3..=3))
+                .with(Color::FG_BRIGHT_GREEN)
+                .with(Width::wrap(example_width)),
+        );
 
     println!("\n{}\n", table);
     println!("💡 Tip: Use 'bunnylol <command>' to open URLs in your browser");
