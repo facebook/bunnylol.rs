@@ -20,7 +20,8 @@
       "Bash(./target/debug/bunnylol-cli:*)",
       "Bash(gh issue list:*)",
       "Bash(timeout 5 cargo run:*)",
-      "Bash(./target/debug/bunnylol service start:*)"
+      "Bash(./target/debug/bunnylol service start:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

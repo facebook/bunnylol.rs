@@ -443,18 +443,6 @@ $BUNNYLOL_PORT=9000·docker compose up
 
 The application will be running at `http://localhost:8000` by default.
 
-### Auto-start on Boot (Linux)
-
-Docker containers can automatically start on system boot:
-
-1. Enable Docker service: `sudo systemctl enable docker`
-2. Use restart policy in `docker-compose.yml`:
-   ```yaml
-   services:
-     bunnylol:
-       restart: unless-stopped
-   ```
-
 ### Where to Deploy
 
 Docker makes it easy to deploy anywhere:
