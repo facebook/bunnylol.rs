@@ -42,8 +42,8 @@ tokio = { version = "1.47", features = ["macros", "rt-multi-thread"] }
 rocket = { version = "0.5", features = ["json"], optional = true }
 leptos = { version = "0.6", features = ["ssr"], optional = true }
 leptos_meta = { version = "0.6", features = ["ssr"], optional = true }
-metrics = { version = "0.23", optional = true }
-metrics-exporter-prometheus = { version = "0.15", optional = true }
+metrics = { version = "0.24", optional = true }
+metrics-exporter-prometheus = { version = "0.18", optional = true }
 
 # CLI dependencies (optional)
 open = { version = "5.3", optional = true }

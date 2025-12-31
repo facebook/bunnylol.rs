@@ -11,8 +11,6 @@ pub mod metrics;
 #[cfg(feature = "server")]
 pub mod routes;
 #[cfg(feature = "server")]
-pub mod stats;
-#[cfg(feature = "server")]
 pub mod web;
 
 // Service management - only needed for CLI feature
@@ -107,14 +105,6 @@ mod server_impl {
         (rocket::http::Status::Ok, super::metrics::get_metrics())
     }
 
-    // Usage statistics dashboard
-    #[rocket::get("/stats")]
-    pub(super) fn stats_web(
-        config: &State<BunnylolConfig>,
-    ) -> rocket::response::content::RawHtml<String> {
-        web::render_stats_page(config.inner())
-    }
-
     // Catch 404 errors and redirect to bindings page
     #[rocket::catch(404)]
     pub(super) fn not_found() -> Redirect {
@@ -150,14 +140,7 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         .manage(config)
         .mount(
             "/",
-            rocket::routes![
-                search,
-                root,
-                health,
-                metrics_endpoint,
-                stats_web,
-                routes::bindings_web
-            ],
+            rocket::routes![search, root, health, metrics_endpoint, routes::bindings_web],
         )
         .register("/", rocket::catchers![not_found])
         .launch()
