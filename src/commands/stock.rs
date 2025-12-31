@@ -6,6 +6,11 @@ pub struct StockCommand;
 impl StockCommand {
     /// Process a ticker with $ prefix (e.g., "$META")
     pub fn process_ticker(ticker_with_dollar: &str) -> String {
+        // Handle edge case: if string is empty or just "$", go to Yahoo Finance homepage
+        if ticker_with_dollar.len() <= 1 {
+            return "https://finance.yahoo.com/".to_string();
+        }
+
         // Remove the $ prefix
         let ticker = &ticker_with_dollar[1..];
         Self::build_yahoo_finance_url(ticker)
@@ -124,6 +129,24 @@ mod tests {
     fn test_stock_command_no_ticker() {
         assert_eq!(
             StockCommand::process_args("stock"),
+            "https://finance.yahoo.com/"
+        );
+    }
+
+    #[test]
+    fn test_stock_ticker_prefix_edge_case_empty_ticker() {
+        // Test that "$" alone doesn't panic
+        assert_eq!(
+            StockCommand::process_ticker("$"),
+            "https://finance.yahoo.com/"
+        );
+    }
+
+    #[test]
+    fn test_stock_ticker_prefix_edge_case_empty_string() {
+        // Test that empty string doesn't panic
+        assert_eq!(
+            StockCommand::process_ticker(""),
             "https://finance.yahoo.com/"
         );
     }
