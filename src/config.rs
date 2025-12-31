@@ -34,6 +34,10 @@ pub struct BunnylolConfig {
     /// Server configuration (for bunnylol serve)
     #[serde(default)]
     pub server: ServerConfig,
+
+    /// Command filtering (blocklist/allowlist)
+    #[serde(default)]
+    pub command_filtering: CommandFilteringConfig,
 }
 
 impl Default for BunnylolConfig {
@@ -44,6 +48,7 @@ impl Default for BunnylolConfig {
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
+            command_filtering: CommandFilteringConfig::default(),
         }
     }
 }
@@ -91,6 +96,75 @@ impl Default for ServerConfig {
             port: default_port(),
             address: default_address(),
             log_level: default_log_level(),
+        }
+    }
+}
+
+/// Configuration for command filtering (blocklist/allowlist)
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CommandFilteringConfig {
+    /// Commands to block (deny-list mode)
+    /// When populated, these commands will fall through to search
+    #[serde(default)]
+    pub blocked_commands: Vec<String>,
+
+    /// Commands to allow (allow-list mode)
+    /// When populated, only these commands will work, all others fall through to search
+    /// NOTE: Only use ONE of blocked_commands or allowed_commands
+    #[serde(default)]
+    pub allowed_commands: Vec<String>,
+}
+
+impl CommandFilteringConfig {
+    /// Helper: Check if command name or any binding matches any entry in a list (case-insensitive)
+    fn has_matching_entry(command_name: &str, bindings: &[&str], config_list: &[String]) -> bool {
+        config_list.iter().any(|config_entry| {
+            // Check if config entry matches the command name (struct name)
+            if config_entry.eq_ignore_ascii_case(command_name) {
+                return true;
+            }
+            // Check if config entry matches any alias
+            bindings
+                .iter()
+                .any(|binding| binding.eq_ignore_ascii_case(config_entry))
+        })
+    }
+
+    /// Check if a command is allowed based on current configuration
+    /// Returns true if the command should be executed, false if it should be blocked
+    ///
+    /// Checks if the command name (struct name) or any of its bindings match entries in blocked/allowed lists
+    pub fn is_command_allowed(&self, command_name: &str, bindings: &[&str]) -> bool {
+        let has_blocked = !self.blocked_commands.is_empty();
+        let has_allowed = !self.allowed_commands.is_empty();
+
+        match (has_blocked, has_allowed) {
+            (true, _) => {
+                // Blocklist mode (takes precedence if both are set)
+                // Allow if NOT in blocked list
+                !Self::has_matching_entry(command_name, bindings, &self.blocked_commands)
+            }
+            (false, true) => {
+                // Allowlist mode - allow ONLY if in list
+                Self::has_matching_entry(command_name, bindings, &self.allowed_commands)
+            }
+            (false, false) => {
+                // No filtering - allow all
+                true
+            }
+        }
+    }
+
+    /// Validate configuration and return error message if invalid
+    /// Returns Some(error_message) if both lists are populated, None otherwise
+    pub fn validate(&self) -> Option<String> {
+        if !self.blocked_commands.is_empty() && !self.allowed_commands.is_empty() {
+            Some(
+                "Both blocked_commands and allowed_commands are set. Only blocked_commands will be applied."
+                    .to_string(),
+            )
+        } else {
+            None
         }
     }
 }
@@ -214,8 +288,15 @@ impl BunnylolConfig {
         let contents = fs::read_to_string(&config_path)
             .map_err(|e| format!("Failed to read config file {:?}: {}", config_path, e))?;
 
-        toml::from_str(&contents)
-            .map_err(|e| format!("Failed to parse config file {:?}: {}", config_path, e))
+        let config: Self = toml::from_str(&contents)
+            .map_err(|e| format!("Failed to parse config file {:?}: {}", config_path, e))?;
+
+        // Validate command filtering configuration
+        if let Some(warning) = config.command_filtering.validate() {
+            eprintln!("Warning: {}", warning);
+        }
+
+        Ok(config)
     }
 
     /// Write configuration to a file
@@ -263,6 +344,28 @@ max_entries = {}
 port = {}
 address = "{}"
 log_level = "{}"
+
+# Command filtering
+#
+# Use ONE of the following (not both):
+#   - blocked_commands: Block specific commands, allow all others (deny-list)
+#   - allowed_commands: Only allow specific commands, block all others (allow-list)
+#
+# IMPORTANT: If both lists are populated, only blocked_commands will be applied
+#            and an error will be printed.
+#
+# You can use either command names (struct names) OR aliases:
+#   - Command names (recommended): "GitHub", "Instagram", "Meta", etc.
+#   - Aliases also work: "gh", "ig", etc.
+#   - Both work the same way - blocking "GitHub" blocks all aliases ("gh", etc.)
+#
+# To see all available commands, run: bunnylol bindings
+#
+# When a command is blocked, it falls through to your search engine.
+#
+[command_filtering]
+{}
+{}
 "#,
             if let Some(browser) = &self.browser {
                 format!("browser = \"{}\"", browser)
@@ -284,6 +387,24 @@ log_level = "{}"
             self.server.port,
             self.server.address,
             self.server.log_level,
+            if self.command_filtering.blocked_commands.is_empty() {
+                "#blocked_commands = [\"GitHub\", \"Meta\"]  # Uncomment to block commands"
+                    .to_string()
+            } else {
+                format!(
+                    "blocked_commands = {:?}",
+                    self.command_filtering.blocked_commands
+                )
+            },
+            if self.command_filtering.allowed_commands.is_empty() {
+                "#allowed_commands = []                  # Uncomment to use allowlist mode"
+                    .to_string()
+            } else {
+                format!(
+                    "allowed_commands = {:?}",
+                    self.command_filtering.allowed_commands
+                )
+            },
         )
     }
 
@@ -349,16 +470,20 @@ mod tests {
 
     #[test]
     fn test_get_search_url_ddg() {
-        let mut config = BunnylolConfig::default();
-        config.default_search = "ddg".to_string();
+        let config = BunnylolConfig {
+            default_search: "ddg".to_string(),
+            ..Default::default()
+        };
         let url = config.get_search_url("test query");
         assert!(url.starts_with("https://duckduckgo.com/?q="));
     }
 
     #[test]
     fn test_get_search_url_bing() {
-        let mut config = BunnylolConfig::default();
-        config.default_search = "bing".to_string();
+        let config = BunnylolConfig {
+            default_search: "bing".to_string(),
+            ..Default::default()
+        };
         let url = config.get_search_url("test query");
         assert!(url.starts_with("https://www.bing.com/search?q="));
     }
@@ -408,5 +533,169 @@ mod tests {
         assert_eq!(config.server.port, 9000);
         assert_eq!(config.server.address, "0.0.0.0");
         assert_eq!(config.server.log_level, "debug");
+    }
+
+    #[test]
+    fn test_command_filtering_disabled() {
+        let config = CommandFilteringConfig::default();
+        assert!(config.is_command_allowed("GitHub", &["gh", "github"]));
+        assert!(config.is_command_allowed("Meta", &["meta"]));
+        assert!(config.is_command_allowed("Unknown", &["unknown"]));
+    }
+
+    #[test]
+    fn test_command_filtering_blocklist() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec!["GitHub".to_string(), "Meta".to_string()],
+            allowed_commands: vec![],
+        };
+
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+        assert!(!config.is_command_allowed("Meta", &["meta"]));
+        assert!(config.is_command_allowed("Instagram", &["ig", "instagram"]));
+        assert!(config.is_command_allowed("Unknown", &["unknown"]));
+    }
+
+    #[test]
+    fn test_command_filtering_allowlist() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec![],
+            allowed_commands: vec!["GitHub".to_string(), "Instagram".to_string()],
+        };
+
+        assert!(config.is_command_allowed("GitHub", &["gh", "github"]));
+        assert!(config.is_command_allowed("Instagram", &["ig", "instagram"]));
+        assert!(!config.is_command_allowed("Meta", &["meta"]));
+        assert!(!config.is_command_allowed("Unknown", &["unknown"]));
+    }
+
+    #[test]
+    fn test_command_filtering_case_insensitive() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec!["GitHub".to_string()],
+            allowed_commands: vec![],
+        };
+
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+        assert!(!config.is_command_allowed("GITHUB", &["gh"]));
+        assert!(!config.is_command_allowed("github", &["gh"]));
+    }
+
+    #[test]
+    fn test_command_filtering_both_lists_set() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec!["GitHub".to_string()],
+            allowed_commands: vec!["YouTube".to_string()],
+        };
+
+        // Validation should return an error
+        assert!(config.validate().is_some());
+        assert!(
+            config
+                .validate()
+                .unwrap()
+                .contains("Both blocked_commands and allowed_commands are set")
+        );
+
+        // blocked_commands should win
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+        assert!(config.is_command_allowed("YouTube", &["yt", "youtube"]));
+        assert!(config.is_command_allowed("Instagram", &["ig", "instagram"]));
+    }
+
+    #[test]
+    fn test_command_filtering_blocks_by_struct_name() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec!["GitHub".to_string()], // Using struct name
+            allowed_commands: vec![],
+        };
+
+        // Should block using struct name
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+    }
+
+    #[test]
+    fn test_command_filtering_blocks_by_alias() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec!["gh".to_string()], // Using alias in config
+            allowed_commands: vec![],
+        };
+
+        // Should also block using alias
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+    }
+
+    #[test]
+    fn test_command_filtering_allows_by_struct_name() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec![],
+            allowed_commands: vec!["Instagram".to_string()], // Using struct name
+        };
+
+        // Should allow using struct name
+        assert!(config.is_command_allowed("Instagram", &["ig", "instagram"]));
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+    }
+
+    #[test]
+    fn test_command_filtering_allows_by_alias() {
+        let config = CommandFilteringConfig {
+            blocked_commands: vec![],
+            allowed_commands: vec!["ig".to_string()], // Using alias in config
+        };
+
+        // Should also allow using alias
+        assert!(config.is_command_allowed("Instagram", &["ig", "instagram"]));
+        assert!(!config.is_command_allowed("GitHub", &["gh", "github"]));
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_toml_with_blocked_commands() {
+        let toml_str = r#"
+            [command_filtering]
+            blocked_commands = ["github", "meta"]
+        "#;
+
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.command_filtering.blocked_commands.len(), 2);
+        assert!(
+            config
+                .command_filtering
+                .blocked_commands
+                .contains(&"github".to_string())
+        );
+        assert!(
+            config
+                .command_filtering
+                .blocked_commands
+                .contains(&"meta".to_string())
+        );
+        assert!(config.command_filtering.allowed_commands.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_toml_with_allowed_commands() {
+        let toml_str = r#"
+            [command_filtering]
+            allowed_commands = ["google", "wikipedia"]
+        "#;
+
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.command_filtering.allowed_commands.len(), 2);
+        assert!(
+            config
+                .command_filtering
+                .allowed_commands
+                .contains(&"google".to_string())
+        );
+        assert!(
+            config
+                .command_filtering
+                .allowed_commands
+                .contains(&"wikipedia".to_string())
+        );
+        assert!(config.command_filtering.blocked_commands.is_empty());
     }
 }

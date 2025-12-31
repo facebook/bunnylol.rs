@@ -6,7 +6,7 @@ use crate::utils::url_encoding::build_path_url;
 pub struct GitHubCommand;
 
 impl BunnylolCommand for GitHubCommand {
-    const BINDINGS: &'static [&'static str] = &["gh"];
+    const BINDINGS: &'static [&'static str] = &["gh", "github"];
 
     fn process_args(args: &str) -> String {
         let query = Self::get_command_args(args);

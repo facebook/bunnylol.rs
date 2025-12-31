@@ -15,9 +15,12 @@ use super::web::BindingsPage;
 static BINDINGS_HTML_CACHE: OnceLock<String> = OnceLock::new();
 
 fn render_bindings_page() -> String {
-    leptos::ssr::render_to_string(|| {
+    // Load config once at initialization to filter commands based on blocklist/allowlist
+    let config = crate::config::BunnylolConfig::load().ok();
+
+    leptos::ssr::render_to_string(move || {
         view! {
-            <BindingsPage />
+            <BindingsPage config=config.clone() />
         }
     })
     .to_string()

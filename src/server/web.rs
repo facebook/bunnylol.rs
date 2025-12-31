@@ -90,11 +90,16 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
 }
 
 #[component]
-pub fn BindingsPage() -> impl IntoView {
-    let mut bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
-        .iter()
-        .map(|cmd| (*cmd).clone().into())
-        .collect();
+pub fn BindingsPage(
+    #[prop(default = None)] config: Option<crate::config::BunnylolConfig>,
+) -> impl IntoView {
+    let commands = if let Some(ref cfg) = config {
+        BunnylolCommandRegistry::get_all_commands_filtered(Some(cfg))
+    } else {
+        BunnylolCommandRegistry::get_all_commands().clone()
+    };
+
+    let mut bindings: Vec<BindingData> = commands.iter().map(|cmd| (*cmd).clone().into()).collect();
 
     // Sort bindings alphabetically by command name
     bindings.sort_by(|a, b| a.command.to_lowercase().cmp(&b.command.to_lowercase()));

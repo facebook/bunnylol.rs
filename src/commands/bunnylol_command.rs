@@ -11,6 +11,7 @@ pub struct BunnylolCommandInfo {
 /// Bunnylol Command trait that all URL builders must implement
 pub trait BunnylolCommand {
     /// All command strings that trigger this binding (e.g., ["gh", "github"])
+    /// The first binding is used as the canonical command name for filtering
     const BINDINGS: &'static [&'static str];
 
     /// Process the command arguments and return the appropriate URL
