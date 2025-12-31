@@ -6,16 +6,12 @@ services:
     container_name: bunnylol
     restart: unless-stopped
     ports:
-      - "${BUNNYLOL_PORT:-8000}:${BUNNYLOL_PORT:-8000}"
-    environment:
-      - ROCKET_LOG_LEVEL=${ROCKET_LOG_LEVEL:-normal}
-      - BUNNYLOL_PORT=${BUNNYLOL_PORT:-8000}
-      - ROCKET_PORT=${BUNNYLOL_PORT:-8000}
-    # Uncomment to persist any data if needed in the future
+      - "${BUNNYLOL_PORT:-8000}:8000"
+    # Uncomment to persist config file (optional)
     # volumes:
-    #   - ./data:/app/data
+    #   - ./config:/etc/bunnylol
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:$${BUNNYLOL_PORT}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 60s
       timeout: 10s
       retries: 3

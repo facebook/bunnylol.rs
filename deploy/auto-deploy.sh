@@ -64,24 +64,25 @@ git pull origin "$BRANCH" 2>&1 | tee -a "$LOG_FILE" || {
 }
 
 # Rebuild and redeploy
-log "Building new image while old container is still running (this may take a few minutes)..."
-docker compose build --no-cache 2>&1 | tee -a "$LOG_FILE" || {
-    log "ERROR: Build failed"
+log "Rebuilding and redeploying with zero-downtime..."
+docker compose up --build -d 2>&1 | tee -a "$LOG_FILE" || {
+    log "ERROR: Deployment failed"
     exit 1
 }
 
-log "Stopping old container..."
-docker compose down 2>&1 | tee -a "$LOG_FILE"
-
-log "Starting new container..."
-docker compose up -d 2>&1 | tee -a "$LOG_FILE" || {
-    log "ERROR: Failed to start containers"
-    exit 1
-}
-
-# Wait for container to start
-log "Waiting for container to start..."
+# Wait for container to be ready
+log "Waiting for container to be ready..."
 sleep 5
+
+# Health check
+log "Running health check..."
+if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+    log "✓ Health check passed"
+else
+    log "ERROR: Health check failed!"
+    docker compose logs --tail=50 bunnylol | tee -a "$LOG_FILE"
+    exit 1
+fi
 
 # Verify deployment
 if docker ps | grep -q bunnylol; then

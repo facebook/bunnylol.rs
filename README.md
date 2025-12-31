@@ -138,9 +138,16 @@ The bunnylol CLI supports optional configuration via a TOML file following the [
 
 ### Configuration File Location
 
-The config file is located at:
+Bunnylol uses different config file locations depending on how it's run:
+
+**For CLI and manual server usage (`bunnylol serve`):**
 - **Linux/macOS**: `~/.config/bunnylol/config.toml` (or `$XDG_CONFIG_HOME/bunnylol/config.toml` if set)
 - **Windows**: `%APPDATA%\bunnylol\config.toml`
+
+**For system service (`sudo bunnylol service install`):**
+- **Linux**: `/etc/bunnylol/config.toml`
+
+The config file is automatically created with sensible defaults when you first run bunnylol.
 
 ### Configuration Features
 
@@ -234,7 +241,8 @@ The CLI uses platform-appropriate directories for configuration and data:
 
 | Platform | Type | Path |
 |----------|------|------|
-| **Linux/macOS** | Config | `~/.config/bunnylol/config.toml`<br>(or `$XDG_CONFIG_HOME/bunnylol/config.toml`) |
+| **Linux/macOS** | User Config | `~/.config/bunnylol/config.toml`<br>(or `$XDG_CONFIG_HOME/bunnylol/config.toml`) |
+| **Linux** | System Config | `/etc/bunnylol/config.toml`<br>(when running as system service) |
 | **Linux/macOS** | Data | `~/.local/share/bunnylol/`<br>(or `$XDG_DATA_HOME/bunnylol/`) |
 | **Windows** | Config | `%APPDATA%\bunnylol\config.toml` |
 | **Windows** | Data | `%APPDATA%\bunnylol\` |
@@ -297,10 +305,15 @@ For production use on **Linux**, install bunnylol as a `systemd` service that st
 $ cargo install bunnylol
 
 # Install as system service (requires sudo, Linux only)
+# Default: localhost only (127.0.0.1)
 $ sudo bunnylol service install
+
+# For network access (production servers)
+$ sudo bunnylol service install --network
 
 # The installer will:
 # - Create /etc/systemd/system/bunnylol.service
+# - Create /etc/bunnylol/config.toml with server settings
 # - Enable autostart on boot
 # - Start the service immediately
 
@@ -312,6 +325,10 @@ $ sudo bunnylol service restart
 # Uninstall
 $ sudo bunnylol service uninstall
 ```
+
+**Network Access:**
+- **Without `--network`** (default): Binds to `127.0.0.1` (localhost only, secure default)
+- **With `--network`**: Binds to `0.0.0.0` (accessible from network, for production servers)
 
 The service installer works on:
 - **Linux**: `systemd` (Ubuntu 16.04+, Debian 8+, CentOS 7+, etc.)

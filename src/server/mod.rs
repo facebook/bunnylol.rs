@@ -19,9 +19,9 @@ pub mod service;
 #[cfg(feature = "server")]
 use rocket::State;
 #[cfg(feature = "server")]
-use rocket::response::Redirect;
+use rocket::request::{self, FromRequest, Request};
 #[cfg(feature = "server")]
-use rocket::request::{self, Request, FromRequest};
+use rocket::response::Redirect;
 
 #[cfg(feature = "server")]
 use crate::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
@@ -48,12 +48,19 @@ mod server_impl {
 
     // http://localhost:8000/?cmd=gh
     #[rocket::get("/?<cmd>")]
-    pub(super) fn search(cmd: &str, config: &State<BunnylolConfig>, client_ip: ClientIP) -> Redirect {
+    pub(super) fn search(
+        cmd: &str,
+        config: &State<BunnylolConfig>,
+        client_ip: ClientIP,
+    ) -> Redirect {
         println!("bunnylol command: {}", cmd);
 
         let command = utils::get_command_from_query_string(cmd);
-        let redirect_url =
-            BunnylolCommandRegistry::process_command_with_config(command, cmd, Some(config.inner()));
+        let redirect_url = BunnylolCommandRegistry::process_command_with_config(
+            command,
+            cmd,
+            Some(config.inner()),
+        );
         println!("redirecting to: {}", redirect_url);
 
         // Track command in history if enabled
@@ -96,27 +103,23 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         "Bunnylol server starting with default search: {}",
         config.default_search
     );
-    println!("Server configured for {}:{}", config.server.address, config.server.port);
-
-    // Configure Rocket with address and port from config
-    // Environment variables can override config file values
-    let address = std::env::var("ROCKET_ADDRESS")
-        .unwrap_or_else(|_| config.server.address.clone());
-    let port: u16 = std::env::var("ROCKET_PORT")
-        .ok()
-        .and_then(|p| p.parse().ok())
-        .unwrap_or(config.server.port);
-    let log_level = std::env::var("ROCKET_LOG_LEVEL")
-        .unwrap_or_else(|_| config.server.log_level.clone());
+    println!(
+        "Server listening on {}:{}",
+        config.server.address, config.server.port
+    );
 
     let figment = rocket::Config::figment()
-        .merge(("address", address))
-        .merge(("port", port))
-        .merge(("log_level", log_level));
+        .merge(("address", config.server.address.clone()))
+        .merge(("port", config.server.port))
+        .merge(("log_level", config.server.log_level.clone()))
+        .merge(("ident", format!("Bunnylol/{}", env!("CARGO_PKG_VERSION"))));
 
     let _rocket = rocket::custom(figment)
         .manage(config)
-        .mount("/", rocket::routes![search, root, health, routes::bindings_web])
+        .mount(
+            "/",
+            rocket::routes![search, root, health, routes::bindings_web],
+        )
         .register("/", rocket::catchers![not_found])
         .launch()
         .await?;

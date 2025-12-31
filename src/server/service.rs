@@ -12,10 +12,12 @@ use service_manager::*;
 #[cfg(target_os = "linux")]
 use std::ffi::OsString;
 #[cfg(target_os = "linux")]
+use std::path::PathBuf;
+#[cfg(target_os = "linux")]
 use std::process::Command;
 
-/// Service label used for systemd (reverse domain notation)
-pub const SERVICE_LABEL: &str = "com.facebook.bunnylol";
+/// Service label used for systemd
+pub const SERVICE_LABEL: &str = "bunnylol";
 
 /// Service name used in systemctl/journalctl commands
 pub const SERVICE_NAME: &str = "bunnylol";
@@ -29,6 +31,7 @@ pub enum ServiceError {
     ServiceManagerError(String),
     BinaryNotFound,
     ServiceStartFailed(String),
+    ConfigError(String),
     IoError(std::io::Error),
     UnsupportedPlatform,
 }
@@ -51,6 +54,9 @@ impl fmt::Display for ServiceError {
             }
             ServiceError::ServiceStartFailed(msg) => {
                 write!(f, "service installed but failed to start: {}", msg)
+            }
+            ServiceError::ConfigError(msg) => {
+                write!(f, "config error: {}", msg)
             }
             ServiceError::IoError(e) => {
                 write!(f, "I/O error: {}", e)
@@ -92,7 +98,7 @@ impl Default for ServiceConfig {
     fn default() -> Self {
         Self {
             port: 8000,
-            address: "0.0.0.0".to_string(),
+            address: "127.0.0.1".to_string(), // Localhost only by default (secure)
             log_level: "normal".to_string(),
         }
     }
@@ -136,33 +142,88 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
         "✓ Service file will be created at: /etc/systemd/system/{}.service",
         SERVICE_NAME
     );
+
+    // Create or update config file at /etc/bunnylol/config.toml
+    let system_config_path = PathBuf::from("/etc/bunnylol/config.toml");
+
+    // Create directory if needed
+    std::fs::create_dir_all("/etc/bunnylol")
+        .map_err(|e| ServiceError::ConfigError(format!("Failed to create /etc/bunnylol: {}", e)))?;
+
+    use crate::config::BunnylolConfig;
+
+    if system_config_path.exists() {
+        println!("✓ Found existing config file: /etc/bunnylol/config.toml");
+
+        // Load existing config
+        let mut existing_config = BunnylolConfig::load().map_err(|e| {
+            ServiceError::ConfigError(format!("Failed to load existing config: {}", e))
+        })?;
+
+        let current_address = existing_config.server.address.clone();
+        println!("  Current address: {}", current_address);
+        println!("  New address:     {}", config.address);
+
+        if current_address == config.address {
+            println!("✓ Config already has correct address, no changes needed");
+        } else {
+            // Update only the address field, preserve everything else
+            existing_config.server.address = config.address.clone();
+
+            println!("✓ Updating address in config file (preserving other settings)...");
+            if let Err(e) = existing_config.write_to_file(&system_config_path) {
+                return Err(ServiceError::ConfigError(format!(
+                    "Failed to write config: {}",
+                    e
+                )));
+            }
+        }
+    } else {
+        println!("✓ Creating system config file: /etc/bunnylol/config.toml");
+
+        // Create new config with provided ServiceConfig settings
+        let mut default_config = BunnylolConfig::default();
+        default_config.server.port = config.port;
+        default_config.server.address = config.address.clone();
+        default_config.server.log_level = config.log_level.clone();
+
+        // Write config file
+        if let Err(e) = default_config.write_to_file(&system_config_path) {
+            return Err(ServiceError::ConfigError(format!(
+                "Failed to write config: {}",
+                e
+            )));
+        }
+    }
+
     println!();
 
     println!("Service configuration:");
     println!("  Label:       {}", SERVICE_LABEL);
     println!("  Binary:      {}", binary_path.display());
+    println!("  Command:     bunnylol serve");
+    println!("  Config:      /etc/bunnylol/config.toml");
     println!(
-        "  Command:     bunnylol serve --port {} --address {}",
-        config.port, config.address
+        "    Port:      {} (can be changed in config file)",
+        config.port
     );
-    println!("  Port:        {}", config.port);
-    println!("  Address:     {}", config.address);
-    println!("  Log level:   {}", config.log_level);
+    println!(
+        "    Address:   {} (can be changed in config file)",
+        config.address
+    );
+    println!(
+        "    Log level: {} (can be changed in config file)",
+        config.log_level
+    );
     println!("  Run as:      root");
     println!("  Autostart:   enabled");
     println!();
 
     let (manager, label) = setup_manager()?;
 
-    let args = vec![
-        OsString::from("serve"),
-        OsString::from("--port"),
-        OsString::from(config.port.to_string()),
-        OsString::from("--address"),
-        OsString::from(&config.address),
-    ];
+    let args = vec![OsString::from("serve")];
 
-    let environment = vec![("ROCKET_LOG_LEVEL".to_string(), config.log_level)];
+    let environment = vec![];
 
     println!("Creating service file...");
     let install_ctx = ServiceInstallCtx {
@@ -197,11 +258,17 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
     println!();
     println!("🎉 Bunnylol server installed successfully!");
     println!();
-    println!("Server URL: http://{}:{}", config.address, config.port);
+    println!(
+        "Server URL (from config): http://{}:{}",
+        config.address, config.port
+    );
     println!(
         "Add to browser search: http://{}:{}/?cmd=%s",
         config.address, config.port
     );
+    println!();
+    println!("To change port/address, edit: /etc/bunnylol/config.toml");
+    println!("Then restart the service: sudo bunnylol service restart");
 
     println!();
     println!("Manage service:");

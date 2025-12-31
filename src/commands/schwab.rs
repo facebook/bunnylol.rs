@@ -23,7 +23,8 @@ impl BunnylolCommand for SchwabCommand {
             "orders" => "https://client.schwab.com/app/trade/orderstatus/#/orderstatus".to_string(),
             "trade" => "https://client.schwab.com/app/trade/tom/trade".to_string(),
             "transfer" | "transfers" | "payments" => {
-                "https://client.schwab.com/app/accounts/transfers_and_payments_overview/#/".to_string()
+                "https://client.schwab.com/app/accounts/transfers_and_payments_overview/#/"
+                    .to_string()
             }
             "security" => "https://client.schwab.com/app/access/securitysettings".to_string(),
             "contact" | "contactus" | "call" => {
@@ -36,7 +37,9 @@ impl BunnylolCommand for SchwabCommand {
     fn get_info() -> BunnylolCommandInfo {
         BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Charles Schwab shortcuts (billpay, orders, trade, transfer, security, contact)".to_string(),
+            description:
+                "Charles Schwab shortcuts (billpay, orders, trade, transfer, security, contact)"
+                    .to_string(),
             example: "schwab trade".to_string(),
         }
     }

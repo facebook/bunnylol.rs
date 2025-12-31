@@ -11,7 +11,15 @@ use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 pub struct BindingsCommand;
 
 impl BunnylolCommand for BindingsCommand {
-    const BINDINGS: &'static [&'static str] = &["bindings", "commmands", "list", "bunny", "cmd", "cmds", "help"];
+    const BINDINGS: &'static [&'static str] = &[
+        "bindings",
+        "commmands",
+        "list",
+        "bunny",
+        "cmd",
+        "cmds",
+        "help",
+    ];
 
     fn process_args(_args: &str) -> String {
         "/bindings".to_string()

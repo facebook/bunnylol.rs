@@ -15,7 +15,11 @@ impl BunnylolCommand for RustCommand {
         if query.is_empty() {
             "https://doc.rust-lang.org/stable/std/index.html".to_string()
         } else {
-            build_search_url("https://doc.rust-lang.org/stable/std/index.html", "search", query)
+            build_search_url(
+                "https://doc.rust-lang.org/stable/std/index.html",
+                "search",
+                query,
+            )
         }
     }
 

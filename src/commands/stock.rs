@@ -1,5 +1,5 @@
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
-use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 
 pub struct StockCommand;
 
@@ -38,7 +38,12 @@ impl BunnylolCommand for StockCommand {
 
     fn get_info() -> BunnylolCommandInfo {
         BunnylolCommandInfo {
-            bindings: vec!["stock".to_string(), "stocks".to_string(), "finance".to_string(), "$<ticker>".to_string()],
+            bindings: vec![
+                "stock".to_string(),
+                "stocks".to_string(),
+                "finance".to_string(),
+                "$<ticker>".to_string(),
+            ],
             description: "Look up stock prices on Yahoo Finance".to_string(),
             example: "stock META  or  $META".to_string(),
         }

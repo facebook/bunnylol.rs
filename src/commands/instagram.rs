@@ -13,7 +13,11 @@ impl InstagramCommand {
     }
 
     fn construct_search_url(query: &str) -> String {
-        build_search_url("https://www.instagram.com/explore/search/keyword", "q", query)
+        build_search_url(
+            "https://www.instagram.com/explore/search/keyword",
+            "q",
+            query,
+        )
     }
 }
 
@@ -28,7 +32,9 @@ impl BunnylolCommand for InstagramCommand {
             // Check for specific subcommands first
             match query {
                 "reels" => "https://www.instagram.com/reels/".to_string(),
-                "messages" | "msg" | "chat" => "https://www.instagram.com/direct/inbox/".to_string(),
+                "messages" | "msg" | "chat" => {
+                    "https://www.instagram.com/direct/inbox/".to_string()
+                }
                 _ => {
                     // Check if it looks like an Instagram profile
                     if let Some(username) = query.strip_prefix('@') {
@@ -49,7 +55,9 @@ impl BunnylolCommand for InstagramCommand {
     fn get_info() -> BunnylolCommandInfo {
         BunnylolCommandInfo {
             bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Instagram profiles, search Instagram, or access Reels/Messages".to_string(),
+            description:
+                "Navigate to Instagram profiles, search Instagram, or access Reels/Messages"
+                    .to_string(),
             example: "ig @instagram".to_string(),
         }
     }

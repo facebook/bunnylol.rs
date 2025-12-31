@@ -15,7 +15,10 @@ impl BunnylolCommand for MetaCommand {
         match query {
             "accounts" | "account" => "https://accountscenter.meta.com".to_string(),
             "ai" => "https://www.meta.ai".to_string(),
-            "pay" => "https://accountscenter.meta.com/meta_pay_wallet/?referrer=accounts_center_home".to_string(),
+            "pay" => {
+                "https://accountscenter.meta.com/meta_pay_wallet/?referrer=accounts_center_home"
+                    .to_string()
+            }
             "" if args.starts_with("metaai") => "https://www.meta.ai".to_string(),
             _ => "https://www.meta.com".to_string(),
         }
@@ -57,10 +60,7 @@ mod tests {
 
     #[test]
     fn test_meta_command_ai() {
-        assert_eq!(
-            MetaCommand::process_args("meta ai"),
-            "https://www.meta.ai"
-        );
+        assert_eq!(MetaCommand::process_args("meta ai"), "https://www.meta.ai");
     }
 
     #[test]

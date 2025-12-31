@@ -1,0 +1,27 @@
+# Bunnylol Configuration File
+# https://github.com/facebook/bunnylol.rs
+
+# Browser to open URLs in (optional)
+# Examples: "firefox", "chrome", "chromium", "safari"
+# If not set, uses system default browser
+# browser = "firefox"
+
+# Default search engine when command not recognized
+# Options: "google" (default), "ddg", "bing"
+default_search = "google"
+
+# Custom command aliases
+# Example: work = "gh mycompany/repo"
+[aliases]
+# my-alias = "gh username/repo"
+
+# Command history settings
+[history]
+enabled = true
+max_entries = 1000
+
+# Server configuration (for bunnylol serve)
+[server]
+port = 8000
+address = "0.0.0.0"
+log_level = "normal"

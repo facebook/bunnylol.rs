@@ -16,12 +16,14 @@ use bunnylol::{BunnylolCommandRegistry, History, utils};
 #[cfg(feature = "cli")]
 use tabled::{
     Table, Tabled,
-    settings::{Style, Color, Modify, object::Columns},
+    settings::{Color, Modify, Style, object::Columns},
 };
 
 #[derive(Parser)]
 #[command(name = "bunnylol")]
-#[command(about = "Smart bookmark server and CLI - URL shortcuts for your browser's search bar and terminal")]
+#[command(
+    about = "Smart bookmark server and CLI - URL shortcuts for your browser's search bar and terminal"
+)]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
@@ -41,11 +43,11 @@ enum Commands {
     /// Run the bunnylol web server
     #[cfg(feature = "server")]
     Serve {
-        /// Port to bind the server to (overrides config)
+        /// Port to bind the server to (overrides config file)
         #[arg(short, long)]
         port: Option<u16>,
 
-        /// Address to bind to (overrides config)
+        /// Address to bind to (overrides config file)
         #[arg(short, long)]
         address: Option<String>,
     },
@@ -66,15 +68,11 @@ enum Commands {
 #[cfg(feature = "cli")]
 #[derive(Subcommand)]
 enum ServiceAction {
-    /// Install bunnylol server as a service
+    /// Install bunnylol server as a service (uses config file for port/address)
     Install {
-        /// Port to bind the server to
-        #[arg(long, default_value = "8000")]
-        port: u16,
-
-        /// Address to bind to
-        #[arg(long)]
-        address: Option<String>,
+        /// Allow network access (bind to 0.0.0.0). Default: localhost only (127.0.0.1)
+        #[arg(short, long)]
+        network: bool,
     },
     /// Uninstall bunnylol service
     Uninstall,
@@ -138,11 +136,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             use bunnylol::service::*;
 
             let result = match action {
-                ServiceAction::Install { port, address } => {
-                    let service_config = ServiceConfig {
-                        port,
-                        address: address.unwrap_or_else(|| "0.0.0.0".to_string()),
-                        log_level: config.server.log_level.clone(),
+                ServiceAction::Install { network } => {
+                    // Use ServiceConfig with appropriate address based on --network flag
+                    let mut service_config = ServiceConfig::default();
+                    service_config.address = if network {
+                        "0.0.0.0".to_string() // Network access
+                    } else {
+                        "127.0.0.1".to_string() // Localhost only (secure default)
                     };
 
                     install_systemd_service(service_config)
@@ -173,7 +173,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(feature = "cli")]
         None => {
             // Check if there are any remaining arguments (passed as positional)
-            let args: Vec<String> = std::env::args().skip(1)
+            let args: Vec<String> = std::env::args()
+                .skip(1)
                 .filter(|arg| !arg.starts_with('-') && arg != "bunnylol")
                 .collect();
 
@@ -199,7 +200,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(feature = "cli")]
-fn execute_command(args: Vec<String>, config: &BunnylolConfig, dry_run: bool) -> Result<(), Box<dyn std::error::Error>> {
+fn execute_command(
+    args: Vec<String>,
+    config: &BunnylolConfig,
+    dry_run: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Check if first arg is "list"
     if args.first().map(|s| s.as_str()) == Some("list") {
         print_commands();
@@ -214,7 +219,8 @@ fn execute_command(args: Vec<String>, config: &BunnylolConfig, dry_run: bool) ->
 
     // Extract command and process with config for custom search engine
     let command = utils::get_command_from_query_string(&resolved_args);
-    let url = BunnylolCommandRegistry::process_command_with_config(command, &resolved_args, Some(config));
+    let url =
+        BunnylolCommandRegistry::process_command_with_config(command, &resolved_args, Some(config));
 
     // Print URL
     println!("{}", url);
@@ -249,9 +255,8 @@ fn open_url(url: &str, config: &BunnylolConfig) -> Result<(), Box<dyn std::error
         })?;
     } else {
         // Use system default browser
-        open::that(url).map_err(|e| {
-            format!("Failed to open browser: {}. URL printed above.", e)
-        })?;
+        open::that(url)
+            .map_err(|e| format!("Failed to open browser: {}. URL printed above.", e))?;
     }
     Ok(())
 }
@@ -273,7 +278,9 @@ struct CommandRow {
 fn print_commands() {
     let mut commands = BunnylolCommandRegistry::get_all_commands().clone();
     commands.sort_by(|a, b| {
-        a.bindings[0].to_lowercase().cmp(&b.bindings[0].to_lowercase())
+        a.bindings[0]
+            .to_lowercase()
+            .cmp(&b.bindings[0].to_lowercase())
     });
 
     let rows: Vec<CommandRow> = commands

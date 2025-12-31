@@ -79,22 +79,33 @@ The recommended deployment method for **Linux** is to install bunnylol as a nati
 # Install bunnylol first
 $ cargo install bunnylol
 
-# Install as system service (requires sudo)
+# Install as system service (requires sudo, Linux only)
+# Default: localhost only (127.0.0.1)
 $ sudo bunnylol service install
+
+# For network access (production servers)
+$ sudo bunnylol service install --network
 
 # The installer will:
 # - Find the bunnylol binary in PATH
 # - Create systemd service file at /etc/systemd/system/bunnylol.service
+# - Create config file at /etc/bunnylol/config.toml (if not exists)
 # - Configure autostart on boot (always enabled)
 # - Start the service immediately
 ```
 
-Default configuration:
-- **Port**: 8000
-- **Address**: 0.0.0.0 (accessible from network)
+**Network Access:**
+- **Without `--network`** (default): Binds to `127.0.0.1` (localhost only, secure default)
+- **With `--network`**: Binds to `0.0.0.0` (accessible from network, for production servers)
+
+Configuration is managed through the system config file at `/etc/bunnylol/config.toml`:
+- **Port**: 8000 (default)
+- **Address**: 127.0.0.1 (default) or 0.0.0.0 (with `--network` flag)
 - **Autostart**: Enabled (always)
 - **Run as**: root
 - **Auto-restart**: On failure (5 second delay)
+
+To customize these settings after installation, edit `/etc/bunnylol/config.toml` and restart the service.
 
 ### Managing the Service
 
@@ -121,22 +132,28 @@ $ sudo bunnylol service stop
 $ sudo bunnylol service start
 ```
 
-### Custom Configuration
+### Customizing Server Settings
 
-Customize port and address during installation:
+Server settings for the system service are configured in `/etc/bunnylol/config.toml` (created automatically during installation):
 
-```bash
-# Custom port
-$ sudo bunnylol service install --port 9000
-
-# Custom address (e.g., localhost only)
-$ sudo bunnylol service install --address 127.0.0.1
-
-# Both custom port and address
-$ sudo bunnylol service install --port 9000 --address 127.0.0.1
+```toml
+[server]
+port = 8000              # Change to your preferred port
+address = "127.0.0.1"    # Use "127.0.0.1" for localhost, "0.0.0.0" for network access
+log_level = "normal"     # Options: normal, debug, critical
 ```
 
-**Note:** The service always autostarts on boot and starts immediately after installation. These behaviors cannot be disabled as they are the primary purpose of installing a service.
+**Network Access:**
+- `address = "127.0.0.1"` - Localhost only (secure default, installed without `--network`)
+- `address = "0.0.0.0"` - Network accessible (production servers, installed with `--network`)
+
+After editing the config file, restart the service:
+
+```bash
+$ sudo bunnylol service restart
+```
+
+**Note:** For running `bunnylol serve` manually (non-service), the config file is at `~/.config/bunnylol/config.toml`.
 
 ### Uninstalling
 
@@ -182,8 +199,13 @@ The easiest way to deploy bunnylol with Docker is using Docker Compose:
 2. **Start the service**:
    ```bash
    docker compose up -d
+   ```
+
+   To use a custom port, set the `BUNNYLOL_PORT` environment variable:
+   ```bash
    BUNNYLOL_PORT=9000 docker compose up -d
    ```
+   This maps port 9000 on the host to port 8000 in the container.
 
 3. **Access the application**:
    Open your browser to `http://localhost:8000`
@@ -359,22 +381,80 @@ crontab -e
 
 ## Configuration
 
-### Environment Variables
+### Config File Locations
 
-You can customize the deployment by setting environment variables in a `.env` file:
+Bunnylol uses different config file locations depending on how it's run:
 
-```bash
-# .env
-BUNNYLOL_PORT=8000
-ROCKET_LOG_LEVEL=normal
+- **System service** (installed with `sudo bunnylol service install`): `/etc/bunnylol/config.toml`
+- **User/manual run** (running `bunnylol serve` directly): `~/.config/bunnylol/config.toml`
+
+The config file is automatically created with defaults if it doesn't exist.
+
+### Native Service
+
+For native systemd installations, configuration is in `/etc/bunnylol/config.toml`.
+
+Example configuration:
+
+```toml
+# Browser to open URLs in (optional)
+# browser = "firefox"
+
+# Default search engine when command not recognized
+# Options: "google" (default), "ddg", "bing"
+default_search = "google"
+
+# Custom command aliases
+[aliases]
+# work = "gh mycompany/repo"
+
+# Command history settings
+[history]
+enabled = true
+max_entries = 1000
+
+# Server configuration
+[server]
+port = 8000
+address = "127.0.0.1"    # Use "0.0.0.0" for network access
+log_level = "normal"     # Options: normal, debug, critical
 ```
 
-Bunnylol supports these environment variables:
+After editing the config file, restart the service:
+```bash
+sudo bunnylol service restart
+```
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BUNNYLOL_PORT` | Port to listen on | `8000` |
-| `ROCKET_LOG_LEVEL` | Logging level (normal, debug, critical) | `normal` |
+### Docker
+
+For Docker deployments, you can customize the host port using the `BUNNYLOL_PORT` environment variable:
+
+```bash
+# .env file (optional)
+BUNNYLOL_PORT=9000
+```
+
+Then start with:
+```bash
+docker compose up -d
+```
+
+Or set it inline:
+```bash
+BUNNYLOL_PORT=9000 docker compose up -d
+```
+
+To customize other settings in Docker, you can mount a config file:
+
+```yaml
+# docker-compose.yml
+services:
+  bunnylol:
+    volumes:
+      - ./config:/etc/bunnylol
+```
+
+Then create a local `config/config.toml` file with your settings, and it will be mounted into the container at `/etc/bunnylol/config.toml`.
 
 ## Running on Boot
 
