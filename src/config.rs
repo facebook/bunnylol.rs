@@ -156,7 +156,7 @@ impl BunnylolConfig {
     }
 
     /// Load configuration from the config file
-    /// If the file doesn't exist, returns default configuration
+    /// If the file doesn't exist, creates it with default configuration
     /// If the file exists but is invalid, returns an error
     pub fn load() -> Result<Self, String> {
         let config_path = match Self::get_config_path() {
@@ -164,9 +164,16 @@ impl BunnylolConfig {
             None => return Ok(Self::default()),
         };
 
-        // If config file doesn't exist, return default config
+        // If config file doesn't exist, create it with default config
         if !config_path.exists() {
-            return Ok(Self::default());
+            let default_config = Self::default();
+            if let Err(e) = default_config.write_to_file(&config_path) {
+                eprintln!("Warning: Failed to write default config file: {}", e);
+                eprintln!("Continuing with default configuration...");
+            } else {
+                println!("Created default config file at: {}", config_path.display());
+            }
+            return Ok(default_config);
         }
 
         // Read and parse the config file
@@ -175,6 +182,76 @@ impl BunnylolConfig {
 
         toml::from_str(&contents)
             .map_err(|e| format!("Failed to parse config file {:?}: {}", config_path, e))
+    }
+
+    /// Write configuration to a file
+    fn write_to_file(&self, path: &PathBuf) -> Result<(), String> {
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+        }
+
+        // Serialize config to TOML with comments
+        let toml_content = self.to_toml_with_comments();
+
+        // Write to file
+        fs::write(path, toml_content)
+            .map_err(|e| format!("Failed to write config file: {}", e))
+    }
+
+    /// Convert config to TOML string with helpful comments
+    fn to_toml_with_comments(&self) -> String {
+        format!(
+            r#"# Bunnylol Configuration File
+# https://github.com/facebook/bunnylol.rs
+
+# Browser to open URLs in (optional)
+# Examples: "firefox", "chrome", "chromium", "safari"
+# If not set, uses system default browser
+{}
+
+# Default search engine when command not recognized
+# Options: "google" (default), "ddg", "bing"
+default_search = "{}"
+
+# Custom command aliases
+# Example: work = "gh mycompany/repo"
+[aliases]
+{}
+
+# Command history settings
+[history]
+enabled = {}
+max_entries = {}
+
+# Server configuration (for bunnylol serve)
+[server]
+port = {}
+address = "{}"
+log_level = "{}"
+"#,
+            if let Some(browser) = &self.browser {
+                format!("browser = \"{}\"", browser)
+            } else {
+                "# browser = \"firefox\"".to_string()
+            },
+            self.default_search,
+            if self.aliases.is_empty() {
+                "# my-alias = \"gh username/repo\"".to_string()
+            } else {
+                self.aliases
+                    .iter()
+                    .map(|(k, v)| format!("{} = \"{}\"", k, v))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            },
+            self.history.enabled,
+            self.history.max_entries,
+            self.server.port,
+            self.server.address,
+            self.server.log_level,
+        )
     }
 
     /// Resolve a command, checking aliases first
