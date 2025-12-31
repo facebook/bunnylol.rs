@@ -342,7 +342,7 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 ## Command Reference
 
 <details>
-<summary><strong>📚 Click to view all available commands</strong></summary>
+<summary><strong>📚 Click to view all available commands (46 commands, 82+ bindings)</strong></summary>
 
 <br>
 
@@ -431,7 +431,6 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 | Command | Aliases | Description | Example |
 |---------|---------|-------------|---------|
 | `bindings` | `commmands`, `list`, `bunny`, `cmd`, `cmds`, `help` | View all Bunnylol command bindings in a web portal | `bindings` |
-| `devbunny` | — | Test Bunnylol commands in development | `devbunny gh facebook` |
 
 ### Special Syntax
 
