@@ -16,8 +16,8 @@ use std::path::PathBuf;
 #[cfg(target_os = "linux")]
 use std::process::Command;
 
-/// Service label used for systemd (reverse domain notation)
-pub const SERVICE_LABEL: &str = "com.facebook.bunnylol";
+/// Service label used for systemd
+pub const SERVICE_LABEL: &str = "bunnylol";
 
 /// Service name used in systemctl/journalctl commands
 pub const SERVICE_NAME: &str = "bunnylol";
