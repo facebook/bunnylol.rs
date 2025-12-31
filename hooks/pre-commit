@@ -1,0 +1,25 @@
+#!/bin/bash
+# Pre-commit hook for bunnylol.rs
+# Runs tests and formatting checks before allowing commit
+
+set -e
+
+echo "Running pre-commit checks..."
+echo ""
+
+# Run cargo check (fast compilation check)
+echo "🔍 Running cargo check..."
+cargo check --all-features
+
+# Check formatting
+echo ""
+echo "📝 Checking code formatting..."
+cargo fmt --all -- --check
+
+# Run tests
+echo ""
+echo "🧪 Running cargo test..."
+cargo test --all-features
+
+echo ""
+echo "✅ All checks passed! Proceeding with commit."
