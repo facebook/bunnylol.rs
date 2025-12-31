@@ -83,6 +83,12 @@ pub struct ServerConfig {
     /// Rocket log level (normal, debug, critical, off)
     #[serde(default = "default_log_level")]
     pub log_level: String,
+
+    /// Public-facing URL for display in the bindings page
+    /// Examples: "bunny.alichtman.com", "https://bunny.example.com"
+    /// If not set, defaults to http://localhost:{port}
+    #[serde(default)]
+    pub server_display_url: Option<String>,
 }
 
 impl Default for ServerConfig {
@@ -91,6 +97,36 @@ impl Default for ServerConfig {
             port: default_port(),
             address: default_address(),
             log_level: default_log_level(),
+            server_display_url: None,
+        }
+    }
+}
+
+impl ServerConfig {
+    /// Get the display URL for the server, normalized with protocol
+    ///
+    /// If server_display_url is configured, normalizes it:
+    /// - "bunny.example.com" → "https://bunny.example.com"
+    /// - "https://bunny.example.com" → "https://bunny.example.com" (unchanged)
+    /// - "http://localhost:8000" → "http://localhost:8000" (unchanged)
+    ///
+    /// If server_display_url is not set, returns "http://localhost:{port}"
+    pub fn get_display_url(&self) -> String {
+        match &self.server_display_url {
+            Some(url) => {
+                let url = url.trim();
+                // If URL already has a protocol, use as-is
+                if url.starts_with("http://") || url.starts_with("https://") {
+                    url.to_string()
+                } else {
+                    // No protocol, prepend https://
+                    format!("https://{}", url)
+                }
+            }
+            None => {
+                // Fallback to localhost
+                format!("http://localhost:{}", self.port)
+            }
         }
     }
 }
@@ -238,6 +274,9 @@ impl BunnylolConfig {
         format!(
             r#"# Bunnylol Configuration File
 # https://github.com/facebook/bunnylol.rs
+#
+# NOTE: Configuration is loaded once at server startup.
+#       You must restart the server (bunnylol serve) to apply changes.
 
 # Browser to open URLs in (optional)
 # Examples: "firefox", "chrome", "chromium", "safari"
@@ -259,10 +298,14 @@ enabled = {}
 max_entries = {}
 
 # Server configuration (for bunnylol serve)
+# server_display_url: Public-facing URL shown in the bindings page
+#   - Accepts domain (e.g., "bunny.example.com") or full URL (e.g., "https://bunny.example.com")
+#   - If not set, defaults to http://localhost:{{port}}
 [server]
 port = {}
 address = "{}"
 log_level = "{}"
+{}
 "#,
             if let Some(browser) = &self.browser {
                 format!("browser = \"{}\"", browser)
@@ -284,6 +327,11 @@ log_level = "{}"
             self.server.port,
             self.server.address,
             self.server.log_level,
+            if let Some(url) = &self.server.server_display_url {
+                format!("server_display_url = \"{}\"", url)
+            } else {
+                "# server_display_url = \"bunny.example.com\"".to_string()
+            },
         )
     }
 
@@ -325,6 +373,7 @@ mod tests {
         assert_eq!(config.server.port, 8000);
         assert_eq!(config.server.address, "127.0.0.1");
         assert_eq!(config.server.log_level, "normal");
+        assert_eq!(config.server.server_display_url, None);
     }
 
     #[test]
@@ -408,5 +457,71 @@ mod tests {
         assert_eq!(config.server.port, 9000);
         assert_eq!(config.server.address, "0.0.0.0");
         assert_eq!(config.server.log_level, "debug");
+    }
+
+    #[test]
+    fn test_server_display_url_defaults() {
+        let config = ServerConfig::default();
+        assert_eq!(config.server_display_url, None);
+    }
+
+    #[test]
+    fn test_get_display_url_with_domain() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("bunny.alichtman.com".to_string());
+        assert_eq!(config.get_display_url(), "https://bunny.alichtman.com");
+    }
+
+    #[test]
+    fn test_get_display_url_with_https() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("https://bunny.example.com".to_string());
+        assert_eq!(config.get_display_url(), "https://bunny.example.com");
+    }
+
+    #[test]
+    fn test_get_display_url_with_http() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("http://localhost:8000".to_string());
+        assert_eq!(config.get_display_url(), "http://localhost:8000");
+    }
+
+    #[test]
+    fn test_get_display_url_fallback() {
+        let config = ServerConfig::default();
+        assert_eq!(config.get_display_url(), "http://localhost:8000");
+
+        let mut config2 = ServerConfig::default();
+        config2.port = 9000;
+        assert_eq!(config2.get_display_url(), "http://localhost:9000");
+    }
+
+    #[test]
+    fn test_get_display_url_with_whitespace() {
+        let mut config = ServerConfig::default();
+        config.server_display_url = Some("  bunny.example.com  ".to_string());
+        assert_eq!(config.get_display_url(), "https://bunny.example.com");
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_server_display_url_from_toml() {
+        let toml_str = r#"
+            [server]
+            port = 8000
+            address = "0.0.0.0"
+            log_level = "normal"
+            server_display_url = "bunny.alichtman.com"
+        "#;
+
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.server.server_display_url,
+            Some("bunny.alichtman.com".to_string())
+        );
+        assert_eq!(
+            config.server.get_display_url(),
+            "https://bunny.alichtman.com"
+        );
     }
 }
