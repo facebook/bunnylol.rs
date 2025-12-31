@@ -191,4 +191,33 @@ mod cache_tests {
             "Cache should return same reference"
         );
     }
+
+    #[test]
+    fn test_no_binding_collisions() {
+        use std::collections::HashMap;
+
+        let commands = BunnylolCommandRegistry::get_all_commands();
+        let mut binding_to_command: HashMap<&str, &str> = HashMap::new();
+        let mut collisions: Vec<String> = Vec::new();
+
+        // Check each command's bindings for collisions
+        for cmd_info in commands {
+            for binding in &cmd_info.bindings {
+                if let Some(existing_description) = binding_to_command.get(binding.as_str()) {
+                    collisions.push(format!(
+                        "Binding '{}' is used by both '{}' and '{}'",
+                        binding, existing_description, cmd_info.description
+                    ));
+                } else {
+                    binding_to_command.insert(binding, &cmd_info.description);
+                }
+            }
+        }
+
+        assert!(
+            collisions.is_empty(),
+            "Found binding collisions:\n{}",
+            collisions.join("\n")
+        );
+    }
 }
