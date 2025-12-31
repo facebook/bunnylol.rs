@@ -42,6 +42,8 @@ tokio = { version = "1.47", features = ["macros", "rt-multi-thread"] }
 rocket = { version = "0.5", features = ["json"], optional = true }
 leptos = { version = "0.6", features = ["ssr"], optional = true }
 leptos_meta = { version = "0.6", features = ["ssr"], optional = true }
+metrics = { version = "0.23", optional = true }
+metrics-exporter-prometheus = { version = "0.15", optional = true }
 
 # CLI dependencies (optional)
 open = { version = "5.3", optional = true }
@@ -57,7 +59,7 @@ libc = "0.2"
 
 [features]
 default = ["server", "cli"]
-server = ["rocket", "leptos", "leptos_meta"]
+server = ["rocket", "leptos", "leptos_meta", "metrics", "metrics-exporter-prometheus"]
 cli = ["open", "tabled", "terminal_size", "whoami", "service-manager", "which", "clap_complete"]
 
 [dev-dependencies]

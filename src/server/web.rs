@@ -7,9 +7,11 @@
 
 use leptos::*;
 use leptos_meta::*;
+use rocket::response::content::RawHtml;
 use serde::{Deserialize, Serialize};
 
-use crate::{BunnylolCommandInfo, BunnylolCommandRegistry};
+use super::stats::UsageStats;
+use crate::{BunnylolCommandInfo, BunnylolCommandRegistry, BunnylolConfig};
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct BindingData {
@@ -272,4 +274,208 @@ pub fn BindingsPage() -> impl IntoView {
             </footer>
         </div>
     }
+}
+
+#[component]
+pub fn StatsPage(stats: UsageStats) -> impl IntoView {
+    view! {
+        <Html lang="en"/>
+        <Meta charset="UTF-8"/>
+        <Meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <Title text="Bunnylol Usage Statistics"/>
+        <Link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <Link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+        <Link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+        <Style>
+            r#"
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body, html { height: 100%; width: 100%; }
+                body {
+                    font-family: 'JetBrains Mono', monospace;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    padding: 20px;
+                }
+                .bar {
+                    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                    height: 30px;
+                    margin-bottom: 8px;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 12px;
+                    color: white;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                }
+                .bar:hover {
+                    transform: scaleX(1.02);
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                }
+                .stat-card {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+            "#
+        </Style>
+
+        <div
+            style:max-width="1200px"
+            style:margin="0 auto"
+            style:background="white"
+            style:border-radius="12px"
+            style:padding="30px"
+            style:box-shadow="0 20px 60px rgba(0, 0, 0, 0.3)"
+        >
+            <h1
+                style:color="#333"
+                style:text-align="center"
+                style:margin-bottom="10px"
+                style:font-size="2.5em"
+            >
+                "📊 Usage Statistics"
+            </h1>
+            <div
+                style:text-align="center"
+                style:color="#666"
+                style:margin-bottom="30px"
+                style:font-size="1.1em"
+            >
+                "Your bunnylol command history at a glance"
+            </div>
+
+            // Summary stats
+            <div
+                style:display="grid"
+                style:grid-template-columns="repeat(auto-fit, minmax(200px, 1fr))"
+                style:gap="20px"
+                style:margin-bottom="40px"
+            >
+                <div class="stat-card">
+                    <div style:font-size="2.5em" style:font-weight="700" style:color="#667eea" style:text-align="center">
+                        {stats.total_commands.to_string()}
+                    </div>
+                    <div style:text-align="center" style:color="#666" style:margin-top="8px">
+                        "Total Commands"
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div style:font-size="2.5em" style:font-weight="700" style:color="#764ba2" style:text-align="center">
+                        {stats.unique_commands.to_string()}
+                    </div>
+                    <div style:text-align="center" style:color="#666" style:margin-top="8px">
+                        "Unique Commands"
+                    </div>
+                </div>
+            </div>
+
+            // Top 10 commands
+            <div style:margin-bottom="40px">
+                <h2 style:color="#333" style:margin-bottom="20px" style:font-size="1.8em">
+                    "🏆 Top 10 Commands"
+                </h2>
+                <div style:background="#f5f7fa" style:padding="20px" style:border-radius="8px">
+                    {if stats.top_commands.is_empty() {
+                        view! {
+                            <p style:text-align="center" style:color="#666" style:padding="20px">
+                                "No command history yet. Start using bunnylol to see stats!"
+                            </p>
+                        }.into_view()
+                    } else {
+                        let max_count = stats.top_commands.first().map(|c| c.count).unwrap_or(1);
+                        view! {
+                            <For
+                                each=move || stats.top_commands.clone()
+                                key=|cmd| cmd.command.clone()
+                                children=move |cmd| {
+                                    let width_percent = (cmd.count as f64 / max_count as f64 * 100.0).min(100.0);
+                                    view! {
+                                        <div style:margin-bottom="12px">
+                                            <div style:display="flex" style:justify-content="space-between" style:margin-bottom="4px">
+                                                <span style:font-weight="600" style:color="#333">{cmd.command.clone()}</span>
+                                                <span style:color="#666">{format!("{} uses ({}%)", cmd.count, cmd.percentage.round() as i32)}</span>
+                                            </div>
+                                            <div
+                                                class="bar"
+                                                style=format!("width: {}%", width_percent)
+                                            >
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            />
+                        }.into_view()
+                    }}
+                </div>
+            </div>
+
+            // Least used commands
+            {if !stats.least_used_commands.is_empty() {
+                view! {
+                    <div>
+                        <h2 style:color="#333" style:margin-bottom="20px" style:font-size="1.8em">
+                            "📉 Least Used Commands"
+                        </h2>
+                        <div style:background="#f5f7fa" style:padding="20px" style:border-radius="8px">
+                            <p style:color="#666" style:margin-bottom="15px">
+                                "These commands haven't seen much action. Consider removing them or using them more!"
+                            </p>
+                            <For
+                                each=move || stats.least_used_commands.clone()
+                                key=|cmd| cmd.command.clone()
+                                children=move |cmd| {
+                                    view! {
+                                        <div style:display="flex" style:justify-content="space-between" style:padding="8px 12px" style:background="white" style:margin-bottom="6px" style:border-radius="4px">
+                                            <span style:font-weight="600" style:color="#333">{cmd.command.clone()}</span>
+                                            <span style:color="#666">{format!("{} uses", cmd.count)}</span>
+                                        </div>
+                                    }
+                                }
+                            />
+                        </div>
+                    </div>
+                }.into_view()
+            } else {
+                view! { <div></div> }.into_view()
+            }}
+
+            <div style:margin-top="30px" style:text-align="center">
+                <a
+                    href="/bindings"
+                    style:display="inline-block"
+                    style:padding="12px 24px"
+                    style:background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    style:color="white"
+                    style:text-decoration="none"
+                    style:border-radius="6px"
+                    style:font-weight="600"
+                    style:transition="transform 0.2s"
+                >
+                    "← Back to Commands"
+                </a>
+            </div>
+        </div>
+    }
+}
+
+/// Render the stats page to HTML string
+pub fn render_stats_page(config: &BunnylolConfig) -> RawHtml<String> {
+    let stats = UsageStats::from_history(config).unwrap_or_else(|| UsageStats {
+        total_commands: 0,
+        unique_commands: 0,
+        top_commands: vec![],
+        least_used_commands: vec![],
+        all_commands: vec![],
+    });
+
+    let html = leptos::ssr::render_to_string(move || {
+        view! {
+            <StatsPage stats=stats />
+        }
+    })
+    .to_string();
+
+    RawHtml(html)
 }

@@ -7,7 +7,11 @@
 
 // Server runtime (routes, web UI) - only needed for server feature
 #[cfg(feature = "server")]
+pub mod metrics;
+#[cfg(feature = "server")]
 pub mod routes;
+#[cfg(feature = "server")]
+pub mod stats;
 #[cfg(feature = "server")]
 pub mod web;
 
@@ -53,6 +57,10 @@ mod server_impl {
         config: &State<BunnylolConfig>,
         client_ip: ClientIP,
     ) -> Redirect {
+        // Track active requests
+        super::metrics::increment_active_requests();
+        let start_time = std::time::Instant::now();
+
         println!("bunnylol command: {}", cmd);
 
         let command = utils::get_command_from_query_string(cmd);
@@ -71,6 +79,13 @@ mod server_impl {
             eprintln!("Warning: Failed to save command to history: {}", e);
         }
 
+        // Track metrics
+        let duration = start_time.elapsed().as_secs_f64() * 1000.0; // Convert to milliseconds
+        super::metrics::track_request(command, true);
+        super::metrics::track_request_duration(command, duration);
+        super::metrics::track_command_usage(command);
+        super::metrics::decrement_active_requests();
+
         Redirect::to(redirect_url)
     }
 
@@ -86,6 +101,20 @@ mod server_impl {
         "ok"
     }
 
+    // Prometheus metrics endpoint
+    #[rocket::get("/metrics")]
+    pub(super) fn metrics_endpoint() -> (rocket::http::Status, String) {
+        (rocket::http::Status::Ok, super::metrics::get_metrics())
+    }
+
+    // Usage statistics dashboard
+    #[rocket::get("/stats")]
+    pub(super) fn stats_web(
+        config: &State<BunnylolConfig>,
+    ) -> rocket::response::content::RawHtml<String> {
+        web::render_stats_page(config.inner())
+    }
+
     // Catch 404 errors and redirect to bindings page
     #[rocket::catch(404)]
     pub(super) fn not_found() -> Redirect {
@@ -99,6 +128,9 @@ use server_impl::*;
 /// Launch the Bunnylol web server with the given configuration
 #[cfg(feature = "server")]
 pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
+    // Initialize metrics exporter
+    metrics::init_metrics();
+
     println!(
         "Bunnylol server starting with default search: {}",
         config.default_search
@@ -118,7 +150,14 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         .manage(config)
         .mount(
             "/",
-            rocket::routes![search, root, health, routes::bindings_web],
+            rocket::routes![
+                search,
+                root,
+                health,
+                metrics_endpoint,
+                stats_web,
+                routes::bindings_web
+            ],
         )
         .register("/", rocket::catchers![not_found])
         .launch()
