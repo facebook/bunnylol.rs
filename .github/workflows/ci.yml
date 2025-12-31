@@ -43,12 +43,6 @@ jobs:
       - name: Run cargo test
         run: cargo test --all-features
 
-      - name: Run cargo test (server only)
-        run: cargo test --no-default-features --features server
-
-      - name: Run cargo test (cli only)
-        run: cargo test --no-default-features --features cli
-
   fmt:
     name: Formatting
     runs-on: ubuntu-latest

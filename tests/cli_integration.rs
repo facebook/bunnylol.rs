@@ -19,6 +19,7 @@ fn test_cli_version() {
 }
 
 #[test]
+#[cfg(feature = "cli")]
 fn test_cli_list_commands_flag() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--list")
@@ -31,6 +32,7 @@ fn test_cli_list_commands_flag() {
 }
 
 #[test]
+#[cfg(feature = "cli")]
 fn test_cli_list_commands_as_command() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("list")
@@ -43,6 +45,7 @@ fn test_cli_list_commands_as_command() {
 }
 
 #[test]
+#[cfg(feature = "cli")]
 fn test_cli_dry_run_github() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
@@ -53,6 +56,7 @@ fn test_cli_dry_run_github() {
 }
 
 #[test]
+#[cfg(feature = "cli")]
 fn test_cli_dry_run_instagram_reels() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
@@ -64,6 +68,7 @@ fn test_cli_dry_run_instagram_reels() {
 }
 
 #[test]
+#[cfg(feature = "cli")]
 fn test_cli_dry_run_github_repo() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
     cmd.arg("--dry-run")
