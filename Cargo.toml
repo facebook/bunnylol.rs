@@ -1,7 +1,7 @@
 [package]
 name = "bunnylol"
-version = "0.1.0"
-authors = ["Joe Previte <jprevite@fb.com>", "Aaron Lichtman <alichtman@meta.com>"]
+version = "0.1.1"
+authors = ["Aaron Lichtman <alichtman@meta.com>", "Joe Previte <jprevite@fb.com>"]
 edition = "2024"
 description = "Smart bookmark server and CLI: URL shortcuts for your browser's search bar and terminal"
 license = "MIT"
