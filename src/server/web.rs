@@ -350,54 +350,6 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                 </div>
             </div>
 
-
-            // CLI Section
-            <div
-                style:background="#f5f7fa"
-                style:padding="20px"
-                style:border-radius="6px"
-                style:margin-bottom="20px"
-                style:border="1px solid #e0e0e0"
-            >
-                <div style:font-weight="600" style:margin-bottom="15px" style:color="#333" style:font-size="1.1em" style:text-align="center">
-                    "💻 CLI Usage"
-                </div>
-                <div style:max-width="700px" style:margin="0 auto">
-                    <div style:margin-bottom="15px">
-                        <div style:font-weight="600" style:margin-bottom="8px" style:color="#666" style:font-size="0.9em">"Install:"</div>
-                        <code
-                            style:font-family="'JetBrains Mono', monospace"
-                            style:background="white"
-                            style:padding="12px 16px"
-                            style:border-radius="4px"
-                            style:display="block"
-                            style:color="#333"
-                            style:border="1px solid #e0e0e0"
-                            style:font-size="0.9em"
-                        >
-                            "$ cargo install bunnylol"
-                        </code>
-                    </div>
-                    <div>
-                        <div style:font-weight="600" style:margin-bottom="8px" style:color="#666" style:font-size="0.9em">"Example usage:"</div>
-                        <code
-                            style:font-family="'JetBrains Mono', monospace"
-                            style:background="white"
-                            style:padding="12px 16px"
-                            style:border-radius="4px"
-                            style:display="block"
-                            style:color="#333"
-                            style:border="1px solid #e0e0e0"
-                            style:font-size="0.9em"
-                            style:line-height="1.6"
-                        >
-                            "$ bunnylol gh facebook/bunnylol.rs"<br/>
-                            "# Opens https://github.com/facebook/bunnylol.rs in your browser"
-                        </code>
-                    </div>
-                </div>
-            </div>
-
             <div
                 style:text-align="center"
                 style:color="#666"
@@ -405,7 +357,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                 style:font-size="1.1em"
                 style:font-weight="600"
             >
-                "All currently registered URL shortcuts"
+                "Available Commands"
             </div>
 
             <div
