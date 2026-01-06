@@ -8,7 +8,6 @@
 use std::sync::OnceLock;
 
 use leptos::*;
-use leptos_meta::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{BunnylolCommandInfo, BunnylolCommandRegistry, BunnylolConfig};
@@ -20,12 +19,51 @@ pub fn render_landing_page_html(config: &BunnylolConfig) -> String {
     LANDING_PAGE_HTML_CACHE
         .get_or_init(|| {
             let display_url = config.server.get_display_url();
-            leptos::ssr::render_to_string(move || {
+            let body_content = leptos::ssr::render_to_string(move || {
                 view! {
                     <LandingPage server_display_url=display_url.clone() />
                 }
             })
-            .to_string()
+            .to_string();
+
+            // Wrap in proper HTML document with favicon
+            format!(
+                r#"<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>bunnylol</title>
+                        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐰</text></svg>">
+                        <link rel="preconnect" href="https://fonts.googleapis.com">
+                        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+                        <style>
+                            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                            body, html {{ height: 100%; width: 100%; }}
+                            body {{
+                                font-family: 'JetBrains Mono', monospace;
+                                background: linear-gradient(135deg, #5B21B6 0%, #8B5CF6 50%, #E879F9 100%);
+                                background-attachment: fixed;
+                                min-height: 100vh;
+                                padding: 20px 20px 100px 20px;
+                            }}
+                            .binding-card {{
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                                cursor: pointer;
+                            }}
+                            .binding-card:hover {{
+                                transform: translateY(-5px);
+                                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        {}
+                    </body>
+                </html>"#,
+                body_content
+            )
         })
         .clone()
 }
@@ -66,7 +104,7 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
                 style:font-family="'JetBrains Mono', monospace"
                 style:font-size="1.4em"
                 style:font-weight="700"
-                style:color="#667eea"
+                style:color="#8B5CF6"
                 style:margin-bottom="10px"
                 style:background="white"
                 style:padding="8px 12px"
@@ -86,7 +124,7 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
                 style:background="white"
                 style:padding="10px"
                 style:border-radius="4px"
-                style:border-left="3px solid #667eea"
+                style:border-left="3px solid #8B5CF6"
             >
                 <div
                     style:font-size="0.85em"
@@ -98,7 +136,7 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
                 </div>
                 <div
                     style:font-family="'JetBrains Mono', monospace"
-                    style:color="#764ba2"
+                    style:color="#D946EF"
                     style:font-weight="500"
                 >
                     {binding.example}
@@ -110,8 +148,6 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
 
 #[component]
 pub fn LandingPage(server_display_url: String) -> impl IntoView {
-    provide_meta_context();
-
     let mut bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
         .iter()
         .map(|cmd| (*cmd).clone().into())
@@ -124,34 +160,6 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
     let example_url = format!("{}/?cmd=gh facebook/bunnylol.rs", server_display_url);
 
     view! {
-        <Html lang="en"/>
-        <Meta charset="UTF-8"/>
-        <Meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <Title text="Bunnylol Command Bindings"/>
-        <Link rel="preconnect" href="https://fonts.googleapis.com"/>
-        <Link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-        <Link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-        <Style>
-            r#"
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body, html { height: 100%; width: 100%; }
-                body {
-                    font-family: 'JetBrains Mono', monospace;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    padding: 20px;
-                }
-                .binding-card {
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    cursor: pointer;
-                }
-                .binding-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-                }
-            "#
-        </Style>
-
         <div
             style:max-width="1200px"
             style:margin="0 auto"
@@ -179,7 +187,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                     href="https://github.com/facebook/bunnylol.rs"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style:color="#667eea"
+                    style:color="#8B5CF6"
                     style:text-decoration="none"
                     style:font-size="0.95em"
                     style:font-weight="500"
@@ -199,9 +207,9 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                     </svg>
                     <span>
-                        <span style:color="#666">"facebook"</span>
-                        <span style:color="#333" style:font-weight="600">"/"</span>
-                        <span style:color="#667eea" style:font-weight="600">"bunnylol.rs"</span>
+                        <span style:color="#9CA3AF">"facebook"</span>
+                        <span style:color="#5B21B6" style:font-weight="600" style:gap="4">"/"</span>
+                        <span style:color="#8B5CF6" style:font-weight="600">"bunnylol.rs"</span>
                     </span>
                 </a>
             </div>
@@ -214,10 +222,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                 style:margin-bottom="20px"
                 style:border="1px solid #e0e0e0"
             >
-                <div style:font-weight="600" style:margin-bottom="15px" style:color="#333" style:font-size="1.1em" style:text-align="center">
-                    "🌐 Web Usage"
-                </div>
-                <div style:max-width="700px" style:margin="0 auto" style:color="#666" style:line-height="1.6">
+                <div style:max-width="700px" style:margin="0 auto" style:color="#666" style:line-height="1.6" style:text-align="center">
                     <p style:margin-bottom="10px">
                         "This server is available at "
                         <code
@@ -241,20 +246,18 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                         style:background="white"
                         style:padding="12px 16px"
                         style:border-radius="4px"
-                        style:display="block"
-                        style:color="#667eea"
-                        style:border="1px solid #667eea"
+                        style:display="inline-block"
+                        style:color="#8B5CF6"
+                        style:border="1px solid #8B5CF6"
                         style:text-decoration="none"
                         style:transition="all 0.2s"
                         style:font-size="0.9em"
-                    >
-                        {example_url.clone()}
-                    </a>
+                    >{example_url.clone()}</a>
 
                     // Setup guides within web usage section
-                    <div style:margin-top="30px">
+                    <div style:margin-top="15px">
                         <div style:font-weight="600" style:margin-bottom="15px" style:color="#333" style:font-size="1em" style:text-align="center">
-                            "📚 Set bunnylol as your default search engine"
+                            "Set bunnylol as your default search engine!"
                         </div>
                         <p style:margin-bottom="15px" style:text-align="center" style:color="#666" style:line-height="1.8" style:max-width="800" style:margin-left="auto" style:margin-right="auto">
                             "If you set bunnylol as your default search engine, as an example, you can use it by entering "
@@ -295,7 +298,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                                         href="https://support.google.com/chrome/answer/95426?hl=en&co=GENIE.Platform%3DDesktop"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style:color="#667eea"
+                                        style:color="#8B5CF6"
                                         style:text-decoration="none"
                                         style:font-weight="500"
                                     >
@@ -308,7 +311,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                                         href="https://support.mozilla.org/en-US/kb/add-custom-search-engine-firefox"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style:color="#667eea"
+                                        style:color="#8B5CF6"
                                         style:text-decoration="none"
                                         style:font-weight="500"
                                     >
@@ -321,7 +324,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                                         href="https://support.mozilla.org/en-US/kb/change-your-default-search-engine-firefox-ios"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style:color="#667eea"
+                                        style:color="#8B5CF6"
                                         style:text-decoration="none"
                                         style:font-weight="500"
                                     >
@@ -334,7 +337,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                                         href="https://support.mozilla.org/en-US/kb/manage-my-default-search-engines-firefox-android"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style:color="#667eea"
+                                        style:color="#8B5CF6"
                                         style:text-decoration="none"
                                         style:font-weight="500"
                                     >
