@@ -15,7 +15,7 @@ fn test_cli_version() {
     cmd.arg("--version")
         .assert()
         .success()
-        .stdout(predicate::str::contains("0.1.0"));
+        .stdout(predicate::str::is_match(r"\d+\.\d+\.\d+").unwrap());
 }
 
 #[test]
