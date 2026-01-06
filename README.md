@@ -1,4 +1,4 @@
-# `bunnylol.rs` -- Smart browser bookmarks with Rust
+# `bunnylol.rs` — Smart browser bookmarks with Rust
 
 [![Crates.io](https://img.shields.io/crates/v/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
 [![Downloads](https://img.shields.io/crates/d/bunnylol.svg?style=flat-square)](https://crates.io/crates/bunnylol)
@@ -44,41 +44,15 @@ Or build from source:
 $ git clone https://github.com/facebook/bunnylol.rs.git
 $ cd bunnylol.rs
 
-# Install both CLI and server (3.9MB)
+# Install both CLI and server
 $ cargo install --path .
 
-# Install just the CLI (1.4MB - recommended for terminal use only)
+# Install just the CLI
 $ cargo install --path . --features cli --no-default-features
 
-# Install just the server (3.6MB - recommended for web server deployments)
+# Install just the server
 $ cargo install --path . --features server --no-default-features
 ```
-
-**Which one should I use?**
-- **CLI only**: If you only want terminal shortcuts and don't need the web server (1.4MB, faster to compile)
-- **Server only**: For deploying on a server where you don't need CLI features (3.6MB)
-- **Both** (default): Get everything - use the CLI locally and run the web server (3.9MB)
-
-<!-- TABLE OF CONTENTS -->
-## Table of Contents
-
-  - [Demo](#demo)
-  - [Installation](#installation)
-  - [CLI Quickstart](#cli-quickstart)
-  - [CLI Configuration](#cli-configuration)
-  - [Web Server Quickstart](#quickstart---web-server)
-    - [Installing as a System Service](#installing-as-a-system-service)
-  - [Setting bunnylol as Default Search Engine](#setting-bunnylol-to-be-your-default-search-engine)
-  - [Command Reference](#command-reference)
-    - [Built With](#built-with)
-  - [Getting Started](#getting-started)
-    - [Manual Setup](#manual-setup)
-  - [Deployment](#deployment-with-docker)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Acknowledgments](#acknowledgements)
-
-
 
 ## CLI Quickstart
 
