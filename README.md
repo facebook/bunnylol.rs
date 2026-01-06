@@ -207,6 +207,13 @@ default_search = "ddg"
 [history]
 enabled = true
 max_entries = 1000
+
+# Server configuration (for bunnylol serve) (optional)
+[server]
+port = 8000
+address = "127.0.0.1"  # Use "0.0.0.0" for network access
+log_level = "normal"   # Options: "normal", "debug", "critical", "off"
+server_display_url = "https://bunny.example.com"  # Public URL shown on bindings page
 ```
 
 ### Platform-Specific Directory Structure
