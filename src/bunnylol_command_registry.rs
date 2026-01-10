@@ -94,6 +94,8 @@ impl BunnylolCommandRegistry {
         crate::commands::PythonCommand,
         crate::commands::RubygemsCommand,
         crate::commands::StackOverflowCommand,
+        crate::commands::ProtonDriveCommand,
+        crate::commands::ProtonMailCommand,
     }
 
     /// Process commands that use special prefixes (like $ for stock tickers)
@@ -195,7 +197,7 @@ mod cache_tests {
         let commands = BunnylolCommandRegistry::get_all_commands();
 
         // Verify we have all expected commands
-        assert_eq!(commands.len(), 46, "Expected 46 commands");
+        assert_eq!(commands.len(), 48, "Expected 48 commands");
 
         // Verify cache returns same pointer (not regenerated)
         let commands2 = BunnylolCommandRegistry::get_all_commands();

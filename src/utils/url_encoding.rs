@@ -47,8 +47,38 @@ pub fn encode_url(input: &str) -> String {
 /// assert_eq!(url, "https://google.com/search?q=hello%20world");
 /// ```
 pub fn build_search_url(base_url: &str, query_param: &str, query_value: &str) -> String {
+    build_search_url_with_attribute_separator(base_url, query_param, query_value, "?")
+}
+
+/// Build a search URL with proper encoding
+///
+/// # Arguments
+/// * `base_url` - The base URL (e.g., "https://google.com/search")
+/// * `query_param` - The query parameter name (e.g., "q")
+/// * `query_value` - The search term to encode
+/// * `attribute_separator` - The character to separate the url from the query parameters (e.g., "?")
+///
+/// # Returns
+/// A complete search URL with properly encoded query parameters
+///
+/// # Example
+/// ```
+/// use bunnylol::utils::url_encoding::build_search_url_with_attribute_separator;
+///
+/// let url = build_search_url_with_attribute_separator("https://google.com/search", "q", "hello world", "?");
+/// assert_eq!(url, "https://google.com/search?q=hello%20world");
+/// ```
+pub fn build_search_url_with_attribute_separator(
+    base_url: &str,
+    query_param: &str,
+    query_value: &str,
+    attribute_separator: &str,
+) -> String {
     let encoded_query = encode_url(query_value);
-    format!("{}?{}={}", base_url, query_param, encoded_query)
+    format!(
+        "{}{}{}={}",
+        base_url, attribute_separator, query_param, encoded_query
+    )
 }
 
 /// Build a simple path URL with proper encoding
@@ -95,6 +125,17 @@ mod tests {
     fn test_build_search_url() {
         let url = build_search_url("https://google.com/search", "q", "hello world");
         assert_eq!(url, "https://google.com/search?q=hello%20world");
+    }
+
+    #[test]
+    fn test_build_search_url_with_attribute_separator() {
+        let url = build_search_url_with_attribute_separator(
+            "https://drive.proton.me/u/1/search",
+            "q",
+            "file",
+            "#",
+        );
+        assert_eq!(url, "https://drive.proton.me/u/1/search#q=file");
     }
 
     #[test]
