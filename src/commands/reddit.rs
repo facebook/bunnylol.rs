@@ -40,11 +40,11 @@ impl BunnylolCommand for RedditCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Reddit or search subreddits".to_string(),
-            example: "r r/rust".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Reddit or search subreddits",
+            "r r/rust",
+        )
     }
 }
 

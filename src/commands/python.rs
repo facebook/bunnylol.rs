@@ -25,12 +25,11 @@ impl BunnylolCommand for PythonCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Python documentation or search for Python resources"
-                .to_string(),
-            example: "python list".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Python documentation or search for Python resources",
+            "python list",
+        )
     }
 }
 

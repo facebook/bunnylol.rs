@@ -20,11 +20,11 @@ impl BunnylolCommand for BrewCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to formulae.brew.sh or search for Homebrew packages".to_string(),
-            example: "brew wget".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to formulae.brew.sh or search for Homebrew packages",
+            "brew wget",
+        )
     }
 }
 

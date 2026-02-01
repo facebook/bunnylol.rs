@@ -25,11 +25,11 @@ impl BunnylolCommand for GopkgCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to pkg.go.dev or search for Go packages".to_string(),
-            example: "go http".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to pkg.go.dev or search for Go packages",
+            "go http",
+        )
     }
 }
 

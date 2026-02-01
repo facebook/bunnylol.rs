@@ -23,11 +23,11 @@ impl BunnylolCommand for CargoCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to crates.io or search for Rust crates".to_string(),
-            example: "cargo serde".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to crates.io or search for Rust crates",
+            "cargo serde",
+        )
     }
 }
 

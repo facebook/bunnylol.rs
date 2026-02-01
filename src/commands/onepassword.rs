@@ -13,11 +13,11 @@ impl BunnylolCommand for OnePasswordCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "1Password home page".to_string(),
-            example: "1p".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "1Password home page",
+            "1p",
+        )
     }
 }
 

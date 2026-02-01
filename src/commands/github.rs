@@ -18,11 +18,11 @@ impl BunnylolCommand for GitHubCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to GitHub repositories".to_string(),
-            example: "gh facebook/react".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to GitHub repositories",
+            "gh facebook/react",
+        )
     }
 }
 

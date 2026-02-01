@@ -18,11 +18,11 @@ impl BunnylolCommand for REICommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to REI or search for outdoor gear".to_string(),
-            example: "rei hiking boots".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to REI or search for outdoor gear",
+            "rei hiking boots",
+        )
     }
 }
 

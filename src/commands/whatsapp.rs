@@ -12,11 +12,11 @@ impl BunnylolCommand for WhatsAppCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to WhatsApp".to_string(),
-            example: "wa".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to WhatsApp",
+            "wa",
+        )
     }
 }
 

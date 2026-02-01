@@ -20,11 +20,11 @@ impl BunnylolCommand for PypiCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to pypi.org or search for Python packages".to_string(),
-            example: "pypi requests".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to pypi.org or search for Python packages",
+            "pypi requests",
+        )
     }
 }
 

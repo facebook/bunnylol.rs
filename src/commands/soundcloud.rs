@@ -20,11 +20,11 @@ impl BunnylolCommand for SoundCloudCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to SoundCloud (supports: likes)".to_string(),
-            example: "sc edm".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to SoundCloud (supports: likes)",
+            "sc edm",
+        )
     }
 }
 

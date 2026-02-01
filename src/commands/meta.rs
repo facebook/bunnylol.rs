@@ -25,11 +25,11 @@ impl BunnylolCommand for MetaCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Meta, Meta AI, Meta Accounts Center, or Meta Pay".to_string(),
-            example: "meta accounts".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Meta, Meta AI, Meta Accounts Center, or Meta Pay",
+            "meta accounts",
+        )
     }
 }
 

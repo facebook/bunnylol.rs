@@ -20,12 +20,11 @@ impl BunnylolCommand for StackOverflowCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Stack Overflow or search for programming questions"
-                .to_string(),
-            example: "so rust ownership".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Stack Overflow or search for programming questions",
+            "so rust ownership",
+        )
     }
 }
 

@@ -21,11 +21,11 @@ impl BunnylolCommand for LinkedInCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to LinkedIn or search".to_string(),
-            example: "li software engineer".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to LinkedIn or search",
+            "li software engineer",
+        )
     }
 }
 

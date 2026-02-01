@@ -14,12 +14,11 @@ impl BunnylolCommand for GoogleSearchCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: vec!["g".to_string(), "(default)".to_string()],
-            description: "Search Google (default fallback for any unrecognized command)"
-                .to_string(),
-            example: "g rust programming".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            &["g", "(default)"],
+            "Search Google (default fallback for any unrecognized command)",
+            "g rust programming",
+        )
     }
 }
 

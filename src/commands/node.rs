@@ -36,12 +36,11 @@ impl BunnylolCommand for NodeCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Node.js API documentation or specific module docs"
-                .to_string(),
-            example: "node fs".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Node.js API documentation or specific module docs",
+            "node fs",
+        )
     }
 }
 
