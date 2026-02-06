@@ -38,11 +38,11 @@ impl BunnylolCommand for TwitterCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Twitter profiles or search Twitter".to_string(),
-            example: "tw @MetaOpenSource".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Twitter profiles or search Twitter",
+            "tw @MetaOpenSource",
+        )
     }
 }
 

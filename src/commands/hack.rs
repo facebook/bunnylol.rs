@@ -20,11 +20,11 @@ impl BunnylolCommand for HackCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Hack documentation or search Hack docs".to_string(),
-            example: "hack async".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Hack documentation or search Hack docs",
+            "hack async",
+        )
     }
 }
 

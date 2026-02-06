@@ -19,11 +19,11 @@ impl BunnylolCommand for WikipediaCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: vec!["wiki".to_string(), "wikipedia".to_string()],
-            description: "Search on Wikipedia".to_string(),
-            example: "wiki rust programming".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Search on Wikipedia",
+            "wiki rust programming",
+        )
     }
 }
 

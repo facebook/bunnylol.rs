@@ -32,11 +32,11 @@ impl BunnylolCommand for FacebookCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Facebook pages or search Facebook".to_string(),
-            example: "fb Meta".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Facebook pages or search Facebook",
+            "fb Meta",
+        )
     }
 }
 

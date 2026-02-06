@@ -14,11 +14,11 @@ impl BunnylolCommand for DuckDuckGoCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Search DuckDuckGo".to_string(),
-            example: "ddg rust programming".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Search DuckDuckGo",
+            "ddg rust programming",
+        )
     }
 }
 

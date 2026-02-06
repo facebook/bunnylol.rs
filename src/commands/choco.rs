@@ -20,12 +20,11 @@ impl BunnylolCommand for ChocoCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to community.chocolatey.org or search for Windows packages"
-                .to_string(),
-            example: "choco git".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to community.chocolatey.org or search for Windows packages",
+            "choco git",
+        )
     }
 }
 

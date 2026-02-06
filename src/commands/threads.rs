@@ -38,11 +38,11 @@ impl BunnylolCommand for ThreadsCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Threads profiles or search Threads".to_string(),
-            example: "threads @zuck".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Threads profiles or search Threads",
+            "threads @zuck",
+        )
     }
 }
 

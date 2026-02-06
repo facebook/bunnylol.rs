@@ -36,11 +36,11 @@ impl BunnylolCommand for GitlabCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to GitLab projects or search GitLab".to_string(),
-            example: "gitlab gitlab-org/gitlab".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to GitLab projects or search GitLab",
+            "gitlab gitlab-org/gitlab",
+        )
     }
 }
 

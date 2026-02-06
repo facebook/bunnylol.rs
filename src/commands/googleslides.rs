@@ -12,11 +12,11 @@ impl BunnylolCommand for GoogleSlidesCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Google Slides".to_string(),
-            example: "gslides".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Google Slides",
+            "gslides",
+        )
     }
 }
 

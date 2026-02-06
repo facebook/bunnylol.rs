@@ -8,6 +8,17 @@ pub struct BunnylolCommandInfo {
     pub example: String,
 }
 
+impl BunnylolCommandInfo {
+    // Create a new BunnylolCommandInfo
+    pub fn new(bindings: &[&str], description: &str, example: &str) -> Self {
+        BunnylolCommandInfo {
+            bindings: bindings.iter().map(|s| s.to_string()).collect(),
+            description: description.to_string(),
+            example: example.to_string(),
+        }
+    }
+}
+
 /// Bunnylol Command trait that all URL builders must implement
 pub trait BunnylolCommand {
     /// All command strings that trigger this binding (e.g., ["gh", "github"])
@@ -60,11 +71,11 @@ mod tests {
         }
 
         fn get_info() -> BunnylolCommandInfo {
-            BunnylolCommandInfo {
-                bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-                description: "Test command".to_string(),
-                example: "test query".to_string(),
-            }
+            BunnylolCommandInfo::new(
+                Self::BINDINGS,
+                "Test command",
+                "test query",
+            )
         }
     }
 

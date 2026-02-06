@@ -18,11 +18,11 @@ impl BunnylolCommand for GoogleMapsCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Google Maps or search for a location".to_string(),
-            example: "gmaps san francisco".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Google Maps or search for a location",
+            "gmaps san francisco",
+        )
     }
 }
 

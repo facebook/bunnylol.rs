@@ -20,12 +20,11 @@ impl BunnylolCommand for MdnCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to MDN Web Docs or search for web development resources"
-                .to_string(),
-            example: "mdn flexbox".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to MDN Web Docs or search for web development resources",
+            "mdn flexbox",
+        )
     }
 }
 

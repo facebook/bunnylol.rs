@@ -20,11 +20,11 @@ impl BunnylolCommand for NugetCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to nuget.org or search for .NET packages".to_string(),
-            example: "nuget newtonsoft".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to nuget.org or search for .NET packages",
+            "nuget newtonsoft",
+        )
     }
 }
 

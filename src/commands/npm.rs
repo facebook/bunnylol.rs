@@ -20,11 +20,11 @@ impl BunnylolCommand for NpmCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to npmjs.com or search for npm packages".to_string(),
-            example: "npm react".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to npmjs.com or search for npm packages",
+            "npm react",
+        )
     }
 }
 
