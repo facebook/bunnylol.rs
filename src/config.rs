@@ -23,6 +23,11 @@ pub struct BunnylolConfig {
     #[serde(default = "default_search_engine")]
     pub default_search: String,
 
+    /// Stock website provider (optional)
+    /// Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+    #[serde(default = "default_stock_provider")]
+    pub stock_provider: String,
+
     /// Custom command aliases
     #[serde(default)]
     pub aliases: HashMap<String, String>,
@@ -41,6 +46,7 @@ impl Default for BunnylolConfig {
         Self {
             browser: None,
             default_search: default_search_engine(),
+            stock_provider: default_stock_provider(),
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
@@ -149,6 +155,10 @@ impl ServerConfig {
 
 fn default_search_engine() -> String {
     "google".to_string()
+}
+
+fn default_stock_provider() -> String {
+    "yahoo".to_string()
 }
 
 fn default_history_enabled() -> bool {
@@ -303,6 +313,10 @@ impl BunnylolConfig {
 # Options: "google" (default), "ddg", "bing"
 default_search = "{}"
 
+# Stock website provider (optional)
+# Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+stock_provider = "{}"
+
 # Custom command aliases
 # Example: work = "gh mycompany/repo"
 [aliases]
@@ -334,6 +348,7 @@ log_level = "{}"
                 "# browser = \"firefox\"".to_string()
             },
             self.default_search,
+            self.stock_provider,
             if self.aliases.is_empty() {
                 "# my-alias = \"gh username/repo\"".to_string()
             } else {
@@ -377,6 +392,26 @@ log_level = "{}"
             _ => format!("https://www.google.com/search?q={}", encoded_query), // Default to Google
         }
     }
+
+    /// Get the stock provider URL for a ticker
+    pub fn get_stock_url(&self, ticker: &str) -> String {
+        self.get_stock_url_for_provider(ticker, &self.stock_provider)
+    }
+
+    /// Get the stock URL for a specific provider
+    fn get_stock_url_for_provider(&self, ticker: &str, provider: &str) -> String {
+        use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+        let encoded = utf8_percent_encode(ticker, NON_ALPHANUMERIC).to_string();
+
+        match provider {
+            "yahoo" => format!("https://finance.yahoo.com/quote/{}/", encoded),
+            "finviz" => format!("https://finviz.com/quote.ashx?t={}", ticker),
+            "tradingview" | "tv" => format!("https://www.tradingview.com/symbols/{}/", ticker),
+            "google" | "gf" => format!("https://www.google.com/finance/quote/{}", ticker),
+            "investing" | "inv" => format!("https://www.investing.com/search/?q={}", encoded),
+            _ => format!("https://finance.yahoo.com/quote/{}/", encoded), // fallbback is yahoo
+        }
+    }
 }
 
 #[cfg(test)]
@@ -388,6 +423,7 @@ mod tests {
         let config = BunnylolConfig::default();
         assert_eq!(config.browser, None);
         assert_eq!(config.default_search, "google");
+        assert_eq!(config.stock_provider, "yahoo");
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);

@@ -109,7 +109,7 @@ impl BunnylolCommandRegistry {
             if command.len() <= 1 {
                 return None;
             }
-            return Some(StockCommand::process_ticker_with_config(command, config));
+            return Some(StockCommand::process_ticker(command, config));
         }
 
         None
