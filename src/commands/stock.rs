@@ -105,16 +105,11 @@ impl BunnylolCommand for StockCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: vec![
-                "stock".to_string(),
-                "stocks".to_string(),
-                "finance".to_string(),
-                "$<ticker>".to_string(),
-            ],
-            description: "Look up stock prices on Yahoo Finance, Finviz, TradingView, Google Finance, or Investing.com".to_string(),
-            example: "stock META  or  stock finviz META  or  $META".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            &["stock", "stocks", "finance", "$<ticker>"],
+            "Look up stock prices on Yahoo Finance, Finviz, TradingView, Google Finance, or Investing.com",
+            "stock META  or  stock finviz META  or  $META",
+        )
     }
 }
 

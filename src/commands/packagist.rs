@@ -20,11 +20,11 @@ impl BunnylolCommand for PackagistCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to packagist.org or search for PHP packages".to_string(),
-            example: "packagist symfony".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to packagist.org or search for PHP packages",
+            "packagist symfony",
+        )
     }
 }
 

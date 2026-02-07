@@ -24,11 +24,11 @@ impl BunnylolCommand for YouTubeCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to YouTube or search for videos".to_string(),
-            example: "yt rust programming".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to YouTube or search for videos",
+            "yt rust programming",
+        )
     }
 }
 

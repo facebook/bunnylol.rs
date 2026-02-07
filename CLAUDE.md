@@ -66,7 +66,7 @@ All commands implement the `BunnylolCommand` trait defined in `src/utils/bunnylo
 pub trait BunnylolCommand {
     const BINDINGS: &'static [&'static str];  // Command aliases
     fn process_args(args: &str) -> String;     // Returns URL
-    fn get_info() -> CommandInfo;              // For documentation
+    fn get_info() -> BunnylolCommandInfo;      // For documentation
 }
 ```
 
@@ -97,7 +97,7 @@ Located in `src/utils/url_encoding.rs`:
 
 1. **Create command file** in `src/commands/your_command.rs`:
    ```rust
-   use crate::utils::bunnylol_command::{BunnylolCommand, CommandInfo};
+   use crate::utils::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 
    pub struct YourCommand;
 
@@ -110,12 +110,12 @@ Located in `src/utils/url_encoding.rs`:
            "https://example.com".to_string()
        }
 
-       fn get_info() -> CommandInfo {
-           CommandInfo {
-               bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-               description: "Description here".to_string(),
-               example: "alias1 example".to_string(),
-           }
+       fn get_info() -> BunnylolCommandInfo {
+           BunnylolCommandInfo::new(
+               Self::BINDINGS,
+               "Description here",
+               "alias1 example",
+           )
        }
    }
 

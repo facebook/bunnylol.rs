@@ -32,13 +32,11 @@ impl BunnylolCommand for ClaudeCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description:
-                "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)"
-                    .to_string(),
-            example: "claude projects".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)",
+            "claude projects",
+        )
     }
 }
 

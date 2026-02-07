@@ -20,11 +20,11 @@ impl BunnylolCommand for DockerhubCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Docker Hub or search for container images".to_string(),
-            example: "docker nginx".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Docker Hub or search for container images",
+            "docker nginx",
+        )
     }
 }
 

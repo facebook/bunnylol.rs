@@ -20,11 +20,11 @@ impl BunnylolCommand for RubygemsCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to rubygems.org or search for Ruby gems".to_string(),
-            example: "gem rails".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to rubygems.org or search for Ruby gems",
+            "gem rails",
+        )
     }
 }
 

@@ -53,13 +53,11 @@ impl BunnylolCommand for InstagramCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description:
-                "Navigate to Instagram profiles, search Instagram, or access Reels/Messages"
-                    .to_string(),
-            example: "ig @instagram".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Instagram profiles, search Instagram, or access Reels/Messages",
+            "ig @instagram",
+        )
     }
 }
 

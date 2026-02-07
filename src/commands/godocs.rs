@@ -14,11 +14,11 @@ impl BunnylolCommand for GodocsCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Go language documentation".to_string(),
-            example: "godocs".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Go language documentation",
+            "godocs",
+        )
     }
 }
 

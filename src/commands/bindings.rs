@@ -20,11 +20,11 @@ impl BunnylolCommand for BindingsCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "View all Bunnylol command bindings in a web portal".to_string(),
-            example: "bindings".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "View all Bunnylol command bindings in a web portal",
+            "bindings",
+        )
     }
 }
 

@@ -12,11 +12,11 @@ impl BunnylolCommand for ChatGPTCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to ChatGPT".to_string(),
-            example: "chatgpt".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to ChatGPT",
+            "chatgpt",
+        )
     }
 }
 

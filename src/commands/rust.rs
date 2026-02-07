@@ -24,11 +24,11 @@ impl BunnylolCommand for RustCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Rust documentation or search Rust std docs".to_string(),
-            example: "rust HashMap".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Rust documentation or search Rust std docs",
+            "rust HashMap",
+        )
     }
 }
 

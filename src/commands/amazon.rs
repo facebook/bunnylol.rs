@@ -35,11 +35,11 @@ impl BunnylolCommand for AmazonCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo {
-            bindings: Self::BINDINGS.iter().map(|s| s.to_string()).collect(),
-            description: "Navigate to Amazon or search for products".to_string(),
-            example: "az headphones".to_string(),
-        }
+        BunnylolCommandInfo::new(
+            Self::BINDINGS,
+            "Navigate to Amazon or search for products",
+            "az headphones",
+        )
     }
 }
 
