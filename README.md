@@ -203,6 +203,10 @@ notes = "gh username/notes"
 # Options: "google" (default), "ddg", "bing"
 default_search = "ddg"
 
+# Stock website provider (optional)
+# Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+stock_provider = "finviz"
+
 # Command history settings (optional)
 [history]
 enabled = true
@@ -396,7 +400,7 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 | `az` | `amzn`, `azn`, `amazon` | Navigate to Amazon or search for products | `az headphones` |
 | `rei` | — | Navigate to REI or search for outdoor gear | `rei hiking boots` |
 | `schwab` | — | Charles Schwab shortcuts (`billpay`, `orders`, `trade`, `transfer`, `security`, `contact`) | `schwab trade` |
-| `stock` | `stocks`, `finance`, `$<ticker>` | Look up stock prices on Yahoo Finance | `stock META` or `$META` |
+| `stock` | `stocks`, `finance`, `$<ticker>` | Look up stock prices (Yahoo Finance, Finviz, TradingView, Google Finance, Investing.com) | `stock META` or `stock finviz AAPL` or `$META` |
 
 ### Other Services
 
@@ -415,7 +419,7 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 
 ### Special Syntax
 
-- **Stock tickers**: Prefix with `$` → `$AAPL` redirects to Yahoo Finance
+- **Stock tickers**: Prefix with `$` → `$AAPL` 
 - **Twitter profiles**: Prefix with `@` → `tw @username`
 - **Instagram profiles**: Prefix with `@` → `ig @username`
 - **Threads profiles**: Prefix with `@` → `threads @username`
