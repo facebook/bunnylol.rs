@@ -12,11 +12,7 @@ impl BunnylolCommand for ChatGPTCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "Navigate to ChatGPT",
-            "chatgpt",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "Navigate to ChatGPT", "chatgpt")
     }
 }
 

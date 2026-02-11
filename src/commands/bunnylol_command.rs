@@ -71,11 +71,7 @@ mod tests {
         }
 
         fn get_info() -> BunnylolCommandInfo {
-            BunnylolCommandInfo::new(
-                Self::BINDINGS,
-                "Test command",
-                "test query",
-            )
+            BunnylolCommandInfo::new(Self::BINDINGS, "Test command", "test query")
         }
     }
 

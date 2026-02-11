@@ -12,11 +12,7 @@ impl BunnylolCommand for GoogleChatCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "Navigate to Google Chat",
-            "gchat",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "Navigate to Google Chat", "gchat")
     }
 }
 
