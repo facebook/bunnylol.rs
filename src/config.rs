@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::utils::url_encoding::encode_url_special_char;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -382,9 +383,7 @@ log_level = "{}"
 
     /// Get the search engine URL for a query
     pub fn get_search_url(&self, query: &str) -> String {
-        let encoded_query =
-            percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC)
-                .to_string();
+        let encoded_query = encode_url_special_char(query);
 
         match self.default_search.as_str() {
             "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
@@ -400,8 +399,7 @@ log_level = "{}"
 
     /// Get the stock URL for a specific provider
     fn get_stock_url_for_provider(&self, ticker: &str, provider: &str) -> String {
-        use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
-        let encoded = utf8_percent_encode(ticker, NON_ALPHANUMERIC).to_string();
+        let encoded = encode_url_special_char(ticker);
 
         match provider {
             "yahoo" => format!("https://finance.yahoo.com/quote/{}/", encoded),
