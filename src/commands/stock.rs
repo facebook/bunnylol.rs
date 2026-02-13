@@ -1,20 +1,74 @@
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::config::BunnylolConfig;
-use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+use crate::utils::url_encoding::encode_url_special_char;
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
+/// Stock provider configuration
+struct StockProvider {
+    aliases: &'static [&'static str],
+    homepage: &'static str,
+    ticker_url_template: &'static str,
+    needs_encoding: bool,  // Whether to percent-encode the ticker
+}
+
+/// supported stock providers
+static PROVIDERS: &[StockProvider] = &[
+    StockProvider {
+        aliases: &["yahoo"],
+        homepage: "https://finance.yahoo.com/",
+        ticker_url_template: "https://finance.yahoo.com/quote/{}/",
+        needs_encoding: true,
+    },
+    StockProvider {
+        aliases: &["finviz"],
+        homepage: "https://finviz.com/",
+        ticker_url_template: "https://finviz.com/quote.ashx?t={}",
+        needs_encoding: false,
+    },
+    StockProvider {
+        aliases: &["tradingview", "tv"],
+        homepage: "https://www.tradingview.com/",
+        ticker_url_template: "https://www.tradingview.com/symbols/{}/",
+        needs_encoding: false,
+    },
+    StockProvider {
+        aliases: &["google", "gf"],
+        homepage: "https://www.google.com/finance/",
+        ticker_url_template: "https://www.google.com/finance/quote/{}",
+        needs_encoding: false,
+    },
+    StockProvider {
+        aliases: &["investing", "inv"],
+        homepage: "https://www.investing.com/",
+        ticker_url_template: "https://www.investing.com/search/?q={}",
+        needs_encoding: true,
+    },
+];
+
+/// lookup table (alias -> provider) for stocks
+static PROVIDER_LOOKUP: LazyLock<HashMap<&'static str, &'static StockProvider>> =
+    LazyLock::new(|| {
+        PROVIDERS
+            .iter()
+            .flat_map(|p| p.aliases.iter().map(move |a| (*a, p)))
+            .collect()
+    });
 
 pub struct StockCommand;
 
 impl StockCommand {
-    /// Get homepage URL for a provider
-    fn get_provider_homepage(provider: &str) -> String {
-        match provider {
-            "finviz" => "https://finviz.com/",
-            "tradingview" | "tv" => "https://www.tradingview.com/",
-            "google" | "gf" => "https://www.google.com/finance/",
-            "investing" | "inv" => "https://www.investing.com/",
-            _ => "https://finance.yahoo.com/",
+    fn get_provider(name: &str) -> &'static StockProvider {
+        match PROVIDER_LOOKUP.get(name).copied() {
+        Some(provider) => provider,
+        None => {
+            eprintln!(
+                "Warning: Unknown stock provider '{}', using yahoo as fallback",
+                name
+            );
+            &PROVIDERS[0] // Default to yahoo (first provider)
         }
-        .to_string()
+    }
     }
 
     /// Process a ticker with $ prefix (e.g., "$META")
@@ -24,31 +78,31 @@ impl StockCommand {
         config: Option<&BunnylolConfig>,
     ) -> String {
         // Get provider from config or default to yahoo
-        let provider = config
+        let provider_name = config
             .map(|cfg| cfg.stock_provider.as_str())
             .unwrap_or("yahoo");
 
         if ticker_with_dollar.len() <= 1 {
             // No ticker - return provider homepage
-            return Self::get_provider_homepage(provider);
+            let provider = Self::get_provider(provider_name);
+            return provider.homepage.to_string();
         }
 
         let ticker = &ticker_with_dollar[1..];
-        Self::build_url_for_provider(ticker, provider)
+        Self::build_url_for_provider(ticker, provider_name)
     }
 
     /// Build stock URL for a specific provider
-    fn build_url_for_provider(ticker: &str, provider: &str) -> String {
-        let encoded = utf8_percent_encode(ticker, NON_ALPHANUMERIC).to_string();
+    fn build_url_for_provider(ticker: &str, provider_name: &str) -> String {
+        let provider = Self::get_provider(provider_name);
 
-        match provider {
-            "yahoo" => format!("https://finance.yahoo.com/quote/{}/", encoded),
-            "finviz" => format!("https://finviz.com/quote.ashx?t={}", ticker),
-            "tradingview" | "tv" => format!("https://www.tradingview.com/symbols/{}/", ticker),
-            "google" | "gf" => format!("https://www.google.com/finance/quote/{}", ticker),
-            "investing" | "inv" => format!("https://www.investing.com/search/?q={}", encoded),
-            _ => format!("https://finance.yahoo.com/quote/{}/", encoded),
-        }
+        let ticker_str = if provider.needs_encoding {
+            encode_url_special_char(ticker)
+        } else {
+            ticker.to_string()
+        };
+
+        provider.ticker_url_template.replace("{}", &ticker_str)
     }
 
     /// Parse provider from query (e.g., "finviz AAPL" or "AAPL")
@@ -58,9 +112,8 @@ impl StockCommand {
 
         if parts.len() >= 2 {
             let potential_provider = parts[0].to_lowercase();
-            let known_providers = ["yahoo", "finviz", "tradingview", "tv", "google", "gf", "investing", "inv"];
 
-            if known_providers.contains(&potential_provider.as_str()) {
+            if PROVIDER_LOOKUP.contains_key(potential_provider.as_str()) {
                 // Return provider and rest of query, ticker starts after first whitespace + provider length
                 let ticker_start = query.find(char::is_whitespace)
                     .map(|pos| query[pos..].trim_start())
@@ -88,19 +141,20 @@ impl BunnylolCommand for StockCommand {
         let query = Self::get_command_args(args);
 
         // Get provider from config or default to yahoo
-        let provider = config
+        let provider_name = config
             .map(|cfg| cfg.stock_provider.as_str())
             .unwrap_or("yahoo");
 
         if query.is_empty() {
-            // When no tickers, home page
-            return Self::get_provider_homepage(provider);
+            // case of no tickers, return provider homepage
+            let provider = Self::get_provider(provider_name);
+            return provider.homepage.to_string();
         }
 
         let (provider_override, ticker) = Self::parse_provider_and_ticker(query);
 
-        // Override if specified, otherwise use config default
-        let final_provider = provider_override.unwrap_or(provider);
+        // override if specified, otherwise use config default
+        let final_provider = provider_override.unwrap_or(provider_name);
         Self::build_url_for_provider(ticker, final_provider)
     }
 
