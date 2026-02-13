@@ -392,24 +392,6 @@ log_level = "{}"
         }
     }
 
-    /// Get the stock provider URL for a ticker
-    pub fn get_stock_url(&self, ticker: &str) -> String {
-        self.get_stock_url_for_provider(ticker, &self.stock_provider)
-    }
-
-    /// Get the stock URL for a specific provider
-    fn get_stock_url_for_provider(&self, ticker: &str, provider: &str) -> String {
-        let encoded = encode_url_special_char(ticker);
-
-        match provider {
-            "yahoo" => format!("https://finance.yahoo.com/quote/{}/", encoded),
-            "finviz" => format!("https://finviz.com/quote.ashx?t={}", ticker),
-            "tradingview" | "tv" => format!("https://www.tradingview.com/symbols/{}/", ticker),
-            "google" | "gf" => format!("https://www.google.com/finance/quote/{}", ticker),
-            "investing" | "inv" => format!("https://www.investing.com/search/?q={}", encoded),
-            _ => format!("https://finance.yahoo.com/quote/{}/", encoded), // fallbback is yahoo
-        }
-    }
 }
 
 #[cfg(test)]
