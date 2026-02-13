@@ -49,10 +49,13 @@ static PROVIDERS: &[StockProvider] = &[
 /// lookup table (alias -> provider) for stocks
 static PROVIDER_LOOKUP: LazyLock<HashMap<&'static str, &'static StockProvider>> =
     LazyLock::new(|| {
-        PROVIDERS
-            .iter()
-            .flat_map(|p| p.aliases.iter().map(move |a| (*a, p)))
-            .collect()
+        let mut map = HashMap::new();
+        for p in PROVIDERS {
+            for &alias in p.aliases {
+                map.insert(alias, p);
+            }
+        }
+        map
     });
 
 pub struct StockCommand;
