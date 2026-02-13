@@ -4,7 +4,7 @@
 /// duplication across different command implementations.
 extern crate percent_encoding;
 
-use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
+use percent_encoding::{AsciiSet, CONTROLS, NON_ALPHANUMERIC, utf8_percent_encode};
 
 /// URL fragment encoding set used for percent encoding
 /// Used as part of the percent_encoding library to safely encode URLs
@@ -27,6 +27,26 @@ pub const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>'
 /// ```
 pub fn encode_url(input: &str) -> String {
     utf8_percent_encode(input, FRAGMENT).to_string()
+}
+
+/// Encode a string strictly for safe use in URLs (encodes all non-alphanumeric characters)
+/// Use this for stock tickers, search queries, or any content with special characters
+///
+/// # Arguments
+/// * `input` - The string to encode
+///
+/// # Returns
+/// A URL-encoded string with all non-alphanumeric characters encoded
+///
+/// # Example
+/// ```
+/// use bunnylol::utils::url_encoding::encode_url_special_char;
+///
+/// let encoded = encode_url_special_char("BRK.B");
+/// assert_eq!(encoded, "BRK%2EB");
+/// ```
+pub fn encode_url_special_char(input: &str) -> String {
+    utf8_percent_encode(input, NON_ALPHANUMERIC).to_string()
 }
 
 /// Build a search URL with proper encoding
