@@ -55,10 +55,11 @@ mod server_impl {
             Some(cmd_str) => {
                 println!("bunnylol command: {}", cmd_str);
 
-                let command = utils::get_command_from_query_string(cmd_str);
+                let resolved = config.resolve_command(cmd_str);
+                let command = utils::get_command_from_query_string(&resolved);
                 let redirect_url = BunnylolCommandRegistry::process_command_with_config(
                     command,
-                    cmd_str,
+                    &resolved,
                     Some(config.inner()),
                 );
                 println!("redirecting to: {}", redirect_url);
