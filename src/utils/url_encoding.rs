@@ -120,7 +120,10 @@ mod tests {
 
     #[test]
     fn test_encode_url_with_ampersand() {
-        assert_eq!(encode_url("Peak Sports & Spine"), "Peak%20Sports%20%26%20Spine");
+        assert_eq!(
+            encode_url("Peak Sports & Spine"),
+            "Peak%20Sports%20%26%20Spine"
+        );
     }
 
     #[test]
