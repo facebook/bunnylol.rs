@@ -409,6 +409,23 @@ mod tests {
     }
 
     #[test]
+    fn test_resolved_alias_produces_correct_redirect() {
+        let mut config = BunnylolConfig::default();
+        config
+            .aliases
+            .insert("work".to_string(), "gh mycompany".to_string());
+
+        let resolved = config.resolve_command("work");
+        let command = crate::utils::get_command_from_query_string(&resolved);
+        let url = crate::BunnylolCommandRegistry::process_command_with_config(
+            command,
+            &resolved,
+            Some(&config),
+        );
+        assert_eq!(url, "https://github.com/mycompany");
+    }
+
+    #[test]
     fn test_get_search_url_google() {
         let config = BunnylolConfig::default();
         let url = config.get_search_url("hello world");
