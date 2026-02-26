@@ -57,4 +57,12 @@ mod tests {
             "https://google.com/search?q="
         );
     }
+
+    #[test]
+    fn test_google_search_command_with_ampersand() {
+        assert_eq!(
+            GoogleSearchCommand::process_args("g Peak Sports & Spine Physical Therapy"),
+            "https://google.com/search?q=Peak%20Sports%20%26%20Spine%20Physical%20Therapy"
+        );
+    }
 }

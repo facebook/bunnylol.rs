@@ -8,7 +8,16 @@ use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
 
 /// URL fragment encoding set used for percent encoding
 /// Used as part of the percent_encoding library to safely encode URLs
-pub const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'<').add(b'>').add(b'`');
+pub const FRAGMENT: &AsciiSet = &CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'<')
+    .add(b'>')
+    .add(b'`')
+    .add(b'&')
+    .add(b'=')
+    .add(b'+')
+    .add(b'#');
 
 /// Encode a string for safe use in URLs
 ///
@@ -107,5 +116,38 @@ mod tests {
     fn test_build_path_url_with_trailing_slash() {
         let url = build_path_url("https://github.com/", "facebook/react");
         assert_eq!(url, "https://github.com/facebook/react");
+    }
+
+    #[test]
+    fn test_encode_url_with_ampersand() {
+        assert_eq!(encode_url("Peak Sports & Spine"), "Peak%20Sports%20%26%20Spine");
+    }
+
+    #[test]
+    fn test_encode_url_with_equals() {
+        assert_eq!(encode_url("a=b"), "a%3Db");
+    }
+
+    #[test]
+    fn test_encode_url_with_hash() {
+        assert_eq!(encode_url("a#b"), "a%23b");
+    }
+
+    #[test]
+    fn test_encode_url_with_plus() {
+        assert_eq!(encode_url("a+b"), "a%2Bb");
+    }
+
+    #[test]
+    fn test_build_search_url_with_ampersand() {
+        let url = build_search_url(
+            "https://google.com/search",
+            "q",
+            "Peak Sports & Spine Physical Therapy",
+        );
+        assert_eq!(
+            url,
+            "https://google.com/search?q=Peak%20Sports%20%26%20Spine%20Physical%20Therapy"
+        );
     }
 }
