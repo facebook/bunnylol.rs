@@ -422,7 +422,7 @@ mod tests {
             &resolved,
             Some(&config),
         );
-        assert_eq!(url, "https://github.com/mycompany");
+        assert_eq!(url, "https://github.com/search?q=mycompany&type=repositories");
     }
 
     #[test]
