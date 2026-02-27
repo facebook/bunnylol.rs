@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::utils::url_encoding::encode_url_special_char;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -22,6 +23,11 @@ pub struct BunnylolConfig {
     /// Options: "google" (default), "ddg", "bing"
     #[serde(default = "default_search_engine")]
     pub default_search: String,
+
+    /// Stock website provider (optional)
+    /// Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+    #[serde(default = "default_stock_provider")]
+    pub stock_provider: String,
 
     /// Custom command aliases
     #[serde(default)]
@@ -41,6 +47,7 @@ impl Default for BunnylolConfig {
         Self {
             browser: None,
             default_search: default_search_engine(),
+            stock_provider: default_stock_provider(),
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
@@ -149,6 +156,10 @@ impl ServerConfig {
 
 fn default_search_engine() -> String {
     "google".to_string()
+}
+
+fn default_stock_provider() -> String {
+    "yahoo".to_string()
 }
 
 fn default_history_enabled() -> bool {
@@ -303,6 +314,10 @@ impl BunnylolConfig {
 # Options: "google" (default), "ddg", "bing"
 default_search = "{}"
 
+# Stock website provider (optional)
+# Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+stock_provider = "{}"
+
 # Custom command aliases
 # Example: work = "gh mycompany/repo"
 [aliases]
@@ -334,6 +349,7 @@ log_level = "{}"
                 "# browser = \"firefox\"".to_string()
             },
             self.default_search,
+            self.stock_provider,
             if self.aliases.is_empty() {
                 "# my-alias = \"gh username/repo\"".to_string()
             } else {
@@ -367,9 +383,7 @@ log_level = "{}"
 
     /// Get the search engine URL for a query
     pub fn get_search_url(&self, query: &str) -> String {
-        let encoded_query =
-            percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC)
-                .to_string();
+        let encoded_query = encode_url_special_char(query);
 
         match self.default_search.as_str() {
             "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
@@ -377,6 +391,7 @@ log_level = "{}"
             _ => format!("https://www.google.com/search?q={}", encoded_query), // Default to Google
         }
     }
+
 }
 
 #[cfg(test)]
@@ -388,6 +403,7 @@ mod tests {
         let config = BunnylolConfig::default();
         assert_eq!(config.browser, None);
         assert_eq!(config.default_search, "google");
+        assert_eq!(config.stock_provider, "yahoo");
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);

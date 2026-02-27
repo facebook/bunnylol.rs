@@ -27,6 +27,16 @@ pub trait BunnylolCommand {
     /// Process the command arguments and return the appropriate URL
     fn process_args(args: &str) -> String;
 
+    /// Process the command arguments with config support
+    ///
+    /// The command registry calls this on every command, passing optional config
+    fn process_args_with_config(
+        args: &str,
+        _config: Option<&crate::config::BunnylolConfig>,
+    ) -> String {
+        Self::process_args(args)
+    }
+
     /// Get the command portion from the full arguments string
     fn get_command_args(args: &str) -> &str {
         // Check if args starts with any of the bindings
