@@ -13,11 +13,7 @@ impl BunnylolCommand for OnePasswordCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "1Password home page",
-            "1p",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "1Password home page", "1p")
     }
 }
 

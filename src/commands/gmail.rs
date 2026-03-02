@@ -12,11 +12,7 @@ impl BunnylolCommand for GmailCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "Navigate to Gmail",
-            "mail",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "Navigate to Gmail", "mail")
     }
 }
 

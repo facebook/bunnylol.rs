@@ -12,11 +12,7 @@ impl BunnylolCommand for GoogleSlidesCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "Navigate to Google Slides",
-            "gslides",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "Navigate to Google Slides", "gslides")
     }
 }
 

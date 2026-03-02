@@ -14,11 +14,7 @@ impl BunnylolCommand for DuckDuckGoCommand {
     }
 
     fn get_info() -> BunnylolCommandInfo {
-        BunnylolCommandInfo::new(
-            Self::BINDINGS,
-            "Search DuckDuckGo",
-            "ddg rust programming",
-        )
+        BunnylolCommandInfo::new(Self::BINDINGS, "Search DuckDuckGo", "ddg rust programming")
     }
 }
 
