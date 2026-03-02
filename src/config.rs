@@ -10,6 +10,20 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::OnceLock;
+
+/// Global singleton for BunnylolConfig, initialized once at startup!
+static GLOBAL_CONFIG: OnceLock<BunnylolConfig> = OnceLock::new();
+
+/// Call once on startup
+pub fn init_global_config(config: BunnylolConfig) {
+    let _ = GLOBAL_CONFIG.set(config);
+}
+
+/// Get a reference to the global config, after initialized.
+pub fn get_global_config() -> Option<&'static BunnylolConfig> {
+    GLOBAL_CONFIG.get()
+}
 
 /// Configuration for bunnylol CLI
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,8 +40,9 @@ pub struct BunnylolConfig {
 
     /// Stock website provider (optional)
     /// Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
-    #[serde(default = "default_stock_provider")]
-    pub stock_provider: String,
+    /// If not set, defaults to yahoo
+    #[serde(default)]
+    pub stock_provider: Option<String>,
 
     /// Custom command aliases
     #[serde(default)]
@@ -47,7 +62,7 @@ impl Default for BunnylolConfig {
         Self {
             browser: None,
             default_search: default_search_engine(),
-            stock_provider: default_stock_provider(),
+            stock_provider: None,
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
@@ -156,10 +171,6 @@ impl ServerConfig {
 
 fn default_search_engine() -> String {
     "google".to_string()
-}
-
-fn default_stock_provider() -> String {
-    "yahoo".to_string()
 }
 
 fn default_history_enabled() -> bool {
@@ -316,7 +327,7 @@ default_search = "{}"
 
 # Stock website provider (optional)
 # Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
-stock_provider = "{}"
+{}
 
 # Custom command aliases
 # Example: work = "gh mycompany/repo"
@@ -349,7 +360,11 @@ log_level = "{}"
                 "# browser = \"firefox\"".to_string()
             },
             self.default_search,
-            self.stock_provider,
+            if let Some(provider) = &self.stock_provider {
+                format!("stock_provider = \"{}\"", provider)
+            } else {
+                "# stock_provider = \"yahoo\"".to_string()
+            },
             if self.aliases.is_empty() {
                 "# my-alias = \"gh username/repo\"".to_string()
             } else {
@@ -403,7 +418,7 @@ mod tests {
         let config = BunnylolConfig::default();
         assert_eq!(config.browser, None);
         assert_eq!(config.default_search, "google");
-        assert_eq!(config.stock_provider, "yahoo");
+        assert_eq!(config.stock_provider, None);
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);

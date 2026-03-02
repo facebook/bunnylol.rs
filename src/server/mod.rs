@@ -56,11 +56,8 @@ mod server_impl {
                 println!("bunnylol command: {}", cmd_str);
 
                 let command = utils::get_command_from_query_string(cmd_str);
-                let redirect_url = BunnylolCommandRegistry::process_command_with_config(
-                    command,
-                    cmd_str,
-                    Some(config.inner()),
-                );
+                let redirect_url =
+                    BunnylolCommandRegistry::process_command(command, cmd_str);
                 println!("redirecting to: {}", redirect_url);
 
                 // Track command in history if enabled

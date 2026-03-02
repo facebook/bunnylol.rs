@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
-use crate::config::BunnylolConfig;
+use crate::config::get_global_config;
 
-// Type alias for command handler functions with config injection
-type CommandHandler = fn(&str, Option<&BunnylolConfig>) -> String;
+// Type alias for command handler functions
+type CommandHandler = fn(&str) -> String;
 
 // Global command lookup table, initialized once on first access
 static COMMAND_LOOKUP: OnceLock<HashMap<&'static str, CommandHandler>> = OnceLock::new();
@@ -22,7 +22,7 @@ macro_rules! register_commands {
 
             $(
                 for alias in <$cmd>::BINDINGS {
-                    map.insert(*alias, <$cmd>::process_args_with_config as CommandHandler);
+                    map.insert(*alias, <$cmd>::process_args as CommandHandler);
                 }
             )+
 
@@ -98,10 +98,7 @@ impl BunnylolCommandRegistry {
     }
 
     /// Process commands that use special prefixes (like $ for stock tickers)
-    fn process_prefix_commands(
-        command: &str,
-        config: Option<&BunnylolConfig>,
-    ) -> Option<String> {
+    fn process_prefix_commands(command: &str) -> Option<String> {
         use crate::commands::*;
 
         if command.starts_with('$') {
@@ -109,7 +106,7 @@ impl BunnylolCommandRegistry {
             if command.len() <= 1 {
                 return None;
             }
-            return Some(StockCommand::process_ticker(command, config));
+            return Some(StockCommand::process_ticker(command));
         }
 
         None
@@ -117,19 +114,10 @@ impl BunnylolCommandRegistry {
 
     /// Process a command string and return the appropriate URL
     pub fn process_command(command: &str, full_args: &str) -> String {
-        Self::process_command_with_config(command, full_args, None)
-    }
-
-    /// Process a command string with optional config for custom search engine
-    pub fn process_command_with_config(
-        command: &str,
-        full_args: &str,
-        config: Option<&BunnylolConfig>,
-    ) -> String {
         use crate::commands::*;
 
         // Check for prefix commands first (special case)
-        if let Some(url) = Self::process_prefix_commands(command, config) {
+        if let Some(url) = Self::process_prefix_commands(command) {
             return url;
         }
 
@@ -137,10 +125,10 @@ impl BunnylolCommandRegistry {
         let lookup = COMMAND_LOOKUP.get_or_init(Self::initialize_command_lookup);
 
         match lookup.get(command) {
-            Some(handler) => handler(full_args, config),
+            Some(handler) => handler(full_args),
             None => {
-                // Use configured search engine if provided, otherwise default to Google
-                if let Some(cfg) = config {
+                // Use configured search engine if available, otherwise default to Google
+                if let Some(cfg) = get_global_config() {
                     cfg.get_search_url(full_args)
                 } else {
                     GoogleSearchCommand::process_args(full_args)
@@ -187,11 +175,11 @@ mod cache_tests {
 
         // Test GitHub command handler
         let gh_handler = lookup.get("gh").expect("GitHub command should exist");
-        assert_eq!(gh_handler("gh", None), GitHubCommand::process_args("gh"));
+        assert_eq!(gh_handler("gh"), GitHubCommand::process_args("gh"));
 
         // Test Instagram command handler
         let ig_handler = lookup.get("ig").expect("Instagram command should exist");
-        assert_eq!(ig_handler("ig", None), InstagramCommand::process_args("ig"));
+        assert_eq!(ig_handler("ig"), InstagramCommand::process_args("ig"));
     }
 
     #[test]
