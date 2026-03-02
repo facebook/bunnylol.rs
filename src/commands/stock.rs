@@ -76,7 +76,7 @@ impl StockCommand {
 
     fn configured_provider() -> &'static str {
         get_global_config()
-            .and_then(|cfg| cfg.stock_provider.as_deref())
+            .map(|cfg| cfg.stock_provider.as_str())
             .unwrap_or("yahoo")
     }
 

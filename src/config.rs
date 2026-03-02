@@ -38,11 +38,10 @@ pub struct BunnylolConfig {
     #[serde(default = "default_search_engine")]
     pub default_search: String,
 
-    /// Stock website provider (optional)
+    /// Stock website provider
     /// Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
-    /// If not set, defaults to yahoo
-    #[serde(default)]
-    pub stock_provider: Option<String>,
+    #[serde(default = "default_stock_provider")]
+    pub stock_provider: String,
 
     /// Custom command aliases
     #[serde(default)]
@@ -62,7 +61,7 @@ impl Default for BunnylolConfig {
         Self {
             browser: None,
             default_search: default_search_engine(),
-            stock_provider: None,
+            stock_provider: default_stock_provider(),
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
@@ -171,6 +170,10 @@ impl ServerConfig {
 
 fn default_search_engine() -> String {
     "google".to_string()
+}
+
+fn default_stock_provider() -> String {
+    "yahoo".to_string()
 }
 
 fn default_history_enabled() -> bool {
@@ -309,6 +312,24 @@ impl BunnylolConfig {
 
     /// Convert config to TOML string with helpful comments
     fn to_toml_with_comments(&self) -> String {
+        let browser_line = match &self.browser {
+            Some(b) => format!("browser = \"{}\"", b),
+            None => "# browser = \"firefox\"".to_string(),
+        };
+        let aliases_content = if self.aliases.is_empty() {
+            "# my-alias = \"gh username/repo\"".to_string()
+        } else {
+            self.aliases
+                .iter()
+                .map(|(k, v)| format!("{} = \"{}\"", k, v))
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        let server_display_url_line = match &self.server.server_display_url {
+            Some(url) => format!("server_display_url = \"{}\"", url),
+            None => "# server_display_url = \"bunny.example.com\"".to_string(),
+        };
+
         format!(
             r#"# Bunnylol Configuration File
 # https://github.com/facebook/bunnylol.rs
@@ -318,16 +339,16 @@ impl BunnylolConfig {
 
 # Browser to open URLs in (optional)
 # Examples: "firefox", "chrome", "chromium", "safari"
-# If not set, uses system default browser
+# If not set, uses the OS default browser
 {}
 
 # Default search engine when command not recognized
 # Options: "google" (default), "ddg", "bing"
 default_search = "{}"
 
-# Stock website provider (optional)
+# Stock website provider
 # Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
-{}
+stock_provider = "{}"
 
 # Custom command aliases
 # Example: work = "gh mycompany/repo"
@@ -354,36 +375,16 @@ address = "{}"
 log_level = "{}"
 {}
 "#,
-            if let Some(browser) = &self.browser {
-                format!("browser = \"{}\"", browser)
-            } else {
-                "# browser = \"firefox\"".to_string()
-            },
+            browser_line,
             self.default_search,
-            if let Some(provider) = &self.stock_provider {
-                format!("stock_provider = \"{}\"", provider)
-            } else {
-                "# stock_provider = \"yahoo\"".to_string()
-            },
-            if self.aliases.is_empty() {
-                "# my-alias = \"gh username/repo\"".to_string()
-            } else {
-                self.aliases
-                    .iter()
-                    .map(|(k, v)| format!("{} = \"{}\"", k, v))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            },
+            self.stock_provider,
+            aliases_content,
             self.history.enabled,
             self.history.max_entries,
             self.server.port,
             self.server.address,
             self.server.log_level,
-            if let Some(url) = &self.server.server_display_url {
-                format!("server_display_url = \"{}\"", url)
-            } else {
-                "# server_display_url = \"bunny.example.com\"".to_string()
-            },
+            server_display_url_line,
         )
     }
 
@@ -417,7 +418,7 @@ mod tests {
         let config = BunnylolConfig::default();
         assert_eq!(config.browser, None);
         assert_eq!(config.default_search, "google");
-        assert_eq!(config.stock_provider, None);
+        assert_eq!(config.stock_provider, "yahoo");
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);
