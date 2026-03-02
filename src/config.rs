@@ -5,10 +5,25 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use crate::utils::url_encoding::encode_url_special_char;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::OnceLock;
+
+/// Global singleton for BunnylolConfig, initialized once at startup!
+static GLOBAL_CONFIG: OnceLock<BunnylolConfig> = OnceLock::new();
+
+/// Call once on startup
+pub fn init_global_config(config: BunnylolConfig) {
+    let _ = GLOBAL_CONFIG.set(config);
+}
+
+/// Get a reference to the global config, after initialized.
+pub fn get_global_config() -> Option<&'static BunnylolConfig> {
+    GLOBAL_CONFIG.get()
+}
 
 /// Configuration for bunnylol CLI
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,6 +37,12 @@ pub struct BunnylolConfig {
     /// Options: "google" (default), "ddg", "bing"
     #[serde(default = "default_search_engine")]
     pub default_search: String,
+
+    /// Stock website provider (optional)
+    /// Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+    /// If not set, defaults to yahoo
+    #[serde(default)]
+    pub stock_provider: Option<String>,
 
     /// Custom command aliases
     #[serde(default)]
@@ -41,6 +62,7 @@ impl Default for BunnylolConfig {
         Self {
             browser: None,
             default_search: default_search_engine(),
+            stock_provider: None,
             aliases: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
@@ -303,6 +325,10 @@ impl BunnylolConfig {
 # Options: "google" (default), "ddg", "bing"
 default_search = "{}"
 
+# Stock website provider (optional)
+# Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
+{}
+
 # Custom command aliases
 # Example: work = "gh mycompany/repo"
 [aliases]
@@ -334,6 +360,11 @@ log_level = "{}"
                 "# browser = \"firefox\"".to_string()
             },
             self.default_search,
+            if let Some(provider) = &self.stock_provider {
+                format!("stock_provider = \"{}\"", provider)
+            } else {
+                "# stock_provider = \"yahoo\"".to_string()
+            },
             if self.aliases.is_empty() {
                 "# my-alias = \"gh username/repo\"".to_string()
             } else {
@@ -367,9 +398,7 @@ log_level = "{}"
 
     /// Get the search engine URL for a query
     pub fn get_search_url(&self, query: &str) -> String {
-        let encoded_query =
-            percent_encoding::utf8_percent_encode(query, percent_encoding::NON_ALPHANUMERIC)
-                .to_string();
+        let encoded_query = encode_url_special_char(query);
 
         match self.default_search.as_str() {
             "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
@@ -388,6 +417,7 @@ mod tests {
         let config = BunnylolConfig::default();
         assert_eq!(config.browser, None);
         assert_eq!(config.default_search, "google");
+        assert_eq!(config.stock_provider, None);
         assert!(config.aliases.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);
@@ -417,11 +447,7 @@ mod tests {
 
         let resolved = config.resolve_command("work");
         let command = crate::utils::get_command_from_query_string(&resolved);
-        let url = crate::BunnylolCommandRegistry::process_command_with_config(
-            command,
-            &resolved,
-            Some(&config),
-        );
+        let url = crate::BunnylolCommandRegistry::process_command(command, &resolved);
         assert_eq!(
             url,
             "https://github.com/search?q=mycompany&type=repositories"

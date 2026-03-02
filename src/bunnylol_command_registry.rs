@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
+use crate::config::get_global_config;
 
 // Type alias for command handler functions
 type CommandHandler = fn(&str) -> String;
@@ -113,15 +114,6 @@ impl BunnylolCommandRegistry {
 
     /// Process a command string and return the appropriate URL
     pub fn process_command(command: &str, full_args: &str) -> String {
-        Self::process_command_with_config(command, full_args, None)
-    }
-
-    /// Process a command string with optional config for custom search engine
-    pub fn process_command_with_config(
-        command: &str,
-        full_args: &str,
-        config: Option<&crate::config::BunnylolConfig>,
-    ) -> String {
         use crate::commands::*;
 
         // Check for prefix commands first (special case)
@@ -135,8 +127,8 @@ impl BunnylolCommandRegistry {
         match lookup.get(command) {
             Some(handler) => handler(full_args),
             None => {
-                // Use configured search engine if provided, otherwise default to Google
-                if let Some(cfg) = config {
+                // Use configured search engine if available, otherwise default to Google
+                if let Some(cfg) = get_global_config() {
                     cfg.get_search_url(full_args)
                 } else {
                     GoogleSearchCommand::process_args(full_args)
