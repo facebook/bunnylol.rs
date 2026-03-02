@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use crate::utils::url_encoding::encode_url_special_char;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -30,6 +29,7 @@ pub fn get_global_config() -> Option<&'static BunnylolConfig> {
 pub struct BunnylolConfig {
     /// Browser to open URLs in (optional)
     /// Examples: "firefox", "chrome", "chromium", "safari"
+    /// If not set, uses the OS default browser
     #[serde(default)]
     pub browser: Option<String>,
 
@@ -397,16 +397,6 @@ log_level = "{}"
             .unwrap_or_else(|| command.to_string())
     }
 
-    /// Get the search engine URL for a query
-    pub fn get_search_url(&self, query: &str) -> String {
-        let encoded_query = encode_url_special_char(query);
-
-        match self.default_search.as_str() {
-            "ddg" | "duckduckgo" => format!("https://duckduckgo.com/?q={}", encoded_query),
-            "bing" => format!("https://www.bing.com/search?q={}", encoded_query),
-            _ => format!("https://www.google.com/search?q={}", encoded_query), // Default to Google
-        }
-    }
 }
 
 #[cfg(test)]
@@ -453,31 +443,6 @@ mod tests {
             url,
             "https://github.com/search?q=mycompany&type=repositories"
         );
-    }
-
-    #[test]
-    fn test_get_search_url_google() {
-        let config = BunnylolConfig::default();
-        let url = config.get_search_url("hello world");
-        assert!(url.starts_with("https://www.google.com/search?q="));
-        assert!(url.contains("hello"));
-        assert!(url.contains("world"));
-    }
-
-    #[test]
-    fn test_get_search_url_ddg() {
-        let mut config = BunnylolConfig::default();
-        config.default_search = "ddg".to_string();
-        let url = config.get_search_url("test query");
-        assert!(url.starts_with("https://duckduckgo.com/?q="));
-    }
-
-    #[test]
-    fn test_get_search_url_bing() {
-        let mut config = BunnylolConfig::default();
-        config.default_search = "bing".to_string();
-        let url = config.get_search_url("test query");
-        assert!(url.starts_with("https://www.bing.com/search?q="));
     }
 
     #[test]

@@ -276,20 +276,17 @@ fn execute_command(
 
 #[cfg(feature = "cli")]
 fn open_url(url: &str, config: &BunnylolConfig) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(browser) = &config.browser {
-        // Open with specified browser
-        open::with(url, browser).map_err(|e| {
+    match &config.browser {
+        Some(browser) => open::with(url, browser).map_err(|e| {
             format!(
                 "Failed to open browser '{}': {}. URL printed above.",
                 browser, e
             )
-        })?;
-    } else {
-        // Use system default browser
-        open::that(url)
-            .map_err(|e| format!("Failed to open browser: {}. URL printed above.", e))?;
+            .into()
+        }),
+        None => open::that(url)
+            .map_err(|e| format!("Failed to open browser: {}. URL printed above.", e).into()),
     }
-    Ok(())
 }
 
 #[cfg(feature = "cli")]
