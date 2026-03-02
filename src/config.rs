@@ -406,7 +406,6 @@ log_level = "{}"
             _ => format!("https://www.google.com/search?q={}", encoded_query), // Default to Google
         }
     }
-
 }
 
 #[cfg(test)]

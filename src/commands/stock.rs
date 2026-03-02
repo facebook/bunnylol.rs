@@ -9,7 +9,7 @@ struct StockInfoProvider {
     aliases: &'static [&'static str],
     homepage: &'static str,
     ticker_url_template: &'static str,
-    needs_encoding: bool,  // Whether to percent-encode the ticker
+    needs_encoding: bool, // Whether to percent-encode the ticker
 }
 
 /// supported stock providers
@@ -63,15 +63,15 @@ pub struct StockCommand;
 impl StockCommand {
     fn get_provider(name: &str) -> &'static StockInfoProvider {
         match PROVIDER_LOOKUP.get(name).copied() {
-        Some(provider) => provider,
-        None => {
-            eprintln!(
-                "Warning: Unknown stock provider '{}', using yahoo as fallback",
-                name
-            );
-            &PROVIDERS[0] // Default to yahoo (first provider)
+            Some(provider) => provider,
+            None => {
+                eprintln!(
+                    "Warning: Unknown stock provider '{}', using yahoo as fallback",
+                    name
+                );
+                &PROVIDERS[0] // Default to yahoo (first provider)
+            }
         }
-    }
     }
 
     fn configured_provider() -> &'static str {
@@ -135,7 +135,8 @@ impl StockCommand {
 
             if PROVIDER_LOOKUP.contains_key(potential_provider.as_str()) {
                 // Return provider and rest of query, ticker starts after first whitespace + provider length
-                let ticker_start = query.find(char::is_whitespace)
+                let ticker_start = query
+                    .find(char::is_whitespace)
                     .map(|pos| query[pos..].trim_start())
                     .unwrap_or("");
                 return (Some(parts[0]), ticker_start);
