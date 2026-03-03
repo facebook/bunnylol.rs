@@ -396,7 +396,6 @@ log_level = "{}"
             .cloned()
             .unwrap_or_else(|| command.to_string())
     }
-
 }
 
 #[cfg(test)]
