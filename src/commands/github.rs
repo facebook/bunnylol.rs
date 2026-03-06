@@ -1,5 +1,5 @@
 /// GitHub command handler
-/// Supports: gh, gh @[user], gh [user/repo], gh [search terms]
+/// Supports: gh, gh @[user], gh [user/repo], gh token[s], gh [search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
@@ -12,6 +12,8 @@ impl BunnylolCommand for GitHubCommand {
         let query = Self::get_command_args(args);
         if query.is_empty() {
             "https://github.com".to_string()
+        } else if query == "token" || query == "tokens" {
+            "https://github.com/settings/personal-access-tokens".to_string()
         } else if let Some(username) = query.strip_prefix('@') {
             if username.is_empty() {
                 "https://github.com".to_string()
@@ -87,6 +89,22 @@ mod tests {
         assert_eq!(
             GitHubCommand::process_args("gh react"),
             "https://github.com/search?q=react&type=repositories"
+        );
+    }
+
+    #[test]
+    fn test_github_command_token() {
+        assert_eq!(
+            GitHubCommand::process_args("gh token"),
+            "https://github.com/settings/personal-access-tokens"
+        );
+    }
+
+    #[test]
+    fn test_github_command_tokens() {
+        assert_eq!(
+            GitHubCommand::process_args("gh tokens"),
+            "https://github.com/settings/personal-access-tokens"
         );
     }
 }
