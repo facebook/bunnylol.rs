@@ -98,7 +98,7 @@ impl BunnylolCommandRegistry {
     }
 
     /// Process commands that use special prefixes (like $ for stock tickers)
-    fn process_prefix_commands(command: &str) -> Option<String> {
+    fn process_prefix_commands(command: &str, full_args: &str) -> Option<String> {
         use crate::commands::*;
 
         if command.starts_with('$') {
@@ -109,13 +109,17 @@ impl BunnylolCommandRegistry {
             return Some(StockCommand::process_ticker(command));
         }
 
+        if command.starts_with("r/") && command.len() > 2 {
+            return Some(RedditCommand::process_subreddit_prefix(full_args));
+        }
+
         None
     }
 
     /// Process a command string and return the appropriate URL
     pub fn process_command(command: &str, full_args: &str) -> String {
         // Check for prefix commands first (special case)
-        if let Some(url) = Self::process_prefix_commands(command) {
+        if let Some(url) = Self::process_prefix_commands(command, full_args) {
             return url;
         }
 
@@ -190,6 +194,18 @@ mod cache_tests {
         assert!(
             std::ptr::eq(commands, commands2),
             "Cache should return same reference"
+        );
+    }
+
+    #[test]
+    fn test_reddit_subreddit_prefix_via_process_command() {
+        assert_eq!(
+            BunnylolCommandRegistry::process_command("r/myog", "r/myog"),
+            "https://www.reddit.com/r/myog/"
+        );
+        assert_eq!(
+            BunnylolCommandRegistry::process_command("r/rust", "r/rust async await"),
+            "https://www.reddit.com/r/rust/search/?q=async%20await"
         );
     }
 
