@@ -4,6 +4,8 @@
 /// - r [search terms] -> https://www.reddit.com/search/?q=[search terms]
 /// - r r/[subreddit] -> https://reddit.com/r/[subreddit]
 /// - r r/[subreddit] [search terms] -> https://reddit.com/r/[subreddit]/search/?q=[search terms]
+/// - r/[subreddit] -> https://www.reddit.com/r/[subreddit]/  (prefix shorthand)
+/// - r/[subreddit] [search terms] -> https://www.reddit.com/r/[subreddit]/search/?q=[search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::build_search_url;
 
@@ -48,6 +50,36 @@ impl BunnylolCommand for RedditCommand {
     }
 }
 
+impl RedditCommand {
+    /// Handle the `r/SUBREDDITNAME` prefix shorthand (called from the command registry).
+    /// - `r/myog` -> https://www.reddit.com/r/myog/
+    /// - `r/myog search terms` -> https://www.reddit.com/r/myog/search/?q=search%20terms
+    pub fn process_subreddit_prefix(full_args: &str) -> String {
+        // full_args is the raw input, e.g. "r/myog" or "r/myog rust async"
+        let (subreddit, search_terms) = match full_args.find(' ') {
+            Some(space_idx) => {
+                let subreddit = full_args[..space_idx].strip_prefix("r/").unwrap_or("");
+                let search_terms = full_args[space_idx + 1..].trim();
+                (subreddit, search_terms)
+            }
+            None => {
+                let subreddit = full_args.strip_prefix("r/").unwrap_or("");
+                (subreddit, "")
+            }
+        };
+
+        if search_terms.is_empty() {
+            format!("https://www.reddit.com/r/{}/", subreddit)
+        } else {
+            build_search_url(
+                &format!("https://www.reddit.com/r/{}/search/", subreddit),
+                "q",
+                search_terms,
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,6 +110,22 @@ mod tests {
         assert_eq!(
             RedditCommand::process_args("r r/rust async await"),
             "https://reddit.com/r/rust/search/?q=async%20await"
+        );
+    }
+
+    #[test]
+    fn test_reddit_subreddit_prefix_direct() {
+        assert_eq!(
+            RedditCommand::process_subreddit_prefix("r/myog"),
+            "https://www.reddit.com/r/myog/"
+        );
+    }
+
+    #[test]
+    fn test_reddit_subreddit_prefix_search() {
+        assert_eq!(
+            RedditCommand::process_subreddit_prefix("r/rust async await"),
+            "https://www.reddit.com/r/rust/search/?q=async%20await"
         );
     }
 }
