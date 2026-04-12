@@ -48,6 +48,7 @@ pub mod stock;
 pub mod threads;
 pub mod twitter;
 pub mod whatsapp;
+pub mod wayback;
 pub mod wikipedia;
 pub mod youtube;
 
@@ -97,5 +98,6 @@ pub use stock::StockCommand;
 pub use threads::ThreadsCommand;
 pub use twitter::TwitterCommand;
 pub use whatsapp::WhatsAppCommand;
+pub use wayback::WaybackCommand;
 pub use wikipedia::WikipediaCommand;
 pub use youtube::YouTubeCommand;
