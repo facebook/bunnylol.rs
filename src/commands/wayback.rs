@@ -2,6 +2,7 @@
 /// Supports: wayback, archive
 /// wayback [url/search] -> https://web.archive.org/web/*/[url/search]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
+use crate::utils::url_encoding::build_path_url;
 
 pub struct WaybackCommand;
 
@@ -13,7 +14,7 @@ impl BunnylolCommand for WaybackCommand {
         if query.is_empty() {
             "https://web.archive.org/web/".to_string()
         } else {
-            format!("https://web.archive.org/web/*/{}", query)
+            build_path_url("https://web.archive.org/web/*", query)
         }
     }
 
@@ -66,7 +67,7 @@ mod tests {
     fn test_wayback_command_search() {
         assert_eq!(
             WaybackCommand::process_args("wayback some search query"),
-            "https://web.archive.org/web/*/some search query"
+            "https://web.archive.org/web/*/some%20search%20query"
         );
     }
 }
