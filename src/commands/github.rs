@@ -1,5 +1,5 @@
 /// GitHub command handler
-/// Supports: gh, gh @[user], gh [user/repo], gh token[s], gh [search terms]
+/// Supports: gh, gh @[user], gh [user/repo], gh token[s]/pat, gh settings, gh bills/billing, gh notifications/notifs, gh [search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
@@ -12,8 +12,14 @@ impl BunnylolCommand for GitHubCommand {
         let query = Self::get_command_args(args);
         if query.is_empty() {
             "https://github.com".to_string()
-        } else if query == "token" || query == "tokens" {
+        } else if query == "settings" {
+            "https://github.com/settings/profile".to_string()
+        } else if query == "token" || query == "tokens" || query == "pat" {
             "https://github.com/settings/personal-access-tokens".to_string()
+        } else if query == "bills" || query == "billing" {
+            "https://github.com/settings/billing".to_string()
+        } else if query == "notifications" || query == "notifs" {
+            "https://github.com/settings/notifications".to_string()
         } else if let Some(username) = query.strip_prefix('@') {
             if username.is_empty() {
                 "https://github.com".to_string()
@@ -105,6 +111,54 @@ mod tests {
         assert_eq!(
             GitHubCommand::process_args("gh tokens"),
             "https://github.com/settings/personal-access-tokens"
+        );
+    }
+
+    #[test]
+    fn test_github_command_pat() {
+        assert_eq!(
+            GitHubCommand::process_args("gh pat"),
+            "https://github.com/settings/personal-access-tokens"
+        );
+    }
+
+    #[test]
+    fn test_github_command_settings() {
+        assert_eq!(
+            GitHubCommand::process_args("gh settings"),
+            "https://github.com/settings/profile"
+        );
+    }
+
+    #[test]
+    fn test_github_command_bills() {
+        assert_eq!(
+            GitHubCommand::process_args("gh bills"),
+            "https://github.com/settings/billing"
+        );
+    }
+
+    #[test]
+    fn test_github_command_billing() {
+        assert_eq!(
+            GitHubCommand::process_args("gh billing"),
+            "https://github.com/settings/billing"
+        );
+    }
+
+    #[test]
+    fn test_github_command_notifications() {
+        assert_eq!(
+            GitHubCommand::process_args("gh notifications"),
+            "https://github.com/settings/notifications"
+        );
+    }
+
+    #[test]
+    fn test_github_command_notifs() {
+        assert_eq!(
+            GitHubCommand::process_args("gh notifs"),
+            "https://github.com/settings/notifications"
         );
     }
 }
