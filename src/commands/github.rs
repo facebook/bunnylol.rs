@@ -1,5 +1,7 @@
 /// GitHub command handler
-/// Supports: gh, gh @[user], gh [user/repo], gh token[s]/pat, gh settings, gh bills/billing, gh notifications/notifs, gh [search terms]
+/// Supports: gh, gh @[user], gh [user/repo], gh token[s]/pat, gh settings, gh bills/billing,
+/// gh notifications/notifs, gh teams, gh orgs, gh ssh/gpg/keys, gh security/passwords/auth/mfa/2fa,
+/// gh emails, gh [search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
 use crate::utils::url_encoding::{build_path_url, build_search_url};
 
@@ -20,6 +22,21 @@ impl BunnylolCommand for GitHubCommand {
             "https://github.com/settings/billing".to_string()
         } else if query == "notifications" || query == "notifs" {
             "https://github.com/settings/notifications".to_string()
+        } else if query == "teams" {
+            "https://github.com/settings/teams".to_string()
+        } else if query == "orgs" {
+            "https://github.com/settings/organizations".to_string()
+        } else if query == "ssh" || query == "gpg" || query == "keys" {
+            "https://github.com/settings/keys".to_string()
+        } else if query == "security"
+            || query == "passwords"
+            || query == "auth"
+            || query == "mfa"
+            || query == "2fa"
+        {
+            "https://github.com/settings/security".to_string()
+        } else if query == "emails" {
+            "https://github.com/settings/emails".to_string()
         } else if let Some(username) = query.strip_prefix('@') {
             if username.is_empty() {
                 "https://github.com".to_string()
@@ -159,6 +176,94 @@ mod tests {
         assert_eq!(
             GitHubCommand::process_args("gh notifs"),
             "https://github.com/settings/notifications"
+        );
+    }
+
+    #[test]
+    fn test_github_command_teams() {
+        assert_eq!(
+            GitHubCommand::process_args("gh teams"),
+            "https://github.com/settings/teams"
+        );
+    }
+
+    #[test]
+    fn test_github_command_orgs() {
+        assert_eq!(
+            GitHubCommand::process_args("gh orgs"),
+            "https://github.com/settings/organizations"
+        );
+    }
+
+    #[test]
+    fn test_github_command_ssh() {
+        assert_eq!(
+            GitHubCommand::process_args("gh ssh"),
+            "https://github.com/settings/keys"
+        );
+    }
+
+    #[test]
+    fn test_github_command_gpg() {
+        assert_eq!(
+            GitHubCommand::process_args("gh gpg"),
+            "https://github.com/settings/keys"
+        );
+    }
+
+    #[test]
+    fn test_github_command_keys() {
+        assert_eq!(
+            GitHubCommand::process_args("gh keys"),
+            "https://github.com/settings/keys"
+        );
+    }
+
+    #[test]
+    fn test_github_command_security() {
+        assert_eq!(
+            GitHubCommand::process_args("gh security"),
+            "https://github.com/settings/security"
+        );
+    }
+
+    #[test]
+    fn test_github_command_passwords() {
+        assert_eq!(
+            GitHubCommand::process_args("gh passwords"),
+            "https://github.com/settings/security"
+        );
+    }
+
+    #[test]
+    fn test_github_command_auth() {
+        assert_eq!(
+            GitHubCommand::process_args("gh auth"),
+            "https://github.com/settings/security"
+        );
+    }
+
+    #[test]
+    fn test_github_command_mfa() {
+        assert_eq!(
+            GitHubCommand::process_args("gh mfa"),
+            "https://github.com/settings/security"
+        );
+    }
+
+    #[test]
+    fn test_github_command_2fa() {
+        assert_eq!(
+            GitHubCommand::process_args("gh 2fa"),
+            "https://github.com/settings/security"
+        );
+    }
+
+    #[test]
+    fn test_github_command_emails() {
+        assert_eq!(
+            GitHubCommand::process_args("gh emails"),
+            "https://github.com/settings/emails"
         );
     }
 }
