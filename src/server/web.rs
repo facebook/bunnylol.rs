@@ -167,7 +167,7 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
         .collect();
 
     // Sort bindings alphabetically by command name
-    bindings.sort_by(|a, b| a.command.to_lowercase().cmp(&b.command.to_lowercase()));
+    bindings.sort_by_key(|a| a.command.to_lowercase());
 
     // Clone server_display_url for use in the view
     let example_url = format!("{}/?cmd=gh facebook/bunnylol.rs", server_display_url);
