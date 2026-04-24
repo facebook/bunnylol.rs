@@ -95,6 +95,8 @@ impl BunnylolCommandRegistry {
         crate::commands::PythonCommand,
         crate::commands::RubygemsCommand,
         crate::commands::StackOverflowCommand,
+        crate::commands::ProtonMailCommand,
+        crate::commands::ProtonDriveCommand,
         crate::commands::WaybackCommand,
     }
 
@@ -162,8 +164,8 @@ mod cache_tests {
 
         // Verify we have 84+ total bindings (47 commands with multiple aliases each)
         assert!(
-            lookup.len() >= 84,
-            "Expected at least 84 bindings, got {}",
+            lookup.len() >= 86,
+            "Expected at least 86 bindings, got {}",
             lookup.len()
         );
     }
@@ -188,7 +190,7 @@ mod cache_tests {
         let commands = BunnylolCommandRegistry::get_all_commands();
 
         // Verify we have all expected commands
-        assert_eq!(commands.len(), 47, "Expected 47 commands");
+        assert_eq!(commands.len(), 49, "Expected 49 commands");
 
         // Verify cache returns same pointer (not regenerated)
         let commands2 = BunnylolCommandRegistry::get_all_commands();

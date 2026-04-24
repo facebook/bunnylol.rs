@@ -76,8 +76,17 @@ pub fn encode_url_special_char(input: &str) -> String {
 /// assert_eq!(url, "https://google.com/search?q=hello%20world");
 /// ```
 pub fn build_search_url(base_url: &str, query_param: &str, query_value: &str) -> String {
+    build_search_url_with_separator(base_url, query_param, query_value, "?")
+}
+
+pub fn build_search_url_with_separator(
+    base_url: &str,
+    query_param: &str,
+    query_value: &str,
+    separator: &str,
+) -> String {
     let encoded_query = encode_url(query_value);
-    format!("{}?{}={}", base_url, query_param, encoded_query)
+    format!("{}{}{}={}", base_url, separator, query_param, encoded_query)
 }
 
 /// Build a simple path URL with proper encoding
