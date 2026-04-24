@@ -13,12 +13,7 @@ impl BunnylolCommand for ProtonDriveCommand {
         if query.is_empty() {
             "https://drive.proton.me".to_string()
         } else {
-            build_search_url_with_separator(
-                "https://drive.proton.me/u/1/search",
-                "q",
-                query,
-                "#",
-            )
+            build_search_url_with_separator("https://drive.proton.me/u/1/search", "q", query, "#")
         }
     }
 
