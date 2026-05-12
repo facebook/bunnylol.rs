@@ -54,6 +54,20 @@ pub struct BunnylolConfig {
     #[serde(default)]
     pub aliases: HashMap<String, String>,
 
+    /// Custom URL bindings (user-defined)
+    ///
+    /// Maps a name to a URL or URL template. Unlike `aliases` (which renames
+    /// other commands), a binding maps directly to a URL. Templates may use
+    /// `{}` as a placeholder; arguments are URL-encoded before substitution.
+    ///
+    /// Custom bindings never override built-in commands — on conflict, the
+    /// built-in wins and a warning is logged at startup.
+    ///
+    /// NOTE: Hot-reload is not supported in this release. Edit `config.toml`
+    /// and restart `bunnylol serve` (or the CLI) for changes to apply.
+    #[serde(default)]
+    pub bindings: HashMap<String, CustomBinding>,
+
     /// Command history settings
     #[serde(default)]
     pub history: HistoryConfig,
@@ -70,6 +84,7 @@ impl Default for BunnylolConfig {
             default_search: default_search_engine(),
             stock_provider: default_stock_provider(),
             aliases: HashMap::new(),
+            bindings: HashMap::new(),
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
         }
@@ -148,6 +163,81 @@ impl ConfigReloader {
         Ok(())
     }
 }
+
+/// A user-defined URL binding from `[bindings]` in the config file.
+///
+/// Two TOML forms are accepted:
+///
+/// ```toml
+/// [bindings]
+/// # Short form: name = "url"
+/// cal = "https://calendar.google.com/calendar/u/1/r"
+///
+/// # Detailed form: adds a description shown on the /bindings web page.
+/// jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
+/// ```
+///
+/// Templates may include `{}` as a placeholder. At resolution time the
+/// command prefix is stripped from the user input, the remainder is
+/// URL-encoded, and substituted in. A template with no `{}` is treated
+/// as a static URL and any arguments are ignored.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum CustomBinding {
+    /// Short form: just a URL or URL template.
+    Simple(String),
+    /// Detailed form with optional description for the bindings page.
+    Detailed {
+        url: String,
+        #[serde(default)]
+        description: Option<String>,
+    },
+}
+
+impl CustomBinding {
+    /// The URL or URL template for this binding.
+    pub fn url_template(&self) -> &str {
+        match self {
+            CustomBinding::Simple(url) => url,
+            CustomBinding::Detailed { url, .. } => url,
+        }
+    }
+
+    /// The description shown on the /bindings web page, if any.
+    pub fn description(&self) -> Option<&str> {
+        match self {
+            CustomBinding::Simple(_) => None,
+            CustomBinding::Detailed { description, .. } => description.as_deref(),
+        }
+    }
+}
+
+/// Apply a `{}` template substitution. `command` is stripped from the front
+/// of `full_args` (mirroring the convention used by built-in command handlers),
+/// and the remainder is URL-encoded before being substituted.
+///
+/// A template with no `{}` is returned as-is.
+pub(crate) fn apply_binding_template(template: &str, command: &str, full_args: &str) -> String {
+    if !template.contains("{}") {
+        return template.to_string();
+    }
+    let remainder = full_args
+        .strip_prefix(command)
+        .map(|s| s.trim_start())
+        .unwrap_or(full_args);
+    let encoded = crate::utils::url_encoding::encode_url(remainder);
+    template.replace("{}", &encoded)
+}
+
+/// Result of validating a custom binding against the built-in command set.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BindingConflict {
+    /// The name (TOML key) of the user binding that conflicts.
+    pub name: String,
+    /// The URL template the user defined (kept for diagnostics).
+    pub user_url: String,
+}
+
 
 /// Configuration for command history
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -415,6 +505,29 @@ impl BunnylolConfig {
                 .collect::<Vec<_>>()
                 .join("\n")
         };
+        let bindings_content = if self.bindings.is_empty() {
+            // Commented examples for first-time users
+            r#"# cal = "https://calendar.google.com/calendar/u/1/r"
+# jira = "https://corp.atlassian.net/browse/{}"
+# notion = { url = "https://notion.so/{}", description = "Notion page" }"#
+                .to_string()
+        } else {
+            let mut entries: Vec<(&String, &CustomBinding)> = self.bindings.iter().collect();
+            entries.sort_by_key(|(k, _)| k.to_lowercase());
+            entries
+                .into_iter()
+                .map(|(k, v)| match v {
+                    CustomBinding::Simple(url) => format!("{} = \"{}\"", k, url),
+                    CustomBinding::Detailed { url, description } => match description {
+                        Some(d) => {
+                            format!("{} = {{ url = \"{}\", description = \"{}\" }}", k, url, d)
+                        }
+                        None => format!("{} = {{ url = \"{}\" }}", k, url),
+                    },
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
         let server_display_url_line = match &self.server.server_display_url {
             Some(url) => format!("server_display_url = \"{}\"", url),
             None => "# server_display_url = \"bunny.example.com\"".to_string(),
@@ -441,8 +554,24 @@ default_search = "{}"
 stock_provider = "{}"
 
 # Custom command aliases
+# Renames an existing built-in command (the value is re-parsed as a command).
 # Example: work = "gh mycompany/repo"
 [aliases]
+{}
+
+# Custom URL bindings
+# Map a name directly to a URL. Use `{{}}` as a placeholder for arguments
+# (URL-encoded at runtime). A template without `{{}}` is treated as a static URL.
+#
+# Two forms are supported:
+#   name = "https://example.com/{{}}"
+#   name = {{ url = "https://example.com/{{}}", description = "Shown on /bindings" }}
+#
+# NOTE: Hot-reload is not supported in this release.
+#       Edit this file and restart bunnylol (serve or CLI) to apply changes.
+# NOTE: Custom bindings never override built-in commands. On conflict, the
+#       built-in wins and a warning is logged at startup.
+[bindings]
 {}
 
 # Command history settings
@@ -469,6 +598,7 @@ log_level = "{}"
             self.default_search,
             self.stock_provider,
             aliases_content,
+            bindings_content,
             self.history.enabled,
             self.history.max_entries,
             self.server.port,
@@ -485,6 +615,46 @@ log_level = "{}"
             .get(command)
             .cloned()
             .unwrap_or_else(|| command.to_string())
+    }
+
+    /// Resolve a user-defined custom binding, if one exists for `command`.
+    ///
+    /// Returns `None` when no binding matches — callers should fall back to
+    /// the built-in registry or the default search. Built-in commands are
+    /// checked **before** this method by `BunnylolCommandRegistry`, so a
+    /// binding that shadows a built-in is silently ignored at runtime
+    /// (and produces a warning at startup via [`validate_custom_bindings`]).
+    pub fn resolve_custom_binding(&self, command: &str, full_args: &str) -> Option<String> {
+        let binding = self.bindings.get(command)?;
+        Some(apply_binding_template(
+            binding.url_template(),
+            command,
+            full_args,
+        ))
+    }
+
+    /// Validate this config's `[bindings]` against the set of built-in
+    /// command names. Returns the list of user bindings that collide with a
+    /// built-in (these are kept in config but will be shadowed at runtime).
+    ///
+    /// Note: TOML parsing already rejects duplicate keys within `[bindings]`
+    /// itself, so this only needs to check against the built-in set.
+    pub fn validate_custom_bindings(
+        &self,
+        builtin_names: &std::collections::HashSet<&'static str>,
+    ) -> Vec<BindingConflict> {
+        let mut conflicts = Vec::new();
+        for (name, binding) in &self.bindings {
+            if builtin_names.contains(name.as_str()) {
+                conflicts.push(BindingConflict {
+                    name: name.clone(),
+                    user_url: binding.url_template().to_string(),
+                });
+            }
+        }
+        // Stable, deterministic output for logs and tests
+        conflicts.sort_by(|a, b| a.name.cmp(&b.name));
+        conflicts
     }
 }
 
@@ -658,6 +828,284 @@ mod tests {
         let mut config = ServerConfig::default();
         config.server_display_url = Some("0.0.0.0:8000".to_string());
         assert_eq!(config.get_display_url(), "http://0.0.0.0:8000");
+    }
+
+    // -----------------------------------------------------------------
+    // Custom bindings ([bindings] table) tests
+    // -----------------------------------------------------------------
+
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_default_bindings_empty() {
+        let config = BunnylolConfig::default();
+        assert!(config.bindings.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_bindings_short_form() {
+        let toml_str = r#"
+            [bindings]
+            cal = "https://calendar.google.com/calendar/u/1/r"
+        "#;
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(
+            config.bindings.get("cal"),
+            Some(&CustomBinding::Simple(
+                "https://calendar.google.com/calendar/u/1/r".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_bindings_detailed_form() {
+        let toml_str = r#"
+            [bindings]
+            jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
+        "#;
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        match config.bindings.get("jira") {
+            Some(CustomBinding::Detailed { url, description }) => {
+                assert_eq!(url, "https://corp.atlassian.net/browse/{}");
+                assert_eq!(description.as_deref(), Some("Jira ticket"));
+            }
+            other => panic!("Expected detailed binding, got {:?}", other),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_bindings_detailed_form_without_description() {
+        let toml_str = r#"
+            [bindings]
+            corp = { url = "https://example.com" }
+        "#;
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        match config.bindings.get("corp") {
+            Some(CustomBinding::Detailed { url, description }) => {
+                assert_eq!(url, "https://example.com");
+                assert_eq!(description, &None);
+            }
+            other => panic!("Expected detailed binding, got {:?}", other),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_parse_bindings_mixed_forms() {
+        let toml_str = r#"
+            [bindings]
+            cal = "https://calendar.google.com/calendar/u/1/r"
+            jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira" }
+        "#;
+        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.bindings.len(), 2);
+        assert!(matches!(
+            config.bindings.get("cal"),
+            Some(CustomBinding::Simple(_))
+        ));
+        assert!(matches!(
+            config.bindings.get("jira"),
+            Some(CustomBinding::Detailed { .. })
+        ));
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_static() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com/calendar/u/1/r".to_string()),
+        );
+        assert_eq!(
+            config.resolve_custom_binding("cal", "cal"),
+            Some("https://calendar.google.com/calendar/u/1/r".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_static_ignores_extra_args() {
+        // A template with no `{}` is a static URL; trailing args are ignored.
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com/".to_string()),
+        );
+        assert_eq!(
+            config.resolve_custom_binding("cal", "cal tomorrow lunch"),
+            Some("https://calendar.google.com/".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_templated() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "jira".to_string(),
+            CustomBinding::Simple("https://corp.atlassian.net/browse/{}".to_string()),
+        );
+        assert_eq!(
+            config.resolve_custom_binding("jira", "jira PROJ-123"),
+            Some("https://corp.atlassian.net/browse/PROJ-123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_templated_url_encodes_args() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "wiki".to_string(),
+            CustomBinding::Simple("https://example.com/?q={}".to_string()),
+        );
+        // Spaces become %20, special characters in the FRAGMENT set are escaped.
+        assert_eq!(
+            config.resolve_custom_binding("wiki", "wiki hello world"),
+            Some("https://example.com/?q=hello%20world".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_templated_empty_args() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "jira".to_string(),
+            CustomBinding::Simple("https://corp.atlassian.net/browse/{}".to_string()),
+        );
+        // Bare command with no args: {} substituted with empty string.
+        assert_eq!(
+            config.resolve_custom_binding("jira", "jira"),
+            Some("https://corp.atlassian.net/browse/".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_returns_none_when_missing() {
+        let config = BunnylolConfig::default();
+        assert_eq!(config.resolve_custom_binding("nope", "nope"), None);
+    }
+
+    #[test]
+    fn test_resolve_custom_binding_detailed_form_uses_url() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "jira".to_string(),
+            CustomBinding::Detailed {
+                url: "https://corp.atlassian.net/browse/{}".to_string(),
+                description: Some("Jira ticket".to_string()),
+            },
+        );
+        assert_eq!(
+            config.resolve_custom_binding("jira", "jira PROJ-1"),
+            Some("https://corp.atlassian.net/browse/PROJ-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_validate_custom_bindings_reports_conflicts() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "gh".to_string(),
+            CustomBinding::Simple("https://example.com/my-fork".to_string()),
+        );
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com/calendar/u/1/r".to_string()),
+        );
+        let builtins: HashSet<&'static str> = ["gh", "ig", "yt"].into_iter().collect();
+        let conflicts = config.validate_custom_bindings(&builtins);
+        assert_eq!(conflicts.len(), 1);
+        assert_eq!(conflicts[0].name, "gh");
+        assert_eq!(conflicts[0].user_url, "https://example.com/my-fork");
+    }
+
+    #[test]
+    fn test_validate_custom_bindings_empty_when_no_conflicts() {
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com/calendar/u/1/r".to_string()),
+        );
+        let builtins: HashSet<&'static str> = ["gh", "ig"].into_iter().collect();
+        let conflicts = config.validate_custom_bindings(&builtins);
+        assert!(conflicts.is_empty());
+    }
+
+    #[test]
+    fn test_validate_custom_bindings_sorted_deterministic() {
+        // Multiple conflicts should be returned in a stable, alphabetical order
+        // so log lines and tests don't flake on HashMap iteration order.
+        let mut config = BunnylolConfig::default();
+        for name in ["zsh", "abc", "mno", "gh"] {
+            config.bindings.insert(
+                name.to_string(),
+                CustomBinding::Simple("https://example.com".to_string()),
+            );
+        }
+        let builtins: HashSet<&'static str> = ["zsh", "abc", "mno", "gh"].into_iter().collect();
+        let conflicts = config.validate_custom_bindings(&builtins);
+        let names: Vec<&str> = conflicts.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["abc", "gh", "mno", "zsh"]);
+    }
+
+    #[test]
+    fn test_existing_aliases_unaffected_by_bindings() {
+        // Regression guard: the new [bindings] field must not break the
+        // existing [aliases] resolution path.
+        let mut config = BunnylolConfig::default();
+        config
+            .aliases
+            .insert("work".to_string(), "gh mycompany".to_string());
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com".to_string()),
+        );
+        assert_eq!(config.resolve_command("work"), "gh mycompany");
+        assert_eq!(config.resolve_command("ig"), "ig");
+        assert_eq!(
+            config.resolve_custom_binding("cal", "cal"),
+            Some("https://calendar.google.com".to_string())
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_write_then_parse_roundtrip_with_bindings() {
+        // Writing a config with bindings and parsing it back must yield the same data.
+        let mut config = BunnylolConfig::default();
+        config.bindings.insert(
+            "cal".to_string(),
+            CustomBinding::Simple("https://calendar.google.com/calendar/u/1/r".to_string()),
+        );
+        config.bindings.insert(
+            "jira".to_string(),
+            CustomBinding::Detailed {
+                url: "https://corp.atlassian.net/browse/{}".to_string(),
+                description: Some("Jira".to_string()),
+            },
+        );
+
+        let toml_text = config.to_toml_with_comments();
+        let parsed: BunnylolConfig =
+            toml::from_str(&toml_text).expect("Generated config must be parseable as TOML");
+        assert_eq!(parsed.bindings, config.bindings);
+    }
+
+    #[test]
+    fn test_generated_config_includes_restart_note() {
+        // Surface #1: the generated default config must surface the
+        // restart-required note next to [bindings].
+        let config = BunnylolConfig::default();
+        let toml_text = config.to_toml_with_comments();
+        let bindings_idx = toml_text
+            .find("[bindings]")
+            .expect("[bindings] section must be present");
+        let preamble = &toml_text[..bindings_idx];
+        assert!(
+            preamble.contains("Hot-reload is not supported"),
+            "Restart note must appear in the comment block above [bindings]"
+        );
     }
 
     #[test]

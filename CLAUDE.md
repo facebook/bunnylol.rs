@@ -91,6 +91,53 @@ Located in `src/utils/url_encoding.rs`:
 - `build_search_url(base, param, query)` - Constructs search URLs with encoded params
 - `build_path_url(base, path)` - Appends path to base URL
 
+## Custom URL Bindings (User Config)
+
+Users can add personal URL shortcuts **without recompiling** via the
+`[bindings]` table in `~/.config/bunnylol/config.toml`:
+
+```toml
+[bindings]
+# Short form: static URL (args ignored)
+cal = "https://calendar.google.com/calendar/u/1/r"
+
+# Templated: `{}` is replaced with URL-encoded arguments
+jira = "https://corp.atlassian.net/browse/{}"
+
+# Detailed form: adds a description shown on the /bindings web page
+notion = { url = "https://www.notion.so/{}", description = "Notion page" }
+```
+
+**Resolution order in `BunnylolCommandRegistry::process_command`:**
+1. Prefix handlers (`$TICKER`, `r/sub`)
+2. Built-in registered commands
+3. User `[bindings]`
+4. Default search fallback
+
+**Conflict policy:** built-ins always win. A user binding whose name matches
+a built-in is kept in the config but ignored at runtime, and a warning is
+logged at startup via `report_custom_bindings_status` (in `src/main.rs`).
+
+**No hot-reload:** config is read once at startup. Users must restart
+`bunnylol` after editing `config.toml`. This is surfaced in three places:
+1. Comment block above `[bindings]` in the generated default config.
+2. One-line stderr log at startup when `[bindings]` is non-empty.
+3. Italic note above the "User Bindings" section on the `/` web portal.
+
+When extending custom bindings, keep these three surfaces in sync. Tests
+covering them live in `src/config.rs` (`test_generated_config_includes_restart_note`)
+and `tests/cli_integration.rs` (`test_custom_binding_startup_info_log_lists_count`,
+`test_custom_binding_conflict_emits_startup_warning`).
+
+**Implementation files:**
+- `src/config.rs` — `CustomBinding` type, `resolve_custom_binding`,
+  `validate_custom_bindings`, `apply_binding_template`
+- `src/bunnylol_command_registry.rs` — `process_command` integration,
+  `builtin_binding_names`, `validate_user_bindings`
+- `src/main.rs` — `report_custom_bindings_status`, `print_user_bindings_table`
+- `src/server/web.rs` — `collect_user_bindings`, "User Bindings" section in
+  `LandingPage`
+
 ## How to Add New Commands
 
 ### Adding a Brand New Command
