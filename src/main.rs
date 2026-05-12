@@ -118,6 +118,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the global config singleton for commands that need it
     bunnylol::config::init_global_config(config.clone());
 
+    // Report custom [bindings] state to the user, if any are defined.
+    // Surface #2: surface conflicts with built-ins and remind users that
+    // hot-reload is not supported in this release.
+    report_custom_bindings_status(&config);
+
     // Handle global --list flag
     #[cfg(feature = "cli")]
     if cli.list {
@@ -361,7 +366,81 @@ fn print_commands() {
         );
 
     println!("\n{}\n", table);
+
+    // Append user-defined custom bindings as a second table, if any.
+    if let Some(cfg) = bunnylol::config::get_global_config()
+        && !cfg.bindings.is_empty()
+    {
+        print_user_bindings_table(cfg);
+    }
+
     println!("💡 Tip: Use 'bunnylol <command>' to open URLs in your browser");
     println!("   Example: bunnylol ig reels");
     println!("   Use --dry-run to preview the URL without opening it\n");
+}
+
+/// Print user-defined `[bindings]` as a separate table beneath the built-ins.
+#[cfg(feature = "cli")]
+fn print_user_bindings_table(cfg: &BunnylolConfig) {
+    use bunnylol::config::CustomBinding;
+
+    #[derive(tabled::Tabled)]
+    struct UserBindingRow {
+        #[tabled(rename = "Command")]
+        command: String,
+        #[tabled(rename = "URL")]
+        url: String,
+        #[tabled(rename = "Description")]
+        description: String,
+    }
+
+    let mut entries: Vec<(&String, &CustomBinding)> = cfg.bindings.iter().collect();
+    entries.sort_by_key(|(k, _)| k.to_lowercase());
+
+    let rows: Vec<UserBindingRow> = entries
+        .into_iter()
+        .map(|(name, b)| UserBindingRow {
+            command: name.clone(),
+            url: b.url_template().to_string(),
+            description: b.description().unwrap_or("—").to_string(),
+        })
+        .collect();
+
+    println!("User bindings (from ~/.config/bunnylol/config.toml):");
+    let mut table = Table::new(rows);
+    table
+        .with(Style::rounded())
+        .with(Modify::new(Columns::new(0..=0)).with(Color::FG_BRIGHT_CYAN))
+        .with(Modify::new(Columns::new(1..=1)).with(Color::FG_BRIGHT_GREEN));
+    println!("{}\n", table);
+    println!("   ↑ Restart bunnylol after editing config.toml — hot-reload not supported.\n");
+}
+
+/// Emit a one-line status summary about user-defined `[bindings]` and a
+/// stderr warning for any names that conflict with built-in commands.
+///
+/// Quiet by default: prints nothing if `[bindings]` is empty.
+fn report_custom_bindings_status(config: &BunnylolConfig) {
+    if config.bindings.is_empty() {
+        return;
+    }
+
+    let conflicts = bunnylol::BunnylolCommandRegistry::validate_user_bindings(config);
+    let total = config.bindings.len();
+    let accepted = total - conflicts.len();
+
+    eprintln!(
+        "Loaded {} custom binding{} from config.toml (restart bunnylol to pick up edits — \
+         hot-reload not yet supported).",
+        accepted,
+        if accepted == 1 { "" } else { "s" },
+    );
+
+    for conflict in &conflicts {
+        eprintln!(
+            "  Warning: custom binding '{}' is shadowed by a built-in command and was ignored. \
+             ({} -> {} conflict)",
+            conflict.name, conflict.name, conflict.user_url,
+        );
+    }
 }

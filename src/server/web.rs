@@ -19,9 +19,13 @@ pub fn render_landing_page_html(config: &BunnylolConfig) -> String {
     LANDING_PAGE_HTML_CACHE
         .get_or_init(|| {
             let display_url = config.server.get_display_url();
+            let user_bindings: Vec<BindingData> = collect_user_bindings(config);
             let body_content = leptos::ssr::render_to_string(move || {
                 view! {
-                    <LandingPage server_display_url=display_url.clone() />
+                    <LandingPage
+                        server_display_url=display_url.clone()
+                        user_bindings=user_bindings.clone()
+                    />
                 }
             })
             .to_string();
@@ -102,6 +106,28 @@ impl From<BunnylolCommandInfo> for BindingData {
     }
 }
 
+/// Collect user-defined `[bindings]` from the config into `BindingData` rows,
+/// sorted alphabetically by name. Built-in conflicts are filtered out —
+/// they're shadowed at runtime, so showing them here would be misleading.
+fn collect_user_bindings(config: &BunnylolConfig) -> Vec<BindingData> {
+    let builtins = BunnylolCommandRegistry::builtin_binding_names();
+    let mut rows: Vec<BindingData> = config
+        .bindings
+        .iter()
+        .filter(|(name, _)| !builtins.contains(name.as_str()))
+        .map(|(name, binding)| BindingData {
+            command: name.clone(),
+            description: binding
+                .description()
+                .unwrap_or("User-defined binding")
+                .to_string(),
+            example: name.clone(),
+        })
+        .collect();
+    rows.sort_by_key(|a| a.command.to_lowercase());
+    rows
+}
+
 #[component]
 fn BindingCard(binding: BindingData) -> impl IntoView {
     view! {
@@ -160,7 +186,10 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
 }
 
 #[component]
-pub fn LandingPage(server_display_url: String) -> impl IntoView {
+pub fn LandingPage(
+    server_display_url: String,
+    #[prop(default = Vec::new())] user_bindings: Vec<BindingData>,
+) -> impl IntoView {
     let mut bindings: Vec<BindingData> = BunnylolCommandRegistry::get_all_commands()
         .iter()
         .map(|cmd| (*cmd).clone().into())
@@ -365,6 +394,53 @@ pub fn LandingPage(server_display_url: String) -> impl IntoView {
                     </div>
                 </div>
             </div>
+
+            // ---------------- User bindings section ----------------
+            // Rendered only when at least one [bindings] entry exists.
+            // Shadowed names (those conflicting with built-ins) are filtered
+            // out by `collect_user_bindings` to avoid showing entries that
+            // won't actually resolve.
+            {
+                let has_user_bindings = !user_bindings.is_empty();
+                view! {
+                    <Show when=move || has_user_bindings fallback=|| view! { <></> }>
+                        <div
+                            style:text-align="center"
+                            style:color="var(--text-medium)"
+                            style:margin-bottom="6px"
+                            style:margin-top="20px"
+                            style:font-size="1.1em"
+                            style:font-weight="600"
+                        >
+                            "User Bindings"
+                        </div>
+                        <p
+                            style:font-size="0.85em"
+                            style:color="var(--text-light)"
+                            style:font-style="italic"
+                            style:text-align="center"
+                            style:margin-bottom="20px"
+                        >
+                            "Edit ~/.config/bunnylol/config.toml and restart bunnylol to update. Hot-reload is not supported in this release."
+                        </p>
+                        <div
+                            style:display="grid"
+                            style:grid-template-columns="repeat(auto-fill, minmax(350px, 1fr))"
+                            style:gap="20px"
+                            style:margin-bottom="40px"
+                        >
+                            <For
+                                each={
+                                    let ub = user_bindings.clone();
+                                    move || ub.clone()
+                                }
+                                key=|binding| binding.command.clone()
+                                children=|binding| view! { <BindingCard binding=binding /> }
+                            />
+                        </div>
+                    </Show>
+                }
+            }
 
             <div
                 style:text-align="center"
