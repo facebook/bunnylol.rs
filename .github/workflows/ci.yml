@@ -73,3 +73,35 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
+
+  copyright:
+    name: Copyright Headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check copyright headers
+        run: |
+          missing=()
+          while IFS= read -r file; do
+            if ! head -2 "$file" | grep -q "Copyright (c) Meta Platforms, Inc. and affiliates"; then
+              missing+=("$file")
+            fi
+          done < <(find src tests -name '*.rs' -type f)
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::The following files are missing the copyright header:"
+            for f in "${missing[@]}"; do
+              echo "  $f"
+            done
+            echo ""
+            echo "Each .rs file must start with:"
+            echo "/*"
+            echo " * Copyright (c) Meta Platforms, Inc. and affiliates."
+            echo " *"
+            echo " * This source code is licensed under the MIT license found in the"
+            echo " * LICENSE file in the root directory of this source tree."
+            echo " */"
+            exit 1
+          fi
+          echo "All .rs files have copyright headers."
