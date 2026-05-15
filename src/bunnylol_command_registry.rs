@@ -130,38 +130,77 @@ impl BunnylolCommandRegistry {
     ///
     /// Resolution order (first match wins):
     ///   1. Special prefix handlers (`$TICKER`, `r/sub`)
-    ///   2. Built-in registered commands
-    ///   3. User-defined `[bindings]` from the loaded config
-    ///   4. Default search engine fallback
+    ///   2. User `[user_bindings]` with `override = true`
+    ///   3. Built-in registered commands
+    ///   4. User `[user_bindings]` without `override`
+    ///   5. Default search engine fallback
     ///
-    /// Step 3 is intentionally **after** step 2 — built-in commands always
-    /// win on a name collision. Conflicts are surfaced as warnings at
-    /// startup via [`Self::validate_user_bindings`] so users notice that a
-    /// `[bindings]` entry is being shadowed.
+    /// `Command` bindings rewrite the input and dispatch into the registry
+    /// **exactly once** with [`Self::process_command_no_user_bindings`] — they
+    /// can resolve to a built-in or the search fallback, but cannot re-enter
+    /// another user binding. This prevents cycles.
     pub fn process_command(command: &str, full_args: &str) -> String {
-        // Check for prefix commands first (special case)
+        // Tier 1: prefix handlers
         if let Some(url) = Self::process_prefix_commands(command, full_args) {
             return url;
         }
 
-        // Initialize lookup table once, then use O(1) HashMap lookup
-        let lookup = COMMAND_LOOKUP.get_or_init(Self::initialize_command_lookup);
+        let cfg = get_global_config();
 
+        // Tier 2: user bindings with override = true
+        if let Some(ref cfg) = cfg
+            && let Some((resolved, true)) = cfg.resolve_user_binding(command, full_args)
+        {
+            return Self::dispatch_resolved(resolved);
+        }
+
+        // Tier 3: built-in commands
+        let lookup = COMMAND_LOOKUP.get_or_init(Self::initialize_command_lookup);
         if let Some(handler) = lookup.get(command) {
             return handler(full_args);
         }
 
-        // Try user-defined custom bindings before falling through to search.
-        if let Some(cfg) = get_global_config()
-            && let Some(url) = cfg.resolve_custom_binding(command, full_args)
+        // Tier 4: user bindings without override
+        if let Some(ref cfg) = cfg
+            && let Some((resolved, false)) = cfg.resolve_user_binding(command, full_args)
         {
+            return Self::dispatch_resolved(resolved);
+        }
+
+        // Tier 5: default search fallback
+        let engine = cfg
+            .map(|c| c.default_search)
+            .unwrap_or_else(|| "google".to_string());
+        crate::commands::search_url(&engine, full_args)
+    }
+
+    /// Same as [`Self::process_command`] but **skips user bindings entirely**.
+    /// Used to dispatch a `Command` binding's rewritten string without
+    /// recursing back into another `[user_bindings]` entry.
+    fn process_command_no_user_bindings(command: &str, full_args: &str) -> String {
+        if let Some(url) = Self::process_prefix_commands(command, full_args) {
             return url;
         }
 
+        let lookup = COMMAND_LOOKUP.get_or_init(Self::initialize_command_lookup);
+        if let Some(handler) = lookup.get(command) {
+            return handler(full_args);
+        }
+
         let engine = get_global_config()
-            .map(|cfg| cfg.default_search)
+            .map(|c| c.default_search)
             .unwrap_or_else(|| "google".to_string());
         crate::commands::search_url(&engine, full_args)
+    }
+
+    fn dispatch_resolved(resolved: crate::config::ResolvedBinding) -> String {
+        match resolved {
+            crate::config::ResolvedBinding::Url(url) => url,
+            crate::config::ResolvedBinding::Command(rewritten) => {
+                let cmd_word = crate::utils::get_command_from_query_string(&rewritten);
+                Self::process_command_no_user_bindings(cmd_word, &rewritten)
+            }
+        }
     }
 
     /// Get all registered command bindings
@@ -169,20 +208,19 @@ impl BunnylolCommandRegistry {
         BINDINGS_DATA.get_or_init(Self::get_all_commands_impl)
     }
 
-    /// All built-in command alias names. Used to detect conflicts with
-    /// user-defined `[bindings]` at startup.
+    /// All built-in command alias names. Used to detect silent conflicts with
+    /// user `[user_bindings]` at startup.
     pub fn builtin_binding_names() -> std::collections::HashSet<&'static str> {
         let lookup = COMMAND_LOOKUP.get_or_init(Self::initialize_command_lookup);
         lookup.keys().copied().collect()
     }
 
-    /// Validate user-defined `[bindings]` against the built-in command set
-    /// and return any conflicts. Built-ins always win at runtime — conflicts
-    /// here exist only for startup logging.
+    /// Validate `[user_bindings]` against the built-in command set and return
+    /// any silently-shadowed entries (built-ins win unless `override = true`).
     pub fn validate_user_bindings(
         config: &crate::config::BunnylolConfig,
     ) -> Vec<crate::config::BindingConflict> {
-        config.validate_custom_bindings(&Self::builtin_binding_names())
+        config.validate_user_bindings_conflicts(&Self::builtin_binding_names())
     }
 }
 
@@ -252,16 +290,11 @@ mod cache_tests {
         );
     }
 
-    // ---------------- Custom [bindings] regression tests ----------------
+    // ---------------- [user_bindings] regression tests ----------------
     //
-    // These tests exercise process_command's interaction with the global
-    // config's user-defined bindings. They run after other tests may have
-    // initialized the global config, so they only assert behavior that is
-    // valid regardless of whether GLOBAL_CONFIG is set:
-    //   - validate_user_bindings is a pure function over a passed-in config
-    //   - apply_binding_template / resolve_custom_binding are pure
-    // Tests that need a populated GLOBAL_CONFIG are placed in a separate
-    // integration-style test to avoid OnceLock contention between unit tests.
+    // These tests exercise pure helpers over a passed-in config. Tests that
+    // need a populated GLOBAL_CONFIG are placed in tests/cli_integration.rs
+    // to avoid OnceLock contention between unit tests.
 
     #[test]
     fn test_builtin_binding_names_contains_known_aliases() {
@@ -273,17 +306,36 @@ mod cache_tests {
     }
 
     #[test]
-    fn test_validate_user_bindings_flags_conflicts_with_builtins() {
-        use crate::config::{BunnylolConfig, CustomBinding};
+    fn test_validate_user_bindings_flags_silently_shadowed_only() {
+        use crate::config::{BunnylolConfig, UserBinding};
 
         let mut cfg = BunnylolConfig::default();
-        cfg.bindings.insert(
+        // Shadowed (no override) — should be reported
+        cfg.user_bindings.insert(
             "gh".to_string(),
-            CustomBinding::Simple("https://example.com".to_string()),
+            UserBinding::Url {
+                url: "https://example.com".to_string(),
+                description: None,
+                override_builtin: false,
+            },
         );
-        cfg.bindings.insert(
+        // Intentional override — should NOT be reported
+        cfg.user_bindings.insert(
+            "ig".to_string(),
+            UserBinding::Url {
+                url: "https://example.com".to_string(),
+                description: None,
+                override_builtin: true,
+            },
+        );
+        // No collision — irrelevant
+        cfg.user_bindings.insert(
             "cal-not-a-builtin".to_string(),
-            CustomBinding::Simple("https://example.com".to_string()),
+            UserBinding::Url {
+                url: "https://example.com".to_string(),
+                description: None,
+                override_builtin: false,
+            },
         );
         let conflicts = BunnylolCommandRegistry::validate_user_bindings(&cfg);
         let names: Vec<&str> = conflicts.iter().map(|c| c.name.as_str()).collect();

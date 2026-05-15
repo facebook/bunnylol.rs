@@ -244,12 +244,10 @@ fn execute_command(
     // Join command parts (e.g., ["ig", "reels"] -> "ig reels")
     let full_args = args.join(" ");
 
-    // Resolve command aliases
-    let resolved_args = config.resolve_command(&full_args);
-
-    // Extract command and process with config for custom search engine
-    let command = utils::get_command_from_query_string(&resolved_args);
-    let url = BunnylolCommandRegistry::process_command(command, &resolved_args);
+    // Extract command and process. Aliases are handled inside process_command
+    // via the unified [user_bindings] table — see Q2 in the refactor plan.
+    let command = utils::get_command_from_query_string(&full_args);
+    let url = BunnylolCommandRegistry::process_command(command, &full_args);
 
     // Print URL
     println!("{}", url);
@@ -367,11 +365,11 @@ fn print_commands() {
 
     println!("\n{}\n", table);
 
-    // Append user-defined custom bindings as a second table, if any.
+    // Append user-defined bindings as a second table, if any.
     if let Some(cfg) = bunnylol::config::get_global_config()
-        && !cfg.bindings.is_empty()
+        && !cfg.user_bindings.is_empty()
     {
-        print_user_bindings_table(cfg);
+        print_user_bindings_table(&cfg);
     }
 
     println!("💡 Tip: Use 'bunnylol <command>' to open URLs in your browser");
@@ -379,30 +377,40 @@ fn print_commands() {
     println!("   Use --dry-run to preview the URL without opening it\n");
 }
 
-/// Print user-defined `[bindings]` as a separate table beneath the built-ins.
+/// Print `[user_bindings]` as a separate table beneath the built-ins.
 #[cfg(feature = "cli")]
 fn print_user_bindings_table(cfg: &BunnylolConfig) {
-    use bunnylol::config::CustomBinding;
+    use bunnylol::config::UserBinding;
 
     #[derive(tabled::Tabled)]
     struct UserBindingRow {
         #[tabled(rename = "Command")]
         command: String,
-        #[tabled(rename = "URL")]
-        url: String,
+        #[tabled(rename = "Kind")]
+        kind: String,
+        #[tabled(rename = "Target")]
+        target: String,
         #[tabled(rename = "Description")]
         description: String,
     }
 
-    let mut entries: Vec<(&String, &CustomBinding)> = cfg.bindings.iter().collect();
+    let mut entries: Vec<(&String, &UserBinding)> = cfg.user_bindings.iter().collect();
     entries.sort_by_key(|(k, _)| k.to_lowercase());
 
     let rows: Vec<UserBindingRow> = entries
         .into_iter()
-        .map(|(name, b)| UserBindingRow {
-            command: name.clone(),
-            url: b.url_template().to_string(),
-            description: b.description().unwrap_or("—").to_string(),
+        .map(|(name, b)| {
+            let display_name = if b.overrides_builtin() {
+                format!("{} (override)", name)
+            } else {
+                name.clone()
+            };
+            UserBindingRow {
+                command: display_name,
+                kind: b.kind_label().to_string(),
+                target: b.display_target().to_string(),
+                description: b.description().unwrap_or("—").to_string(),
+            }
         })
         .collect();
 
@@ -411,36 +419,49 @@ fn print_user_bindings_table(cfg: &BunnylolConfig) {
     table
         .with(Style::rounded())
         .with(Modify::new(Columns::new(0..=0)).with(Color::FG_BRIGHT_CYAN))
-        .with(Modify::new(Columns::new(1..=1)).with(Color::FG_BRIGHT_GREEN));
+        .with(Modify::new(Columns::new(1..=1)).with(Color::FG_YELLOW))
+        .with(Modify::new(Columns::new(2..=2)).with(Color::FG_BRIGHT_GREEN));
     println!("{}\n", table);
-    println!("   ↑ Restart bunnylol after editing config.toml — hot-reload not supported.\n");
 }
 
-/// Emit a one-line status summary about user-defined `[bindings]` and a
-/// stderr warning for any names that conflict with built-in commands.
+/// Emit a one-line status summary about `[user_bindings]` and a stderr
+/// warning for any names that silently conflict with built-in commands.
+/// Also nudges users to migrate `[aliases]` entries when present.
 ///
-/// Quiet by default: prints nothing if `[bindings]` is empty.
+/// Quiet by default: prints nothing if both tables are empty.
 fn report_custom_bindings_status(config: &BunnylolConfig) {
-    if config.bindings.is_empty() {
+    let bindings_count = config.user_bindings.len();
+    let aliases_count = config.aliases.len();
+
+    if bindings_count == 0 && aliases_count == 0 {
         return;
     }
 
     let conflicts = bunnylol::BunnylolCommandRegistry::validate_user_bindings(config);
-    let total = config.bindings.len();
-    let accepted = total - conflicts.len();
+    let accepted = bindings_count - conflicts.len();
 
-    eprintln!(
-        "Loaded {} custom binding{} from config.toml (restart bunnylol to pick up edits — \
-         hot-reload not yet supported).",
-        accepted,
-        if accepted == 1 { "" } else { "s" },
-    );
+    if accepted > 0 {
+        eprintln!(
+            "Loaded {} user binding{} from config.toml.",
+            accepted,
+            if accepted == 1 { "" } else { "s" },
+        );
+    }
+
+    if aliases_count > 0 {
+        eprintln!(
+            "Note: [aliases] is deprecated — move entries into [user_bindings] as \
+             {{ command = \"...\" }}. ({} alias{} loaded.)",
+            aliases_count,
+            if aliases_count == 1 { "" } else { "es" },
+        );
+    }
 
     for conflict in &conflicts {
         eprintln!(
-            "  Warning: custom binding '{}' is shadowed by a built-in command and was ignored. \
-             ({} -> {} conflict)",
-            conflict.name, conflict.name, conflict.user_url,
+            "  Warning: user binding '{}' is shadowed by a built-in command and was ignored. \
+             Use `override = true` to shadow the built-in. ({} -> {} conflict)",
+            conflict.name, conflict.name, conflict.target,
         );
     }
 }

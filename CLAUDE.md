@@ -91,52 +91,72 @@ Located in `src/utils/url_encoding.rs`:
 - `build_search_url(base, param, query)` - Constructs search URLs with encoded params
 - `build_path_url(base, path)` - Appends path to base URL
 
-## Custom URL Bindings (User Config)
+## User-Defined Bindings (`[user_bindings]`)
 
-Users can add personal URL shortcuts **without recompiling** via the
-`[bindings]` table in `~/.config/bunnylol/config.toml`:
+Users can add personal shortcuts **without recompiling** via the
+`[user_bindings]` table in `~/.config/bunnylol/config.toml`. Every entry uses
+the inline-table form — short-string form (`cal = "..."`) is rejected by the
+parser:
 
 ```toml
-[bindings]
-# Short form: static URL (args ignored)
-cal = "https://calendar.google.com/calendar/u/1/r"
+[user_bindings]
+# URL binding: maps a name to a URL. {} is a placeholder for URL-encoded args.
+cal  = { url = "https://calendar.google.com/calendar/u/1/r" }
+jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
 
-# Templated: `{}` is replaced with URL-encoded arguments
-jira = "https://corp.atlassian.net/browse/{}"
+# Command binding: rewrites to another bunnylol command.
+work = { command = "gh mycompany/repo", description = "Work repo" }
 
-# Detailed form: adds a description shown on the /bindings web page
-notion = { url = "https://www.notion.so/{}", description = "Notion page" }
+# Override a built-in (off by default).
+gh   = { command = "gh myorg/myrepo", override = true }
 ```
+
+**Two variants of `UserBinding` (defined in `src/config.rs`):**
+- `Url { url, description?, override? }` — `{}` template substitution; arg-less
+  static URLs ignore extra args after the binding name.
+- `Command { command, description?, override? }` — rewrites the input verbatim
+  and dispatches into the registry **exactly once**. No `{}` substitution.
+  Extra args are dropped. Never recurses into another `[user_bindings]` entry.
 
 **Resolution order in `BunnylolCommandRegistry::process_command`:**
 1. Prefix handlers (`$TICKER`, `r/sub`)
-2. Built-in registered commands
-3. User `[bindings]`
-4. Default search fallback
+2. User bindings with `override = true`
+3. Built-in registered commands
+4. User bindings without `override`
+5. Default search fallback
 
-**Conflict policy:** built-ins always win. A user binding whose name matches
-a built-in is kept in the config but ignored at runtime, and a warning is
-logged at startup via `report_custom_bindings_status` (in `src/main.rs`).
+**Conflict policy:** built-ins win by default. A user binding may opt in to
+shadowing a built-in via `override = true`. Silently-shadowed bindings
+(name collides with a built-in, `override = false`) are reported as warnings
+at startup via `report_custom_bindings_status` (in `src/main.rs`) and hidden
+from the `/bindings` web page.
 
-**No hot-reload:** config is read once at startup. Users must restart
-`bunnylol` after editing `config.toml`. This is surfaced in three places:
-1. Comment block above `[bindings]` in the generated default config.
-2. One-line stderr log at startup when `[bindings]` is non-empty.
-3. Italic note above the "User Bindings" section on the `/` web portal.
+**Hot reload:** the server reloads `config.toml` when its modified time
+changes (via `ConfigReloader` in `src/config.rs`, added by PR #48). User
+bindings are picked up automatically. No restart needed.
 
-When extending custom bindings, keep these three surfaces in sync. Tests
-covering them live in `src/config.rs` (`test_generated_config_includes_restart_note`)
-and `tests/cli_integration.rs` (`test_custom_binding_startup_info_log_lists_count`,
-`test_custom_binding_conflict_emits_startup_warning`).
+### Legacy `[aliases]` (deprecated)
 
-**Implementation files:**
-- `src/config.rs` — `CustomBinding` type, `resolve_custom_binding`,
-  `validate_custom_bindings`, `apply_binding_template`
-- `src/bunnylol_command_registry.rs` — `process_command` integration,
-  `builtin_binding_names`, `validate_user_bindings`
-- `src/main.rs` — `report_custom_bindings_status`, `print_user_bindings_table`
-- `src/server/web.rs` — `collect_user_bindings`, "User Bindings" section in
-  `LandingPage`
+`[aliases]` predates `[user_bindings]` and remains parseable. Entries are
+folded into `[user_bindings]` as `Command` variants at load time (see
+`fold_aliases_into_user_bindings` in `src/config.rs`). The on-disk file is
+**not** rewritten. A deprecation warning is emitted at startup if `[aliases]`
+is non-empty, nudging the user to migrate to `[user_bindings]`.
+
+If a name appears in both tables, `[user_bindings]` wins.
+
+### Implementation files
+
+- `src/config.rs` — `UserBinding` enum, `ResolvedBinding`, `resolve_user_binding`,
+  `validate_user_bindings_conflicts`, `apply_url_template`, `format_user_binding_toml`,
+  `fold_aliases_into_user_bindings`
+- `src/bunnylol_command_registry.rs` — `process_command` (5-tier),
+  `process_command_no_user_bindings` (recursion guard for `Command` bindings),
+  `dispatch_resolved`, `builtin_binding_names`, `validate_user_bindings`
+- `src/main.rs` — `report_custom_bindings_status` (startup log, override hint,
+  aliases deprecation log), `print_user_bindings_table` (URL/CMD kinds)
+- `src/server/web.rs` — `collect_user_bindings` (handles both variants),
+  "User Bindings" section in `LandingPage`
 
 ## How to Add New Commands
 
