@@ -9,19 +9,26 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::sync::{OnceLock, RwLock};
+use std::time::SystemTime;
 
-/// Global singleton for BunnylolConfig, initialized once at startup!
-static GLOBAL_CONFIG: OnceLock<BunnylolConfig> = OnceLock::new();
+/// Global config snapshot used by command handlers that read config directly.
+static GLOBAL_CONFIG: OnceLock<RwLock<BunnylolConfig>> = OnceLock::new();
 
-/// Call once on startup
+/// Initialize or replace the global config snapshot.
 pub fn init_global_config(config: BunnylolConfig) {
-    let _ = GLOBAL_CONFIG.set(config);
+    if let Some(global) = GLOBAL_CONFIG.get() {
+        *global.write().expect("global config lock poisoned") = config;
+    } else {
+        let _ = GLOBAL_CONFIG.set(RwLock::new(config));
+    }
 }
 
 /// Get a reference to the global config, after initialized.
-pub fn get_global_config() -> Option<&'static BunnylolConfig> {
-    GLOBAL_CONFIG.get()
+pub fn get_global_config() -> Option<BunnylolConfig> {
+    GLOBAL_CONFIG
+        .get()
+        .map(|config| config.read().expect("global config lock poisoned").clone())
 }
 
 /// Configuration for bunnylol CLI
@@ -66,6 +73,79 @@ impl Default for BunnylolConfig {
             history: HistoryConfig::default(),
             server: ServerConfig::default(),
         }
+    }
+}
+
+/// Reloads `config.toml` when its modified time changes.
+#[derive(Debug)]
+pub struct ConfigReloader {
+    config: RwLock<BunnylolConfig>,
+    config_path: Option<PathBuf>,
+    modified: RwLock<Option<SystemTime>>,
+}
+
+impl ConfigReloader {
+    pub fn new(config: BunnylolConfig) -> Self {
+        let config_path = BunnylolConfig::get_config_path();
+        Self::with_path(config, config_path)
+    }
+
+    fn with_path(config: BunnylolConfig, config_path: Option<PathBuf>) -> Self {
+        let modified = config_path
+            .as_ref()
+            .and_then(|path| fs::metadata(path).ok())
+            .and_then(|metadata| metadata.modified().ok());
+
+        Self {
+            config: RwLock::new(config),
+            config_path,
+            modified: RwLock::new(modified),
+        }
+    }
+
+    #[cfg(test)]
+    fn new_for_path(config: BunnylolConfig, config_path: PathBuf) -> Self {
+        Self::with_path(config, Some(config_path))
+    }
+
+    pub fn current(&self) -> BunnylolConfig {
+        if let Err(e) = self.reload_if_changed() {
+            eprintln!("Warning: Failed to reload config.toml: {}", e);
+        }
+
+        self.config
+            .read()
+            .expect("config reloader lock poisoned")
+            .clone()
+    }
+
+    fn reload_if_changed(&self) -> Result<(), String> {
+        let Some(path) = &self.config_path else {
+            return Ok(());
+        };
+
+        let modified = fs::metadata(path)
+            .map_err(|e| format!("Failed to stat config file {:?}: {}", path, e))?
+            .modified()
+            .map_err(|e| format!("Failed to read config modified time {:?}: {}", path, e))?;
+
+        {
+            let last_modified = self.modified.read().expect("config reloader lock poisoned");
+            if *last_modified == Some(modified) {
+                return Ok(());
+            }
+        }
+
+        let config = BunnylolConfig::load_from_path(path)?;
+        *self.config.write().expect("config reloader lock poisoned") = config.clone();
+        *self
+            .modified
+            .write()
+            .expect("config reloader lock poisoned") = Some(modified);
+        init_global_config(config);
+
+        println!("Reloaded config from {}", path.display());
+        Ok(())
     }
 }
 
@@ -220,39 +300,45 @@ impl BunnylolConfig {
         Self::get_xdg_dirs().and_then(|xdg| xdg.get_cache_home())
     }
 
-    /// Get the full path to the config file
-    /// Returns: /etc/bunnylol/config.toml (system-wide, preferred)
+    /// Get the full path to an existing config file.
+    /// Returns: /etc/bunnylol/config.toml (system-wide, preferred on Unix)
     ///       or $XDG_CONFIG_HOME/bunnylol/config.toml (user-specific fallback)
     pub fn get_config_path() -> Option<PathBuf> {
-        // Check system-wide config first
-        let system_config = PathBuf::from("/etc/bunnylol/config.toml");
         let user_config = Self::get_config_dir().map(|dir| dir.join("config.toml"));
 
-        if system_config.exists() {
-            // Warn if both configs exist
-            if let Some(ref user_path) = user_config
-                && user_path.exists()
-            {
-                eprintln!("Warning: Found config files at both locations:");
-                eprintln!("  - {}", system_config.display());
-                eprintln!("  - {}", user_path.display());
-                eprintln!("Using system config: {}", system_config.display());
+        // Check system-wide config first on Unix platforms.
+        #[cfg(unix)]
+        {
+            let system_config = PathBuf::from("/etc/bunnylol/config.toml");
+            if system_config.exists() {
+                // Warn if both configs exist
+                if let Some(ref user_path) = user_config
+                    && user_path.exists()
+                {
+                    eprintln!("Warning: Found config files at both locations:");
+                    eprintln!("  - {}", system_config.display());
+                    eprintln!("  - {}", user_path.display());
+                    eprintln!("Using system config: {}", system_config.display());
+                }
+                return Some(system_config);
             }
-            return Some(system_config);
         }
 
-        // Fall back to user config
-        user_config
+        // Fall back to user config if it exists
+        user_config.filter(|path| path.exists())
     }
 
     /// Get the full path to the config file for writing
-    /// Returns: /etc/bunnylol/config.toml if writable (running as root)
+    /// Returns: /etc/bunnylol/config.toml on Unix if writable (running as root)
     ///       or $XDG_CONFIG_HOME/bunnylol/config.toml otherwise
     pub fn get_config_path_for_writing() -> Option<PathBuf> {
         // If running as root (or /etc/bunnylol exists and is writable), use system config
-        let system_config_dir = PathBuf::from("/etc/bunnylol");
-        if system_config_dir.exists() || std::fs::create_dir_all(&system_config_dir).is_ok() {
-            return Some(system_config_dir.join("config.toml"));
+        #[cfg(unix)]
+        {
+            let system_config_dir = PathBuf::from("/etc/bunnylol");
+            if system_config_dir.exists() || std::fs::create_dir_all(&system_config_dir).is_ok() {
+                return Some(system_config_dir.join("config.toml"));
+            }
         }
 
         // Otherwise use user config
@@ -279,7 +365,7 @@ impl BunnylolConfig {
                         eprintln!("Warning: Failed to write default config file: {}", e);
                         eprintln!("Continuing with default configuration...");
                     } else {
-                        println!("Created default config file at: {}", write_path.display());
+                        eprintln!("Created default config file at: {}", write_path.display());
                     }
                     return Ok(default_config);
                 }
@@ -288,7 +374,11 @@ impl BunnylolConfig {
         };
 
         // Config exists, read it
-        let contents = fs::read_to_string(&config_path)
+        Self::load_from_path(&config_path)
+    }
+
+    fn load_from_path(config_path: &PathBuf) -> Result<Self, String> {
+        let contents = fs::read_to_string(config_path)
             .map_err(|e| format!("Failed to read config file {:?}: {}", config_path, e))?;
 
         toml::from_str(&contents)
@@ -334,8 +424,8 @@ impl BunnylolConfig {
             r#"# Bunnylol Configuration File
 # https://github.com/facebook/bunnylol.rs
 #
-# NOTE: Configuration is loaded once at server startup.
-#       You must restart the server (bunnylol serve) to apply changes.
+# NOTE: The CLI reads this file on each run. The server reloads it when the
+#       file's modified time changes.
 
 # Browser to open URLs in (optional)
 # Examples: "firefox", "chrome", "chromium", "safari"
@@ -590,5 +680,69 @@ mod tests {
             config.server.get_display_url(),
             "https://bunny.alichtman.com"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_config_reloader_reloads_when_config_mtime_changes() {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!(
+            "bunnylol-reloader-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let config_dir = dir.join("bunnylol");
+        fs::create_dir_all(&config_dir).unwrap();
+        let config_path = config_dir.join("config.toml");
+        fs::write(&config_path, "default_search = \"google\"\n").unwrap();
+
+        let result = (|| {
+            let initial = BunnylolConfig::load_from_path(&config_path).unwrap();
+            let reloader = ConfigReloader::new_for_path(initial, config_path.clone());
+            assert_eq!(reloader.current().default_search, "google");
+
+            std::thread::sleep(std::time::Duration::from_millis(1100));
+            fs::write(&config_path, "default_search = \"ddg\"\n").unwrap();
+
+            assert_eq!(reloader.current().default_search, "ddg");
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    #[cfg(feature = "cli")]
+    fn test_config_reloader_keeps_previous_config_when_reload_is_invalid() {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!(
+            "bunnylol-reloader-invalid-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let config_dir = dir.join("bunnylol");
+        fs::create_dir_all(&config_dir).unwrap();
+        let config_path = config_dir.join("config.toml");
+        fs::write(&config_path, "default_search = \"google\"\n").unwrap();
+
+        let result = (|| {
+            let initial = BunnylolConfig::load_from_path(&config_path).unwrap();
+            let reloader = ConfigReloader::new_for_path(initial, config_path.clone());
+            assert_eq!(reloader.current().default_search, "google");
+
+            std::thread::sleep(std::time::Duration::from_millis(1100));
+            fs::write(&config_path, "default_search = [").unwrap();
+
+            assert_eq!(reloader.current().default_search, "google");
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
     }
 }

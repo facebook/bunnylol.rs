@@ -133,9 +133,9 @@ impl BunnylolCommandRegistry {
             Some(handler) => handler(full_args),
             None => {
                 let engine = get_global_config()
-                    .map(|cfg| cfg.default_search.as_str())
-                    .unwrap_or("google");
-                crate::commands::search_url(engine, full_args)
+                    .map(|cfg| cfg.default_search)
+                    .unwrap_or_else(|| "google".to_string());
+                crate::commands::search_url(&engine, full_args)
             }
         }
     }

@@ -74,16 +74,16 @@ impl StockCommand {
         }
     }
 
-    fn configured_provider() -> &'static str {
+    fn configured_provider() -> String {
         get_global_config()
-            .map(|cfg| cfg.stock_provider.as_str())
-            .unwrap_or("yahoo")
+            .map(|cfg| cfg.stock_provider)
+            .unwrap_or_else(|| "yahoo".to_string())
     }
 
     /// Process a ticker with $ prefix (e.g., "$META")
     /// Uses config preference, defaults to yahoo if no config
     pub fn process_ticker(ticker_with_dollar: &str) -> String {
-        Self::process_ticker_with_provider(ticker_with_dollar, Self::configured_provider())
+        Self::process_ticker_with_provider(ticker_with_dollar, &Self::configured_provider())
     }
 
     /// testable version of process_ticker that takes an explicit provider name
@@ -152,7 +152,7 @@ impl BunnylolCommand for StockCommand {
     const BINDINGS: &'static [&'static str] = &["stock", "stocks", "finance"];
 
     fn process_args(args: &str) -> String {
-        Self::process_args_with_provider(args, Self::configured_provider())
+        Self::process_args_with_provider(args, &Self::configured_provider())
     }
 
     fn get_info() -> BunnylolCommandInfo {
