@@ -112,15 +112,8 @@ enum ServiceAction {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
-    // Load configuration
-    let config = match BunnylolConfig::load() {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            eprintln!("Warning: {}", e);
-            eprintln!("Continuing with default configuration...");
-            BunnylolConfig::default()
-        }
-    };
+    // Load configuration. Missing config creates defaults, but invalid config is fatal.
+    let config = BunnylolConfig::load().map_err(|e| format!("Invalid configuration: {}", e))?;
 
     // Initialize the global config singleton for commands that need it
     bunnylol::config::init_global_config(config.clone());

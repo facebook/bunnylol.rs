@@ -1,4 +1,23 @@
 use predicates::prelude::*;
+use std::fs;
+use std::path::PathBuf;
+
+#[cfg(feature = "cli")]
+fn write_test_config(test_name: &str, toml_body: &str) -> PathBuf {
+    let mut dir = std::env::temp_dir();
+    dir.push(format!(
+        "bunnylol-it-{}-{}-{}",
+        test_name,
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    fs::create_dir_all(dir.join("bunnylol")).expect("create temp config dir");
+    fs::write(dir.join("bunnylol/config.toml"), toml_body).expect("write config.toml");
+    dir
+}
 
 #[test]
 fn test_cli_help() {
@@ -77,4 +96,33 @@ fn test_cli_dry_run_github_repo() {
         .assert()
         .success()
         .stdout("https://github.com/facebook/react\n");
+}
+
+#[test]
+#[cfg(feature = "cli")]
+fn test_cli_missing_config_uses_defaults() {
+    let xdg = write_test_config("missing-config", "");
+    fs::remove_file(xdg.join("bunnylol/config.toml")).expect("remove config.toml");
+
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
+    cmd.env("XDG_CONFIG_HOME", &xdg)
+        .arg("--dry-run")
+        .arg("gh")
+        .assert()
+        .success()
+        .stdout("https://github.com\n");
+}
+
+#[test]
+#[cfg(feature = "cli")]
+fn test_cli_invalid_config_exits_with_error() {
+    let xdg = write_test_config("invalid-config", "default_search = [\n");
+
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
+    cmd.env("XDG_CONFIG_HOME", &xdg)
+        .arg("--dry-run")
+        .arg("gh")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid configuration"));
 }

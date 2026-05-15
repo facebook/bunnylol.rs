@@ -22,7 +22,7 @@ use rocket::request::{self, FromRequest, Request};
 use rocket::response::Redirect;
 
 #[cfg(feature = "server")]
-use crate::{BunnylolCommandRegistry, BunnylolConfig, History, utils};
+use crate::{BunnylolCommandRegistry, BunnylolConfig, ConfigReloader, History, utils};
 
 #[cfg(feature = "server")]
 mod server_impl {
@@ -48,9 +48,11 @@ mod server_impl {
     #[rocket::get("/?<cmd>")]
     pub(super) fn search(
         cmd: Option<&str>,
-        config: &State<BunnylolConfig>,
+        config: &State<ConfigReloader>,
         client_ip: ClientIP,
     ) -> Result<Redirect, rocket::response::content::RawHtml<String>> {
+        let config = config.current();
+
         match cmd {
             Some(cmd_str) => {
                 println!("bunnylol command: {}", cmd_str);
@@ -62,7 +64,7 @@ mod server_impl {
 
                 // Track command in history if enabled
                 if config.history.enabled
-                    && let Some(history) = History::new(config.inner())
+                    && let Some(history) = History::new(&config)
                     && let Err(e) = history.add(cmd_str, &client_ip.0)
                 {
                     eprintln!("Warning: Failed to save command to history: {}", e);
@@ -73,7 +75,7 @@ mod server_impl {
             None => {
                 // No cmd parameter, show landing page
                 Err(rocket::response::content::RawHtml(
-                    web::render_landing_page_html(config.inner()),
+                    web::render_landing_page_html(&config),
                 ))
             }
         }
@@ -89,8 +91,9 @@ mod server_impl {
     #[rocket::catch(404)]
     pub(super) fn not_found(req: &rocket::Request) -> rocket::response::content::RawHtml<String> {
         // Get config from request state
-        if let Some(config) = req.rocket().state::<BunnylolConfig>() {
-            rocket::response::content::RawHtml(web::render_landing_page_html(config))
+        if let Some(config) = req.rocket().state::<ConfigReloader>() {
+            let config = config.current();
+            rocket::response::content::RawHtml(web::render_landing_page_html(&config))
         } else {
             // Fallback if config is not available (shouldn't happen)
             rocket::response::content::RawHtml(
@@ -122,7 +125,7 @@ pub async fn launch(config: BunnylolConfig) -> Result<(), Box<rocket::Error>> {
         .merge(("ident", format!("Bunnylol/{}", env!("CARGO_PKG_VERSION"))));
 
     let _rocket = rocket::custom(figment)
-        .manage(config)
+        .manage(ConfigReloader::new(config))
         .mount("/", rocket::routes![search, health])
         .register("/", rocket::catchers![not_found])
         .launch()
