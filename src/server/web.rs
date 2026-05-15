@@ -182,6 +182,8 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
                     style:font-family="'JetBrains Mono', monospace"
                     style:color="var(--accent-purple)"
                     style:font-weight="500"
+                    style:overflow-wrap="anywhere"
+                    style:word-break="break-word"
                 >
                     {binding.example}
                 </div>
