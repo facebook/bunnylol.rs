@@ -106,22 +106,27 @@ impl From<BunnylolCommandInfo> for BindingData {
     }
 }
 
-/// Collect user-defined `[bindings]` from the config into `BindingData` rows,
-/// sorted alphabetically by name. Built-in conflicts are filtered out —
-/// they're shadowed at runtime, so showing them here would be misleading.
+/// Collect user `[user_bindings]` entries into `BindingData` rows, sorted
+/// alphabetically. Silently-shadowed bindings (collide with a built-in and
+/// `override = false`) are filtered out — they won't fire at runtime, so
+/// showing them here would be misleading. Bindings with `override = true`
+/// are kept.
 fn collect_user_bindings(config: &BunnylolConfig) -> Vec<BindingData> {
     let builtins = BunnylolCommandRegistry::builtin_binding_names();
     let mut rows: Vec<BindingData> = config
-        .bindings
+        .user_bindings
         .iter()
-        .filter(|(name, _)| !builtins.contains(name.as_str()))
-        .map(|(name, binding)| BindingData {
-            command: name.clone(),
-            description: binding
-                .description()
-                .unwrap_or("User-defined binding")
-                .to_string(),
-            example: name.clone(),
+        .filter(|(name, binding)| binding.overrides_builtin() || !builtins.contains(name.as_str()))
+        .map(|(name, binding)| {
+            let default_desc = match binding {
+                crate::config::UserBinding::Url { .. } => "User URL binding",
+                crate::config::UserBinding::Command { .. } => "User command binding",
+            };
+            BindingData {
+                command: name.clone(),
+                description: binding.description().unwrap_or(default_desc).to_string(),
+                example: format!("{} — {}", binding.kind_label(), binding.display_target()),
+            }
         })
         .collect();
     rows.sort_by_key(|a| a.command.to_lowercase());
@@ -396,10 +401,11 @@ pub fn LandingPage(
             </div>
 
             // ---------------- User bindings section ----------------
-            // Rendered only when at least one [bindings] entry exists.
-            // Shadowed names (those conflicting with built-ins) are filtered
-            // out by `collect_user_bindings` to avoid showing entries that
-            // won't actually resolve.
+            // Rendered only when at least one [user_bindings] entry exists
+            // (after filtering out silently-shadowed names by
+            // `collect_user_bindings`). Bindings with `override = true` are
+            // shown; bindings that collide with a built-in without override
+            // are hidden because they won't resolve at runtime.
             {
                 let has_user_bindings = !user_bindings.is_empty();
                 view! {
@@ -407,22 +413,13 @@ pub fn LandingPage(
                         <div
                             style:text-align="center"
                             style:color="var(--text-medium)"
-                            style:margin-bottom="6px"
+                            style:margin-bottom="20px"
                             style:margin-top="20px"
                             style:font-size="1.1em"
                             style:font-weight="600"
                         >
                             "User Bindings"
                         </div>
-                        <p
-                            style:font-size="0.85em"
-                            style:color="var(--text-light)"
-                            style:font-style="italic"
-                            style:text-align="center"
-                            style:margin-bottom="20px"
-                        >
-                            "Edit ~/.config/bunnylol/config.toml and restart bunnylol to update. Hot-reload is not supported in this release."
-                        </p>
                         <div
                             style:display="grid"
                             style:grid-template-columns="repeat(auto-fill, minmax(350px, 1fr))"
