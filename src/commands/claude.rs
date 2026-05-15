@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// Claude command handler
 /// Supports: claude -> redirects to claude.ai
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};

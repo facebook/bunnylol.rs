@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// Google Docs command handler
 /// Supports: docs, gdoc -> redirects to Google Docs
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};

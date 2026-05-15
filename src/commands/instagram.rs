@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// Instagram command handler
 /// Supports: ig, instagram, ig @[username], ig [search terms]
 /// Supports: ig reels -> redirects to Instagram Reels

@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// GitHub command handler
 /// Supports: gh, gh @[user], gh [user/repo], gh token[s]/pat, gh settings, gh bills/billing,
 /// gh notifications/notifs, gh teams, gh orgs, gh ssh/gpg/keys, gh security/passwords/auth/mfa/2fa,

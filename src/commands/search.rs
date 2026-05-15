@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// Search engine fallback URL builder
 /// Used when no command matches the input, routing to the configured default search engine
 use crate::utils::url_encoding::build_search_url;

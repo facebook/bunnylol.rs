@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// REI command handler
 /// Supports: rei -> https://www.rei.com, rei [search terms] -> https://www.rei.com/search?q=[search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};

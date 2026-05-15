@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 /// DuckDuckGo Search command handler
 /// Supports: ddg [search terms], duckduckgo [search terms]
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
