@@ -415,7 +415,7 @@ cal = { url = "https://calendar.google.com/calendar/u/1/r" }
 #[cfg(feature = "cli")]
 fn test_legacy_aliases_still_resolve_via_user_bindings_fold() {
     // [aliases] from before the user_bindings refactor must still work.
-    // They're folded into user_bindings as Command variants at load time.
+    // They're migrated into user_bindings as Command variants at load time.
     let xdg = write_test_config(
         "aliases-fold",
         r#"

@@ -229,6 +229,7 @@ dependencies = [
  "serde",
  "service-manager",
  "tabled",
+ "tempfile",
  "terminal_size",
  "tokio",
  "toml 0.9.10+spec-1.1.0",

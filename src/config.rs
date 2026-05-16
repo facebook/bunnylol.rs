@@ -8,7 +8,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
 use std::time::SystemTime;
 
@@ -33,6 +34,7 @@ pub fn get_global_config() -> Option<BunnylolConfig> {
 
 /// Configuration for bunnylol CLI
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct BunnylolConfig {
     /// Browser to open URLs in (optional)
     /// Examples: "firefox", "chrome", "chromium", "safari"
@@ -63,8 +65,8 @@ pub struct BunnylolConfig {
     /// On a name collision with a built-in, the built-in wins by default. A
     /// user binding may opt in to shadowing a built-in with `override = true`.
     ///
-    /// `[aliases]` (legacy) is also loaded and folded into this map as
-    /// `Command` variants at load time. See `BunnylolConfig::load_from_path`.
+    /// `[aliases]` (legacy) is migrated into this map as `Command` variants at
+    /// load time when possible. See `BunnylolConfig::load_from_path`.
     #[serde(default)]
     pub user_bindings: HashMap<String, UserBinding>,
 
@@ -306,11 +308,316 @@ fn format_user_binding_toml(name: &str, binding: &UserBinding) -> String {
             }
         }
     }
-    format!("{} = {{ {} }}", name, parts.join(", "))
+    format!("{} = {{ {} }}", format_toml_key(name), parts.join(", "))
+}
+
+fn format_toml_key(key: &str) -> String {
+    if !key.is_empty()
+        && key
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+    {
+        key.to_string()
+    } else {
+        format!("\"{}\"", escape_toml_string(key))
+    }
 }
 
 fn escape_toml_string(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('"', "\\\"")
+    let mut escaped = String::new();
+    for ch in s.chars() {
+        match ch {
+            '\\' => escaped.push_str("\\\\"),
+            '"' => escaped.push_str("\\\""),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            '\u{08}' => escaped.push_str("\\b"),
+            '\u{0C}' => escaped.push_str("\\f"),
+            ch if ch.is_control() => escaped.push_str(&format!("\\u{:04X}", ch as u32)),
+            ch => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
+#[derive(Debug, Clone, Copy)]
+struct TomlTableSection {
+    header_start: usize,
+    body_start: usize,
+    end: usize,
+}
+
+fn find_toml_table_section(contents: &str, table_name: &str) -> Option<TomlTableSection> {
+    let sections = toml_table_headers(contents);
+
+    sections
+        .iter()
+        .enumerate()
+        .find(|(_, (name, _, _))| *name == table_name)
+        .map(|(idx, (_, header_start, body_start))| TomlTableSection {
+            header_start: *header_start,
+            body_start: *body_start,
+            end: sections
+                .get(idx + 1)
+                .map(|(_, next_header_start, _)| *next_header_start)
+                .unwrap_or(contents.len()),
+        })
+}
+
+fn toml_table_headers(contents: &str) -> Vec<(&str, usize, usize)> {
+    let mut sections = Vec::new();
+    let mut offset = 0;
+
+    for line in contents.split_inclusive('\n') {
+        if let Some(name) = parse_toml_table_header(line) {
+            sections.push((name, offset, offset + line.len()));
+        }
+        offset += line.len();
+    }
+
+    if offset < contents.len() {
+        let line = &contents[offset..];
+        if let Some(name) = parse_toml_table_header(line) {
+            sections.push((name, offset, contents.len()));
+        }
+    }
+
+    sections
+}
+
+fn parse_toml_table_header(line: &str) -> Option<&str> {
+    let trimmed = line.trim_start();
+    if let Some(rest) = trimmed.strip_prefix("[[") {
+        let close = rest.find("]]")?;
+        return Some(rest[..close].trim());
+    }
+    if !trimmed.starts_with('[') {
+        return None;
+    }
+
+    let close = trimmed.find(']')?;
+    Some(trimmed[1..close].trim())
+}
+
+fn find_top_level_aliases_key(contents: &str) -> Option<(usize, usize)> {
+    let first_table_start = toml_table_headers(contents)
+        .first()
+        .map(|(_, start, _)| *start)
+        .unwrap_or(contents.len());
+    let root = &contents[..first_table_start];
+    let mut offset = 0;
+
+    for line in root.split_inclusive('\n') {
+        let trimmed = line.trim_start();
+        if !trimmed.starts_with('#') && toml_line_key_is(trimmed, "aliases") {
+            return Some((offset, offset + line.len()));
+        }
+        offset += line.len();
+    }
+
+    if offset < root.len() {
+        let line = &root[offset..];
+        let trimmed = line.trim_start();
+        if !trimmed.starts_with('#') && toml_line_key_is(trimmed, "aliases") {
+            return Some((offset, root.len()));
+        }
+    }
+
+    None
+}
+
+fn toml_line_key_is(trimmed_line: &str, expected: &str) -> bool {
+    let Some((raw_key, _)) = trimmed_line.split_once('=') else {
+        return false;
+    };
+    let raw_key = raw_key.trim();
+    raw_key == expected || raw_key == format!("\"{}\"", expected).as_str()
+}
+
+fn toml_line_is_comment_or_blank(line: &str) -> bool {
+    let trimmed = line.trim();
+    trimmed.is_empty() || trimmed.starts_with('#')
+}
+
+fn toml_section_lines(contents: &str, section: TomlTableSection) -> Vec<(usize, usize, &str)> {
+    let body = &contents[section.body_start..section.end];
+    let mut offset = section.body_start;
+    let mut lines = Vec::new();
+
+    for line in body.split_inclusive('\n') {
+        let start = offset;
+        let end = offset + line.len();
+        lines.push((start, end, line));
+        offset = end;
+    }
+
+    lines
+}
+
+fn toml_section_last_entry_end(contents: &str, section: TomlTableSection) -> Option<usize> {
+    toml_section_lines(contents, section)
+        .into_iter()
+        .filter(|(_, _, line)| !toml_line_is_comment_or_blank(line))
+        .map(|(_, end, _)| end)
+        .last()
+}
+
+fn aliases_section_replacement_end(contents: &str, section: TomlTableSection) -> usize {
+    if let Some(end) = toml_section_last_entry_end(contents, section) {
+        return end;
+    }
+
+    let lines = toml_section_lines(contents, section);
+    lines
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, (start, _, line))| {
+            if !line.trim().is_empty() {
+                return None;
+            }
+            let has_following_comment = lines[idx + 1..].iter().any(|(_, _, following)| {
+                let trimmed = following.trim();
+                !trimmed.is_empty() && trimmed.starts_with('#')
+            });
+            has_following_comment.then_some(*start)
+        })
+        .last()
+        .unwrap_or(section.end)
+}
+
+fn separator_before_preserved_suffix(suffix: &str) -> &'static str {
+    if suffix.starts_with('\n') {
+        "\n"
+    } else {
+        "\n\n"
+    }
+}
+
+fn migrate_aliases_to_user_bindings_toml(
+    contents: &str,
+    config: &BunnylolConfig,
+) -> Option<String> {
+    let aliases_section = find_toml_table_section(contents, "aliases");
+    let aliases_key = find_top_level_aliases_key(contents);
+    if aliases_section.is_none() && aliases_key.is_none() {
+        return None;
+    }
+    let user_bindings_section = find_toml_table_section(contents, "user_bindings");
+
+    let mut migrated_aliases: Vec<(&String, &String)> = config
+        .aliases
+        .iter()
+        .filter(|(name, _)| !config.user_bindings.contains_key(*name))
+        .collect();
+    migrated_aliases.sort_by_key(|(name, _)| name.to_lowercase());
+
+    let migrated_entries = migrated_aliases
+        .into_iter()
+        .map(|(name, command)| {
+            format_user_binding_toml(
+                name,
+                &UserBinding::Command {
+                    command: command.clone(),
+                    description: None,
+                    override_builtin: false,
+                },
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let mut replacements: Vec<(usize, usize, String)> = Vec::new();
+    if let Some(aliases_section) = aliases_section {
+        let replacement_end = aliases_section_replacement_end(contents, aliases_section);
+        let preserved_suffix = &contents[replacement_end..aliases_section.end];
+        let aliases_replacement = if user_bindings_section.is_none() && !migrated_entries.is_empty()
+        {
+            format!(
+                "[user_bindings]\n{}{}",
+                migrated_entries,
+                separator_before_preserved_suffix(preserved_suffix)
+            )
+        } else {
+            String::new()
+        };
+        replacements.push((
+            aliases_section.header_start,
+            replacement_end,
+            aliases_replacement,
+        ));
+    } else if let Some((start, end)) = aliases_key {
+        replacements.push((start, end, String::new()));
+    }
+
+    let needs_new_user_bindings_section = user_bindings_section.is_none()
+        && aliases_section.is_none()
+        && !migrated_entries.is_empty();
+    if needs_new_user_bindings_section {
+        let first_table_start = toml_table_headers(contents)
+            .first()
+            .map(|(_, start, _)| *start)
+            .unwrap_or(contents.len());
+        let separator = if first_table_start == 0 || contents[..first_table_start].ends_with('\n') {
+            ""
+        } else {
+            "\n"
+        };
+        replacements.push((
+            first_table_start,
+            first_table_start,
+            format!("{}[user_bindings]\n{}\n\n", separator, migrated_entries),
+        ));
+    } else if let Some(section) = user_bindings_section
+        && !migrated_entries.is_empty()
+    {
+        let insertion_point =
+            toml_section_last_entry_end(contents, section).unwrap_or(section.body_start);
+        let preserved_suffix = &contents[insertion_point..section.end];
+        let prefix = if insertion_point == section.body_start
+            || contents[..insertion_point].ends_with('\n')
+        {
+            ""
+        } else {
+            "\n"
+        };
+        replacements.push((
+            insertion_point,
+            insertion_point,
+            format!(
+                "{}{}{}",
+                prefix,
+                migrated_entries,
+                separator_before_preserved_suffix(preserved_suffix)
+            ),
+        ));
+    }
+
+    replacements.sort_by(|a, b| b.0.cmp(&a.0));
+    let mut migrated = contents.to_string();
+    for (start, end, replacement) in replacements {
+        migrated.replace_range(start..end, &replacement);
+    }
+    Some(migrated)
+}
+
+fn write_config_atomically(config_path: &Path, contents: &str) -> Result<(), String> {
+    let parent = config_path
+        .parent()
+        .ok_or_else(|| format!("Config path {:?} has no parent directory", config_path))?;
+    let mut temp_file = tempfile::NamedTempFile::new_in(parent)
+        .map_err(|e| format!("Failed to create temporary config file: {}", e))?;
+    temp_file
+        .write_all(contents.as_bytes())
+        .map_err(|e| format!("Failed to write temporary config file: {}", e))?;
+    temp_file
+        .flush()
+        .map_err(|e| format!("Failed to flush temporary config file: {}", e))?;
+
+    temp_file
+        .persist(config_path)
+        .map(|_| ())
+        .map_err(|e| format!("Failed to replace config file atomically: {}", e.error))
 }
 
 /// Fold `[aliases]` entries into `[user_bindings]` in-memory as `Command`
@@ -583,8 +890,41 @@ impl BunnylolConfig {
         let mut config: BunnylolConfig = toml::from_str(&contents)
             .map_err(|e| format!("Failed to parse config file {:?}: {}", config_path, e))?;
 
-        // Fold legacy [aliases] into [user_bindings] in-memory (the on-disk
-        // file is left untouched — see Q2 in the plan).
+        if let Some(migrated_contents) = migrate_aliases_to_user_bindings_toml(&contents, &config) {
+            match toml::from_str(&migrated_contents) {
+                Ok(migrated_config) => {
+                    match write_config_atomically(config_path, &migrated_contents) {
+                        Ok(()) => {
+                            eprintln!(
+                                "Migrated deprecated [aliases] entries into [user_bindings] in {}.",
+                                config_path.display()
+                            );
+                            config = migrated_config;
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "Warning: Failed to migrate deprecated [aliases] in {}: {}. \
+                             Continuing with in-memory migration only.",
+                                config_path.display(),
+                                e
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!(
+                        "Warning: Failed to validate migrated [aliases] config for {}: {}. \
+                         Continuing with in-memory migration only.",
+                        config_path.display(),
+                        e
+                    );
+                }
+            }
+        }
+
+        // Fold any remaining legacy [aliases] into [user_bindings] in-memory.
+        // This is used if the file could not be rewritten or the aliases were
+        // expressed in a TOML shape the section migrator does not rewrite.
         fold_aliases_into_user_bindings(&mut config);
 
         Ok(config)
@@ -611,23 +951,25 @@ impl BunnylolConfig {
             Some(b) => format!("browser = \"{}\"", b),
             None => "# browser = \"firefox\"".to_string(),
         };
-        let aliases_content = if self.aliases.is_empty() {
-            "# my-alias = \"gh username/repo\"".to_string()
-        } else {
-            self.aliases
-                .iter()
-                .map(|(k, v)| format!("{} = \"{}\"", k, v))
-                .collect::<Vec<_>>()
-                .join("\n")
-        };
-        let user_bindings_content = if self.user_bindings.is_empty() {
+        let mut serialized_user_bindings = self.user_bindings.clone();
+        for (name, command) in &self.aliases {
+            serialized_user_bindings
+                .entry(name.clone())
+                .or_insert_with(|| UserBinding::Command {
+                    command: command.clone(),
+                    description: None,
+                    override_builtin: false,
+                });
+        }
+        let user_bindings_content = if serialized_user_bindings.is_empty() {
             // Commented examples for first-time users
             r#"# cal  = { url = "https://calendar.google.com/calendar/u/1/r" }
 # jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
 # work = { command = "gh mycompany/repo", description = "Work repo" }"#
                 .to_string()
         } else {
-            let mut entries: Vec<(&String, &UserBinding)> = self.user_bindings.iter().collect();
+            let mut entries: Vec<(&String, &UserBinding)> =
+                serialized_user_bindings.iter().collect();
             entries.sort_by_key(|(k, _)| k.to_lowercase());
             entries
                 .into_iter()
@@ -659,12 +1001,6 @@ default_search = "{}"
 # Stock website provider
 # Options: "yahoo" (default), "finviz", "tradingview", "google", "investing"
 stock_provider = "{}"
-
-# Legacy command aliases (DEPRECATED — use [user_bindings] instead).
-# Entries here are folded into [user_bindings] at load time as `command = ...`
-# bindings. Example: work = "gh mycompany/repo"
-[aliases]
-{}
 
 # User-defined bindings. Two variants, both as inline tables:
 #
@@ -706,7 +1042,6 @@ log_level = "{}"
             browser_line,
             self.default_search,
             self.stock_provider,
-            aliases_content,
             user_bindings_content,
             self.history.enabled,
             self.history.max_entries,
@@ -843,6 +1178,262 @@ mod tests {
             }
             other => panic!("Expected user_bindings entry to win, got {:?}", other),
         }
+    }
+
+    #[test]
+    fn test_config_rejects_unknown_top_level_fields() {
+        let toml_str = r#"
+            default_search = "google"
+
+            [future_feature]
+            enabled = true
+        "#;
+        let result: Result<BunnylolConfig, _> = toml::from_str(toml_str);
+        assert!(
+            result.is_err(),
+            "unknown top-level config fields must be rejected"
+        );
+    }
+
+    fn write_migration_test_config(test_name: &str, contents: &str) -> (PathBuf, PathBuf) {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!(
+            "bunnylol-alias-migration-test-{}-{}-{}",
+            test_name,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("config.toml");
+        fs::write(&path, contents).unwrap();
+        (dir, path)
+    }
+
+    #[test]
+    fn test_load_from_path_migration_removes_empty_aliases_section() {
+        let (dir, path) = write_migration_test_config(
+            "empty-aliases",
+            r#"# top-level comment
+default_search = "google"
+
+[aliases]
+# old example alias
+
+[history]
+enabled = true
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(config.aliases.is_empty());
+            assert!(config.user_bindings.is_empty());
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(migrated.contains("# top-level comment"));
+            assert!(migrated.contains("[history]\nenabled = true"));
+            assert!(!migrated.contains("[aliases]"));
+            assert!(!migrated.contains("old example alias"));
+            assert!(!migrated.contains("[user_bindings]"));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    fn test_load_from_path_migrates_aliases_preserving_non_alias_comments() {
+        let (dir, path) = write_migration_test_config(
+            "preserve-comments",
+            r#"# top-level comment
+default_search = "ddg"
+
+[aliases]
+# personal alias comment
+work = "gh mycompany/repo"
+blog = "gh username/blog"
+
+[user_bindings]
+# keep user binding comment
+cal = { url = "https://calendar.google.com/calendar/u/1/r" }
+
+# keep history heading comment
+[history]
+# keep history comment
+enabled = false
+max_entries = 12
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(config.aliases.is_empty());
+            assert!(matches!(
+                config.user_bindings.get("work"),
+                Some(UserBinding::Command { command, .. }) if command == "gh mycompany/repo"
+            ));
+            assert!(matches!(
+                config.user_bindings.get("blog"),
+                Some(UserBinding::Command { command, .. }) if command == "gh username/blog"
+            ));
+            assert!(matches!(
+                config.user_bindings.get("cal"),
+                Some(UserBinding::Url { .. })
+            ));
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(migrated.contains("# top-level comment"));
+            assert!(migrated.contains("# keep user binding comment"));
+            assert!(migrated.contains("# keep history heading comment"));
+            assert!(migrated.contains("# keep history comment"));
+            assert!(!migrated.contains("[aliases]"));
+            assert!(!migrated.contains("# personal alias comment"));
+            assert!(!migrated.contains("work = \"gh mycompany/repo\""));
+            assert!(migrated.contains("work = { command = \"gh mycompany/repo\" }"));
+            assert!(migrated.contains("blog = { command = \"gh username/blog\" }"));
+            assert!(migrated.contains(
+                "work = { command = \"gh mycompany/repo\" }\n\n# keep history heading comment"
+            ));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    fn test_load_from_path_migration_creates_user_bindings_section() {
+        let (dir, path) = write_migration_test_config(
+            "create-user-bindings",
+            r#"default_search = "google"
+
+[aliases]
+work = "gh mycompany/repo"
+
+# Command history settings
+[history]
+enabled = false
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(config.aliases.is_empty());
+            assert!(matches!(
+                config.user_bindings.get("work"),
+                Some(UserBinding::Command { command, .. }) if command == "gh mycompany/repo"
+            ));
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(
+                migrated.contains("[user_bindings]\nwork = { command = \"gh mycompany/repo\" }")
+            );
+            assert!(migrated.contains(
+                "work = { command = \"gh mycompany/repo\" }\n\n# Command history settings"
+            ));
+            assert!(!migrated.contains("[aliases]"));
+            assert!(migrated.contains("# Command history settings"));
+            assert!(migrated.contains("[history]\nenabled = false"));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    fn test_load_from_path_migration_keeps_user_bindings_on_alias_conflict() {
+        let (dir, path) = write_migration_test_config(
+            "user-bindings-wins",
+            r#"[aliases]
+work = "gh from-aliases"
+
+[user_bindings]
+work = { command = "gh from-user-bindings" }
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(config.aliases.is_empty());
+            assert!(matches!(
+                config.user_bindings.get("work"),
+                Some(UserBinding::Command { command, .. }) if command == "gh from-user-bindings"
+            ));
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(migrated.contains("work = { command = \"gh from-user-bindings\" }"));
+            assert!(!migrated.contains("from-aliases"));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    fn test_load_from_path_migration_handles_inline_aliases_without_reparenting_root_keys() {
+        let (dir, path) = write_migration_test_config(
+            "inline-aliases",
+            r#"browser = "firefox"
+aliases = { work = "gh mycompany/repo" }
+default_search = "ddg"
+
+[history]
+enabled = false
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(config.aliases.is_empty());
+            assert_eq!(config.browser.as_deref(), Some("firefox"));
+            assert_eq!(config.default_search, "ddg");
+            assert!(matches!(
+                config.user_bindings.get("work"),
+                Some(UserBinding::Command { command, .. }) if command == "gh mycompany/repo"
+            ));
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(!migrated.contains("aliases ="));
+            assert!(
+                migrated.contains("[user_bindings]\nwork = { command = \"gh mycompany/repo\" }")
+            );
+            assert!(migrated.contains("default_search = \"ddg\""));
+            assert!(migrated.contains("[history]\nenabled = false"));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
+    }
+
+    #[test]
+    fn test_load_from_path_migration_escapes_alias_control_characters() {
+        let (dir, path) = write_migration_test_config(
+            "escaped-control-characters",
+            r#"[aliases]
+multi = "gh mycompany/line\nbreak"
+"#,
+        );
+
+        let result = (|| {
+            let config = BunnylolConfig::load_from_path(&path).unwrap();
+            assert!(matches!(
+                config.user_bindings.get("multi"),
+                Some(UserBinding::Command { command, .. }) if command == "gh mycompany/line\nbreak"
+            ));
+
+            let migrated = fs::read_to_string(&path).unwrap();
+            assert!(migrated.contains("command = \"gh mycompany/line\\nbreak\""));
+            let reparsed: BunnylolConfig = toml::from_str(&migrated).unwrap();
+            assert!(matches!(
+                reparsed.user_bindings.get("multi"),
+                Some(UserBinding::Command { command, .. }) if command == "gh mycompany/line\nbreak"
+            ));
+        })();
+
+        fs::remove_dir_all(&dir).ok();
+        result
     }
 
     #[test]
@@ -1290,8 +1881,7 @@ mod tests {
     #[test]
     fn test_generated_config_drops_restart_note_and_documents_user_bindings() {
         // After PR #48, hot reload is supported. The generated default config
-        // must NOT advertise a restart-required surface, and SHOULD mention
-        // that [aliases] is deprecated.
+        // must NOT advertise a restart-required surface or new [aliases] usage.
         let config = BunnylolConfig::default();
         let toml_text = config.to_toml_with_comments();
         assert!(
@@ -1303,8 +1893,8 @@ mod tests {
             "Generated config must contain a [user_bindings] section"
         );
         assert!(
-            toml_text.contains("DEPRECATED"),
-            "Generated config must mark [aliases] as deprecated"
+            !toml_text.contains("[aliases]"),
+            "Generated config must not contain a legacy [aliases] section"
         );
     }
 
