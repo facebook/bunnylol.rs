@@ -28,7 +28,9 @@ bunnylol.rs/
 ├── src/
 │   ├── main.rs                          # CLI entry point and dispatcher
 │   ├── lib.rs                           # Library exports
-│   ├── config.rs                        # Configuration (server, aliases, history)
+│   ├── config/                          # Configuration (server, aliases, history)
+│   │   ├── mod.rs                       # Config schema, loading, and serialization
+│   │   └── alias_migration.rs           # Legacy [aliases] migration
 │   ├── server/
 │   │   ├── mod.rs                       # Rocket server setup and routing
 │   │   ├── routes.rs                    # HTTP route handlers
@@ -111,7 +113,7 @@ work = { command = "gh mycompany/repo", description = "Work repo" }
 gh   = { command = "gh myorg/myrepo", override = true }
 ```
 
-**Two variants of `UserBinding` (defined in `src/config.rs`):**
+**Two variants of `UserBinding` (defined in `src/config/mod.rs`):**
 - `Url { url, description?, override? }` — `{}` template substitution; arg-less
   static URLs ignore extra args after the binding name.
 - `Command { command, description?, override? }` — rewrites the input verbatim
@@ -132,7 +134,7 @@ at startup via `report_custom_bindings_status` (in `src/main.rs`) and hidden
 from the `/bindings` web page.
 
 **Hot reload:** the server reloads `config.toml` when its modified time
-changes (via `ConfigReloader` in `src/config.rs`, added by PR #48). User
+changes (via `ConfigReloader` in `src/config/mod.rs`, added by PR #48). User
 bindings are picked up automatically. No restart needed.
 
 ### Legacy `[aliases]` (deprecated)
@@ -147,9 +149,11 @@ If a name appears in both tables, `[user_bindings]` wins.
 
 ### Implementation files
 
-- `src/config.rs` — `UserBinding` enum, `ResolvedBinding`, `resolve_user_binding`,
+- `src/config/mod.rs` — `UserBinding` enum, `ResolvedBinding`, `resolve_user_binding`,
   `validate_user_bindings_conflicts`, `apply_url_template`, `format_user_binding_toml`,
   `fold_aliases_into_user_bindings`
+- `src/config/alias_migration.rs` — section-level migration from legacy
+  `[aliases]` into `[user_bindings]`
 - `src/bunnylol_command_registry.rs` — `process_command` (5-tier),
   `process_command_no_user_bindings` (recursion guard for `Command` bindings),
   `dispatch_resolved`, `builtin_binding_names`, `validate_user_bindings`
