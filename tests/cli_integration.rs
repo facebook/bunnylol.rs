@@ -407,6 +407,33 @@ cal = { url = "https://calendar.google.com/calendar/u/1/r" }
         .stdout(predicate::str::contains("cal"));
 }
 
+#[test]
+#[cfg(feature = "cli")]
+fn test_user_binding_list_marks_active_override_and_ignored() {
+    let xdg = write_test_config(
+        "list-status",
+        r#"
+[user_bindings]
+cal = { url = "https://calendar.google.com/calendar/u/1/r" }
+gh = { url = "https://example.com/ignored" }
+ig = { url = "https://example.com/override", override = true }
+"#,
+    );
+
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
+    cmd.env("XDG_CONFIG_HOME", &xdg)
+        .arg("--list")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Status"))
+        .stdout(predicate::str::contains("cal"))
+        .stdout(predicate::str::contains("active"))
+        .stdout(predicate::str::contains("gh"))
+        .stdout(predicate::str::contains("ignored"))
+        .stdout(predicate::str::contains("ig"))
+        .stdout(predicate::str::contains("override"));
+}
+
 // =====================================================================
 // [aliases] deprecation / migration tests
 // =====================================================================
