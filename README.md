@@ -138,25 +138,40 @@ browser = "firefox"  # or "chrome", "chromium", "safari", etc.
 
 If not specified, the system default browser is used.
 
-#### 2. **Custom Command Aliases**
+#### 2. **User-Defined Bindings**
 
-Create your own personalized shortcuts:
+Create your own personalized shortcuts without recompiling bunnylol:
 
 ```toml
-[aliases]
-work = "gh mycompany"
-blog = "gh username/blog"
-dotfiles = "gh username/dotfiles"
+[user_bindings]
+# URL binding: open a fixed URL or substitute URL-encoded args into {}
+cal = { url = "https://calendar.google.com/calendar/u/1/r" }
+jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
+
+# Command binding: rewrite to another bunnylol command
+work = { command = "gh mycompany", description = "Work GitHub" }
+blog = { command = "gh username/blog" }
+
+# Built-ins win by default. Use override = true only when you want to shadow one.
+gh = { command = "gh mycompany/main-repo", override = true }
 ```
 
 Then use them like any built-in command:
 ```sh
+$ bunnylol cal
+# Opens: https://calendar.google.com/calendar/u/1/r
+
+$ bunnylol jira PROJ-123
+# Opens: https://corp.atlassian.net/browse/PROJ-123
+
 $ bunnylol work
 # Opens: https://github.com/mycompany
 
 $ bunnylol blog
 # Opens: https://github.com/username/blog
 ```
+
+Legacy `[aliases]` entries are still read for compatibility, but they are deprecated. When bunnylol loads a config with `[aliases]`, it migrates those entries into `[user_bindings]` and removes the old `[aliases]` section. Comments outside `[aliases]` are preserved.
 
 #### 3. **Custom Default Search Engine**
 
@@ -192,12 +207,13 @@ Here's a full example with all available options:
 # Browser to open URLs in (optional)
 browser = "firefox"
 
-# Custom command aliases (optional)
-[aliases]
-work = "gh mycompany"
-blog = "gh username/blog"
-dotfiles = "gh username/dotfiles"
-notes = "gh username/notes"
+# User-defined bindings (optional)
+[user_bindings]
+cal = { url = "https://calendar.google.com/calendar/u/1/r" }
+jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
+work = { command = "gh mycompany", description = "Work GitHub" }
+blog = { command = "gh username/blog" }
+gh = { command = "gh mycompany/main-repo", override = true }
 
 # Default search engine when command not recognized (optional)
 # Options: "google" (default), "ddg", "bing"
