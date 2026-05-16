@@ -378,6 +378,7 @@ default_search = "ddg"
 # personal alias comment
 work = "gh mycompany/repo"
 blog = "gh username/blog"
+cal = "gh from-aliases"
 
 [user_bindings]
 # keep user binding comment
@@ -415,6 +416,7 @@ max_entries = 12
             assert!(!migrated.contains("[aliases]"));
             assert!(!migrated.contains("# personal alias comment"));
             assert!(!migrated.contains("work = \"gh mycompany/repo\""));
+            assert!(!migrated.contains("from-aliases"));
             assert!(migrated.contains("work = { command = \"gh mycompany/repo\" }"));
             assert!(migrated.contains("blog = { command = \"gh username/blog\" }"));
             assert!(migrated.contains(
@@ -459,35 +461,6 @@ enabled = false
             assert!(!migrated.contains("[aliases]"));
             assert!(migrated.contains("# Command history settings"));
             assert!(migrated.contains("[history]\nenabled = false"));
-        })();
-
-        fs::remove_dir_all(&dir).ok();
-        result
-    }
-
-    #[test]
-    fn test_load_from_path_migration_keeps_user_bindings_on_alias_conflict() {
-        let (dir, path) = write_migration_test_config(
-            "user-bindings-wins",
-            r#"[aliases]
-work = "gh from-aliases"
-
-[user_bindings]
-work = { command = "gh from-user-bindings" }
-"#,
-        );
-
-        let result = (|| {
-            let config = BunnylolConfig::load_from_path(&path).unwrap();
-            assert!(config.aliases.is_empty());
-            assert!(matches!(
-                config.user_bindings.get("work"),
-                Some(UserBinding::Command { command, .. }) if command == "gh from-user-bindings"
-            ));
-
-            let migrated = fs::read_to_string(&path).unwrap();
-            assert!(migrated.contains("work = { command = \"gh from-user-bindings\" }"));
-            assert!(!migrated.contains("from-aliases"));
         })();
 
         fs::remove_dir_all(&dir).ok();
