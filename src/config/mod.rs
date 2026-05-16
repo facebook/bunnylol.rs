@@ -726,24 +726,28 @@ mod tests {
         assert_eq!(config.server_display_url, None);
     }
 
+    fn server_config_with_display_url(server_display_url: &str) -> ServerConfig {
+        ServerConfig {
+            server_display_url: Some(server_display_url.to_string()),
+            ..Default::default()
+        }
+    }
+
     #[test]
     fn test_get_display_url_with_domain() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("bunny.alichtman.com".to_string());
+        let config = server_config_with_display_url("bunny.alichtman.com");
         assert_eq!(config.get_display_url(), "https://bunny.alichtman.com");
     }
 
     #[test]
     fn test_get_display_url_with_https() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("https://bunny.example.com".to_string());
+        let config = server_config_with_display_url("https://bunny.example.com");
         assert_eq!(config.get_display_url(), "https://bunny.example.com");
     }
 
     #[test]
     fn test_get_display_url_with_http() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("http://localhost:8000".to_string());
+        let config = server_config_with_display_url("http://localhost:8000");
         assert_eq!(config.get_display_url(), "http://localhost:8000");
     }
 
@@ -752,50 +756,46 @@ mod tests {
         let config = ServerConfig::default();
         assert_eq!(config.get_display_url(), "http://localhost:8000");
 
-        let mut config2 = ServerConfig::default();
-        config2.port = 9000;
+        let config2 = ServerConfig {
+            port: 9000,
+            ..Default::default()
+        };
         assert_eq!(config2.get_display_url(), "http://localhost:9000");
     }
 
     #[test]
     fn test_get_display_url_with_whitespace() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("  bunny.example.com  ".to_string());
+        let config = server_config_with_display_url("  bunny.example.com  ");
         assert_eq!(config.get_display_url(), "https://bunny.example.com");
     }
 
     #[test]
     fn test_get_display_url_localhost_bare() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("localhost".to_string());
+        let config = server_config_with_display_url("localhost");
         assert_eq!(config.get_display_url(), "http://localhost");
     }
 
     #[test]
     fn test_get_display_url_localhost_with_port() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("localhost:8000".to_string());
+        let config = server_config_with_display_url("localhost:8000");
         assert_eq!(config.get_display_url(), "http://localhost:8000");
     }
 
     #[test]
     fn test_get_display_url_127_0_0_1() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("127.0.0.1".to_string());
+        let config = server_config_with_display_url("127.0.0.1");
         assert_eq!(config.get_display_url(), "http://127.0.0.1");
     }
 
     #[test]
     fn test_get_display_url_127_0_0_1_with_port() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("127.0.0.1:8000".to_string());
+        let config = server_config_with_display_url("127.0.0.1:8000");
         assert_eq!(config.get_display_url(), "http://127.0.0.1:8000");
     }
 
     #[test]
     fn test_get_display_url_0_0_0_0() {
-        let mut config = ServerConfig::default();
-        config.server_display_url = Some("0.0.0.0:8000".to_string());
+        let config = server_config_with_display_url("0.0.0.0:8000");
         assert_eq!(config.get_display_url(), "http://0.0.0.0:8000");
     }
 
@@ -858,7 +858,7 @@ mod tests {
         let config_path = config_dir.join("config.toml");
         fs::write(&config_path, "default_search = \"google\"\n").unwrap();
 
-        let result = (|| {
+        {
             let initial = BunnylolConfig::load_from_path(&config_path).unwrap();
             let reloader = ConfigReloader::new_for_path(initial, config_path.clone());
             assert_eq!(reloader.current().default_search, "google");
@@ -867,10 +867,9 @@ mod tests {
             fs::write(&config_path, "default_search = \"ddg\"\n").unwrap();
 
             assert_eq!(reloader.current().default_search, "ddg");
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 
     #[test]
@@ -890,7 +889,7 @@ mod tests {
         let config_path = config_dir.join("config.toml");
         fs::write(&config_path, "default_search = \"google\"\n").unwrap();
 
-        let result = (|| {
+        {
             let initial = BunnylolConfig::load_from_path(&config_path).unwrap();
             let reloader = ConfigReloader::new_for_path(initial, config_path.clone());
             assert_eq!(reloader.current().default_search, "google");
@@ -899,9 +898,8 @@ mod tests {
             fs::write(&config_path, "default_search = [").unwrap();
 
             assert_eq!(reloader.current().default_search, "google");
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 }

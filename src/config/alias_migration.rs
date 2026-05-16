@@ -151,7 +151,7 @@ fn toml_section_last_entry_end(contents: &str, section: TomlTableSection) -> Opt
         .into_iter()
         .filter(|(_, _, line)| !toml_line_is_comment_or_blank(line))
         .map(|(_, end, _)| end)
-        .last()
+        .next_back()
 }
 
 fn aliases_section_replacement_end(contents: &str, section: TomlTableSection) -> usize {
@@ -173,7 +173,7 @@ fn aliases_section_replacement_end(contents: &str, section: TomlTableSection) ->
             });
             has_following_comment.then_some(*start)
         })
-        .last()
+        .next_back()
         .unwrap_or(section.end)
 }
 
@@ -284,7 +284,7 @@ fn migrate_aliases_to_user_bindings_toml(
         ));
     }
 
-    replacements.sort_by(|a, b| b.0.cmp(&a.0));
+    replacements.sort_by_key(|replacement| std::cmp::Reverse(replacement.0));
     let mut migrated = contents.to_string();
     for (start, end, replacement) in replacements {
         migrated.replace_range(start..end, &replacement);
@@ -350,7 +350,7 @@ enabled = true
 "#,
         );
 
-        let result = (|| {
+        {
             let config = BunnylolConfig::load_from_path(&path).unwrap();
             assert!(config.aliases.is_empty());
             assert!(config.user_bindings.is_empty());
@@ -361,10 +361,9 @@ enabled = true
             assert!(!migrated.contains("[aliases]"));
             assert!(!migrated.contains("old example alias"));
             assert!(!migrated.contains("[user_bindings]"));
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 
     #[test]
@@ -392,7 +391,7 @@ max_entries = 12
 "#,
         );
 
-        let result = (|| {
+        {
             let config = BunnylolConfig::load_from_path(&path).unwrap();
             assert!(config.aliases.is_empty());
             assert!(matches!(
@@ -422,10 +421,9 @@ max_entries = 12
             assert!(migrated.contains(
                 "work = { command = \"gh mycompany/repo\" }\n\n# keep history heading comment"
             ));
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 
     #[test]
@@ -443,7 +441,7 @@ enabled = false
 "#,
         );
 
-        let result = (|| {
+        {
             let config = BunnylolConfig::load_from_path(&path).unwrap();
             assert!(config.aliases.is_empty());
             assert!(matches!(
@@ -461,10 +459,9 @@ enabled = false
             assert!(!migrated.contains("[aliases]"));
             assert!(migrated.contains("# Command history settings"));
             assert!(migrated.contains("[history]\nenabled = false"));
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 
     #[test]
@@ -480,7 +477,7 @@ enabled = false
 "#,
         );
 
-        let result = (|| {
+        {
             let config = BunnylolConfig::load_from_path(&path).unwrap();
             assert!(config.aliases.is_empty());
             assert_eq!(config.browser.as_deref(), Some("firefox"));
@@ -497,10 +494,9 @@ enabled = false
             );
             assert!(migrated.contains("default_search = \"ddg\""));
             assert!(migrated.contains("[history]\nenabled = false"));
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 
     #[test]
@@ -512,7 +508,7 @@ multi = "gh mycompany/line\nbreak"
 "#,
         );
 
-        let result = (|| {
+        {
             let config = BunnylolConfig::load_from_path(&path).unwrap();
             assert!(matches!(
                 config.user_bindings.get("multi"),
@@ -526,9 +522,8 @@ multi = "gh mycompany/line\nbreak"
                 reparsed.user_bindings.get("multi"),
                 Some(UserBinding::Command { command, .. }) if command == "gh mycompany/line\nbreak"
             ));
-        })();
+        }
 
         fs::remove_dir_all(&dir).ok();
-        result
     }
 }
