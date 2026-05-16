@@ -8,7 +8,8 @@
 use std::io::Write;
 use std::path::Path;
 
-use super::{BunnylolConfig, UserBinding, format_user_binding_toml};
+use super::user_bindings::format_user_binding_toml;
+use super::{BunnylolConfig, UserBinding};
 
 pub(super) enum AliasMigrationError {
     Validation(String),
