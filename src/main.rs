@@ -388,26 +388,32 @@ fn print_user_bindings_table(cfg: &BunnylolConfig) {
         command: String,
         #[tabled(rename = "Kind")]
         kind: String,
+        #[tabled(rename = "Status")]
+        status: String,
         #[tabled(rename = "Target")]
         target: String,
         #[tabled(rename = "Description")]
         description: String,
     }
 
+    let builtins = BunnylolCommandRegistry::builtin_binding_names();
     let mut entries: Vec<(&String, &UserBinding)> = cfg.user_bindings.iter().collect();
     entries.sort_by_key(|(k, _)| k.to_lowercase());
 
     let rows: Vec<UserBindingRow> = entries
         .into_iter()
         .map(|(name, b)| {
-            let display_name = if b.overrides_builtin() {
-                format!("{} (override)", name)
+            let status = if b.overrides_builtin() {
+                "override"
+            } else if builtins.contains(name.as_str()) {
+                "ignored"
             } else {
-                name.clone()
+                "active"
             };
             UserBindingRow {
-                command: display_name,
+                command: name.clone(),
                 kind: b.kind_label().to_string(),
+                status: status.to_string(),
                 target: b.display_target().to_string(),
                 description: b.description().unwrap_or("—").to_string(),
             }
@@ -420,7 +426,8 @@ fn print_user_bindings_table(cfg: &BunnylolConfig) {
         .with(Style::rounded())
         .with(Modify::new(Columns::new(0..=0)).with(Color::FG_BRIGHT_CYAN))
         .with(Modify::new(Columns::new(1..=1)).with(Color::FG_YELLOW))
-        .with(Modify::new(Columns::new(2..=2)).with(Color::FG_BRIGHT_GREEN));
+        .with(Modify::new(Columns::new(2..=2)).with(Color::FG_BRIGHT_MAGENTA))
+        .with(Modify::new(Columns::new(3..=3)).with(Color::FG_BRIGHT_GREEN));
     println!("{}\n", table);
 }
 
