@@ -30,6 +30,7 @@ bunnylol.rs/
 │   ├── lib.rs                           # Library exports
 │   ├── config/                          # Configuration (server, aliases, history)
 │   │   ├── mod.rs                       # Config schema, loading, and serialization
+│   │   ├── user_bindings.rs             # [user_bindings] schema and resolution
 │   │   └── alias_migration.rs           # Legacy [aliases] migration
 │   ├── server/
 │   │   ├── mod.rs                       # Rocket server setup and routing
@@ -113,7 +114,7 @@ work = { command = "gh mycompany/repo", description = "Work repo" }
 gh   = { command = "gh myorg/myrepo", override = true }
 ```
 
-**Two variants of `UserBinding` (defined in `src/config/mod.rs`):**
+**Two variants of `UserBinding` (defined in `src/config/user_bindings.rs`):**
 - `Url { url, description?, override? }` — `{}` template substitution; arg-less
   static URLs ignore extra args after the binding name.
 - `Command { command, description?, override? }` — rewrites the input verbatim
@@ -149,9 +150,11 @@ If a name appears in both tables, `[user_bindings]` wins.
 
 ### Implementation files
 
-- `src/config/mod.rs` — `UserBinding` enum, `ResolvedBinding`, `resolve_user_binding`,
-  `validate_user_bindings_conflicts`, `apply_url_template`, `format_user_binding_toml`,
-  `fold_aliases_into_user_bindings`
+- `src/config/mod.rs` — `BunnylolConfig`, `ConfigReloader`, config loading,
+  serialization, and default path handling
+- `src/config/user_bindings.rs` — `UserBinding` enum, `ResolvedBinding`,
+  `resolve_user_binding`, `validate_user_bindings_conflicts`, URL template
+  resolution, and user binding TOML formatting
 - `src/config/alias_migration.rs` — section-level migration from legacy
   `[aliases]` into `[user_bindings]`
 - `src/bunnylol_command_registry.rs` — `process_command` (5-tier),
