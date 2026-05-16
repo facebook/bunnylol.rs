@@ -5,34 +5,77 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-use std::sync::OnceLock;
+use std::sync::{OnceLock, RwLock};
 
 use leptos::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{BunnylolCommandInfo, BunnylolCommandRegistry, BunnylolConfig};
 
-static LANDING_PAGE_HTML_CACHE: OnceLock<String> = OnceLock::new();
+static LANDING_PAGE_HTML_CACHE: OnceLock<RwLock<Option<LandingPageHtmlCache>>> = OnceLock::new();
+
+#[derive(Clone, PartialEq, Eq)]
+struct LandingPageCacheKey {
+    display_url: String,
+    user_bindings: Vec<BindingData>,
+}
+
+struct LandingPageHtmlCache {
+    key: LandingPageCacheKey,
+    html: String,
+}
 
 /// Render the landing page HTML with the given config
 pub fn render_landing_page_html(config: &BunnylolConfig) -> String {
-    LANDING_PAGE_HTML_CACHE
-        .get_or_init(|| {
-            let display_url = config.server.get_display_url();
-            let user_bindings: Vec<BindingData> = collect_user_bindings(config);
-            let body_content = leptos::ssr::render_to_string(move || {
-                view! {
-                    <LandingPage
-                        server_display_url=display_url.clone()
-                        user_bindings=user_bindings.clone()
-                    />
-                }
-            })
-            .to_string();
+    let display_url = config.server.get_display_url();
+    let user_bindings: Vec<BindingData> = collect_user_bindings(config);
+    let key = LandingPageCacheKey {
+        display_url: display_url.clone(),
+        user_bindings: user_bindings.clone(),
+    };
 
-            // Wrap in proper HTML document with favicon
-            format!(
-                r#"<!DOCTYPE html>
+    let cache = LANDING_PAGE_HTML_CACHE.get_or_init(|| RwLock::new(None));
+    {
+        let cached = cache.read().expect("landing page cache lock poisoned");
+        if let Some(cached) = cached.as_ref()
+            && cached.key == key
+        {
+            return cached.html.clone();
+        }
+    }
+
+    let html = render_landing_page_html_uncached(display_url, user_bindings);
+    let mut cached = cache.write().expect("landing page cache lock poisoned");
+    if let Some(cached) = cached.as_ref()
+        && cached.key == key
+    {
+        return cached.html.clone();
+    }
+
+    *cached = Some(LandingPageHtmlCache {
+        key,
+        html: html.clone(),
+    });
+    html
+}
+
+fn render_landing_page_html_uncached(
+    display_url: String,
+    user_bindings: Vec<BindingData>,
+) -> String {
+    let body_content = leptos::ssr::render_to_string(move || {
+        view! {
+            <LandingPage
+                server_display_url=display_url.clone()
+                user_bindings=user_bindings.clone()
+            />
+        }
+    })
+    .to_string();
+
+    // Wrap in proper HTML document with favicon
+    format!(
+        r#"<!DOCTYPE html>
                     <html lang="en">
                     <head>
                         <meta charset="UTF-8">
@@ -79,13 +122,11 @@ pub fn render_landing_page_html(config: &BunnylolConfig) -> String {
                         {}
                     </body>
                 </html>"#,
-                body_content
-            )
-        })
-        .clone()
+        body_content
+    )
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BindingData {
     pub command: String,
     pub description: String,
@@ -464,5 +505,43 @@ pub fn LandingPage(
                 />
             </div>
         </div>
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::UserBinding;
+
+    fn config_with_user_binding(name: &str, url: &str) -> BunnylolConfig {
+        let mut config = BunnylolConfig::default();
+        config.user_bindings.insert(
+            name.to_string(),
+            UserBinding::Url {
+                url: url.to_string(),
+                description: None,
+                override_builtin: false,
+            },
+        );
+        config
+    }
+
+    #[test]
+    fn test_landing_page_cache_invalidates_when_user_bindings_change() {
+        let first = config_with_user_binding(
+            "cache-old-binding-xyz",
+            "https://example.com/cache-old-binding-xyz",
+        );
+        let second = config_with_user_binding(
+            "cache-new-binding-xyz",
+            "https://example.com/cache-new-binding-xyz",
+        );
+
+        let first_html = render_landing_page_html(&first);
+        assert!(first_html.contains("cache-old-binding-xyz"));
+
+        let second_html = render_landing_page_html(&second);
+        assert!(second_html.contains("cache-new-binding-xyz"));
+        assert!(!second_html.contains("cache-old-binding-xyz"));
     }
 }
