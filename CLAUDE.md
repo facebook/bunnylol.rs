@@ -137,11 +137,11 @@ bindings are picked up automatically. No restart needed.
 
 ### Legacy `[aliases]` (deprecated)
 
-`[aliases]` predates `[user_bindings]` and remains parseable. Entries are
-folded into `[user_bindings]` as `Command` variants at load time (see
-`fold_aliases_into_user_bindings` in `src/config.rs`). The on-disk file is
-**not** rewritten. A deprecation warning is emitted at startup if `[aliases]`
-is non-empty, nudging the user to migrate to `[user_bindings]`.
+`[aliases]` predates `[user_bindings]` and remains parseable. On load, entries
+are migrated into `[user_bindings]` as `Command` variants and the on-disk
+`[aliases]` section is removed. Comments outside `[aliases]` are preserved;
+comments inside `[aliases]` may be removed.
+A deprecation/migration warning is emitted when migration happens.
 
 If a name appears in both tables, `[user_bindings]` wins.
 
