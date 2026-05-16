@@ -260,102 +260,59 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_default_user_bindings_empty() {
-        let config = BunnylolConfig::default();
-        assert!(config.user_bindings.is_empty());
+    fn url_binding(url: &str, override_builtin: bool) -> UserBinding {
+        UserBinding::Url {
+            url: url.to_string(),
+            description: None,
+            override_builtin,
+        }
+    }
+
+    fn command_binding(command: &str) -> UserBinding {
+        UserBinding::Command {
+            command: command.to_string(),
+            description: None,
+            override_builtin: false,
+        }
     }
 
     #[test]
-    fn test_parse_user_bindings_url_with_description() {
+    fn test_parse_user_bindings_variants_and_override() {
         let toml_str = r#"
             [user_bindings]
             jira = { url = "https://corp.atlassian.net/browse/{}", description = "Jira ticket" }
-        "#;
-        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
-        match config.user_bindings.get("jira") {
-            Some(UserBinding::Url {
-                url,
-                description,
-                override_builtin,
-            }) => {
-                assert_eq!(url, "https://corp.atlassian.net/browse/{}");
-                assert_eq!(description.as_deref(), Some("Jira ticket"));
-                assert!(!override_builtin);
-            }
-            other => panic!("Expected Url binding, got {:?}", other),
-        }
-    }
-
-    #[test]
-    fn test_parse_user_bindings_url_without_description() {
-        let toml_str = r#"
-            [user_bindings]
             cal = { url = "https://calendar.google.com/calendar/u/1/r" }
-        "#;
-        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
-        match config.user_bindings.get("cal") {
-            Some(UserBinding::Url {
-                url, description, ..
-            }) => {
-                assert_eq!(url, "https://calendar.google.com/calendar/u/1/r");
-                assert_eq!(description, &None);
-            }
-            other => panic!("Expected Url binding, got {:?}", other),
-        }
-    }
-
-    #[test]
-    fn test_parse_user_bindings_command_variant() {
-        let toml_str = r#"
-            [user_bindings]
             work = { command = "gh mycompany/repo", description = "Work repo" }
-        "#;
-        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
-        match config.user_bindings.get("work") {
-            Some(UserBinding::Command {
-                command,
-                description,
-                override_builtin,
-            }) => {
-                assert_eq!(command, "gh mycompany/repo");
-                assert_eq!(description.as_deref(), Some("Work repo"));
-                assert!(!override_builtin);
-            }
-            other => panic!("Expected Command binding, got {:?}", other),
-        }
-    }
-
-    #[test]
-    fn test_parse_user_bindings_mixed_url_and_command() {
-        let toml_str = r#"
-            [user_bindings]
-            jira = { url = "https://corp.atlassian.net/browse/{}" }
-            work = { command = "gh mycompany/repo" }
-        "#;
-        let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.user_bindings.len(), 2);
-        assert!(matches!(
-            config.user_bindings.get("jira"),
-            Some(UserBinding::Url { .. })
-        ));
-        assert!(matches!(
-            config.user_bindings.get("work"),
-            Some(UserBinding::Command { .. })
-        ));
-    }
-
-    #[test]
-    fn test_parse_user_bindings_override_flag() {
-        let toml_str = r#"
-            [user_bindings]
             gh = { url = "https://example.com/my-fork", override = true }
         "#;
         let config: BunnylolConfig = toml::from_str(toml_str).unwrap();
-        match config.user_bindings.get("gh") {
-            Some(b) => assert!(b.overrides_builtin()),
-            None => panic!("Expected gh binding to be present"),
-        }
+        assert_eq!(config.user_bindings.len(), 4);
+
+        let jira = config.user_bindings.get("jira").unwrap();
+        assert!(matches!(jira, UserBinding::Url { .. }));
+        assert_eq!(
+            jira.display_target(),
+            "https://corp.atlassian.net/browse/{}"
+        );
+        assert_eq!(jira.description(), Some("Jira ticket"));
+        assert!(!jira.overrides_builtin());
+
+        let cal = config.user_bindings.get("cal").unwrap();
+        assert!(matches!(cal, UserBinding::Url { .. }));
+        assert_eq!(
+            cal.display_target(),
+            "https://calendar.google.com/calendar/u/1/r"
+        );
+        assert_eq!(cal.description(), None);
+
+        let work = config.user_bindings.get("work").unwrap();
+        assert!(matches!(work, UserBinding::Command { .. }));
+        assert_eq!(work.display_target(), "gh mycompany/repo");
+        assert_eq!(work.description(), Some("Work repo"));
+
+        let gh = config.user_bindings.get("gh").unwrap();
+        assert!(matches!(gh, UserBinding::Url { .. }));
+        assert!(gh.overrides_builtin());
     }
 
     #[test]
@@ -375,36 +332,31 @@ mod tests {
     }
 
     #[test]
-    fn test_resolve_user_binding_url_static() {
+    fn test_resolve_user_bindings_url_variants_and_missing_entries() {
         let mut config = BunnylolConfig::default();
         config.user_bindings.insert(
             "cal".to_string(),
-            UserBinding::Url {
-                url: "https://calendar.google.com/calendar/u/1/r".to_string(),
-                description: None,
-                override_builtin: false,
-            },
+            url_binding("https://calendar.google.com/calendar/u/1/r", false),
         );
-        let resolved = config.resolve_user_binding("cal", "cal");
+        config.user_bindings.insert(
+            "jira".to_string(),
+            url_binding("https://corp.atlassian.net/browse/{}", false),
+        );
+        config.user_bindings.insert(
+            "wiki".to_string(),
+            url_binding("https://example.com/?q={}", false),
+        );
+        config.user_bindings.insert(
+            "gh".to_string(),
+            url_binding("https://example.com/my-fork", true),
+        );
+
         assert_eq!(
-            resolved,
+            config.resolve_user_binding("cal", "cal"),
             Some((
                 ResolvedBinding::Url("https://calendar.google.com/calendar/u/1/r".to_string()),
                 false
             ))
-        );
-    }
-
-    #[test]
-    fn test_resolve_user_binding_url_template_substitution() {
-        let mut config = BunnylolConfig::default();
-        config.user_bindings.insert(
-            "jira".to_string(),
-            UserBinding::Url {
-                url: "https://corp.atlassian.net/browse/{}".to_string(),
-                description: None,
-                override_builtin: false,
-            },
         );
         assert_eq!(
             config.resolve_user_binding("jira", "jira PROJ-123"),
@@ -413,19 +365,6 @@ mod tests {
                 false
             ))
         );
-    }
-
-    #[test]
-    fn test_resolve_user_binding_url_template_encodes_args() {
-        let mut config = BunnylolConfig::default();
-        config.user_bindings.insert(
-            "wiki".to_string(),
-            UserBinding::Url {
-                url: "https://example.com/?q={}".to_string(),
-                description: None,
-                override_builtin: false,
-            },
-        );
         assert_eq!(
             config.resolve_user_binding("wiki", "wiki hello world"),
             Some((
@@ -433,19 +372,22 @@ mod tests {
                 false
             ))
         );
+        assert_eq!(
+            config.resolve_user_binding("gh", "gh").unwrap(),
+            (
+                ResolvedBinding::Url("https://example.com/my-fork".to_string()),
+                true
+            )
+        );
+        assert_eq!(config.resolve_user_binding("nope", "nope"), None);
     }
 
     #[test]
     fn test_resolve_user_binding_command_returns_rewritten_string() {
         let mut config = BunnylolConfig::default();
-        config.user_bindings.insert(
-            "work".to_string(),
-            UserBinding::Command {
-                command: "gh mycompany/repo".to_string(),
-                description: None,
-                override_builtin: false,
-            },
-        );
+        config
+            .user_bindings
+            .insert("work".to_string(), command_binding("gh mycompany/repo"));
         // Command bindings do not substitute or forward args; the registry's
         // dispatch_resolved consumes the rewritten string verbatim.
         assert_eq!(
@@ -458,81 +400,46 @@ mod tests {
     }
 
     #[test]
-    fn test_resolve_user_binding_returns_none_when_missing() {
-        let config = BunnylolConfig::default();
-        assert_eq!(config.resolve_user_binding("nope", "nope"), None);
-    }
-
-    #[test]
-    fn test_resolve_user_binding_reports_override_flag() {
-        let mut config = BunnylolConfig::default();
-        config.user_bindings.insert(
-            "gh".to_string(),
-            UserBinding::Url {
-                url: "https://example.com/my-fork".to_string(),
-                description: None,
-                override_builtin: true,
-            },
-        );
-        let resolved = config.resolve_user_binding("gh", "gh").unwrap();
-        assert!(resolved.1, "override flag must propagate");
-    }
-
-    #[test]
-    fn test_validate_user_bindings_conflicts_reports_silent_shadows_only() {
-        let mut config = BunnylolConfig::default();
-        // Silently shadowed; should be reported.
-        config.user_bindings.insert(
-            "gh".to_string(),
-            UserBinding::Url {
-                url: "https://example.com/my-fork".to_string(),
-                description: None,
-                override_builtin: false,
-            },
-        );
-        // Intentional override; must NOT be reported.
-        config.user_bindings.insert(
-            "ig".to_string(),
-            UserBinding::Url {
-                url: "https://example.com/insta".to_string(),
-                description: None,
-                override_builtin: true,
-            },
-        );
-        // No collision; irrelevant.
-        config.user_bindings.insert(
-            "cal".to_string(),
-            UserBinding::Url {
-                url: "https://calendar.google.com".to_string(),
-                description: None,
-                override_builtin: false,
-            },
-        );
-
-        let builtins: HashSet<&'static str> = ["gh", "ig", "yt"].into_iter().collect();
-        let conflicts = config.validate_user_bindings_conflicts(&builtins);
-        assert_eq!(conflicts.len(), 1);
-        assert_eq!(conflicts[0].name, "gh");
-        assert_eq!(conflicts[0].target, "https://example.com/my-fork");
-    }
-
-    #[test]
-    fn test_validate_user_bindings_conflicts_sorted_deterministic() {
+    fn test_validate_user_bindings_conflicts_filters_and_sorts() {
         let mut config = BunnylolConfig::default();
         for name in ["zsh", "abc", "mno", "gh"] {
             config.user_bindings.insert(
                 name.to_string(),
                 UserBinding::Url {
-                    url: "https://example.com".to_string(),
+                    url: format!("https://example.com/{}", name),
                     description: None,
                     override_builtin: false,
                 },
             );
         }
-        let builtins: HashSet<&'static str> = ["zsh", "abc", "mno", "gh"].into_iter().collect();
+        // Intentional override; must NOT be reported.
+        config.user_bindings.insert(
+            "ig".to_string(),
+            url_binding("https://example.com/insta", true),
+        );
+        // No collision; irrelevant.
+        config.user_bindings.insert(
+            "cal".to_string(),
+            url_binding("https://calendar.google.com", false),
+        );
+
+        let builtins: HashSet<&'static str> = ["zsh", "abc", "mno", "gh", "ig", "yt"]
+            .into_iter()
+            .collect();
         let conflicts = config.validate_user_bindings_conflicts(&builtins);
-        let names: Vec<&str> = conflicts.iter().map(|c| c.name.as_str()).collect();
-        assert_eq!(names, vec!["abc", "gh", "mno", "zsh"]);
+        let actual: Vec<(&str, &str)> = conflicts
+            .iter()
+            .map(|conflict| (conflict.name.as_str(), conflict.target.as_str()))
+            .collect();
+        assert_eq!(
+            actual,
+            vec![
+                ("abc", "https://example.com/abc"),
+                ("gh", "https://example.com/gh"),
+                ("mno", "https://example.com/mno"),
+                ("zsh", "https://example.com/zsh"),
+            ]
+        );
     }
 
     #[test]
