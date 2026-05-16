@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 # Setup script for automatic deployment of bunnylol.rs
 # This script configures auto-deployment to check for updates every 5 minutes
 

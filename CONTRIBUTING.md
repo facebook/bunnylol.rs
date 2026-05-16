@@ -1,3 +1,10 @@
+<!--
+Copyright (c) Meta Platforms, Inc. and affiliates.
+
+This source code is licensed under the MIT license found in the
+LICENSE file in the root directory of this source tree.
+-->
+
 # Contributing to bunnylol.rs
 
 We actively welcome your feature-related pull requests, however, we will not be able to accept all contributions relating to adding / changing bindings. One benefit of open source software is that you can fork it and change whatever you would like to :)

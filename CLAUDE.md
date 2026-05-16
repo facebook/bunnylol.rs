@@ -1,3 +1,10 @@
+<!--
+Copyright (c) Meta Platforms, Inc. and affiliates.
+
+This source code is licensed under the MIT license found in the
+LICENSE file in the root directory of this source tree.
+-->
+
 # CLAUDE.md - Developer Guide for AI Assistants
 
 This guide provides context about the bunnylol.rs repository structure and patterns to help work efficiently on this codebase.

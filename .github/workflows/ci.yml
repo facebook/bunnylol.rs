@@ -1,3 +1,8 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 name: CI
 
 on:
@@ -82,12 +87,41 @@ jobs:
 
       - name: Check copyright headers
         run: |
+          is_text_file() {
+            case "$(file --brief --mime-type "$1")" in
+              text/*)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
+
+          is_exempt_file() {
+            case "$1" in
+              LICENSE|*.json)
+                return 0
+                ;;
+            esac
+
+            if ! is_text_file "$1"; then
+              return 0
+            fi
+
+            return 1
+          }
+
           missing=()
-          while IFS= read -r file; do
-            if ! head -2 "$file" | grep -q "Copyright (c) Meta Platforms, Inc. and affiliates"; then
+          while IFS= read -r -d '' file; do
+            if is_exempt_file "$file"; then
+              continue
+            fi
+
+            if ! head -20 "$file" | grep -q "Copyright (c) Meta Platforms, Inc. and affiliates"; then
               missing+=("$file")
             fi
-          done < <(find src tests -name '*.rs' -type f)
+          done < <(git ls-files -z)
 
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::The following files are missing the copyright header:"
@@ -95,7 +129,7 @@ jobs:
               echo "  $f"
             done
             echo ""
-            echo "Each .rs file must start with:"
+            echo "Each tracked file must include this header near the top unless it is explicitly exempted:"
             echo "/*"
             echo " * Copyright (c) Meta Platforms, Inc. and affiliates."
             echo " *"
@@ -104,4 +138,4 @@ jobs:
             echo " */"
             exit 1
           fi
-          echo "All .rs files have copyright headers."
+          echo "All tracked files that require copyright headers have them."
