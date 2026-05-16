@@ -29,6 +29,17 @@ fn write_test_config(test_name: &str, toml_body: &str) -> PathBuf {
     dir
 }
 
+#[cfg(feature = "cli")]
+fn assert_dry_run_stdout(xdg: &PathBuf, args: &[&str], stdout: &str) {
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
+    cmd.env("XDG_CONFIG_HOME", xdg)
+        .arg("--dry-run")
+        .args(args)
+        .assert()
+        .success()
+        .stdout(predicate::str::diff(stdout.to_owned()));
+}
+
 #[test]
 fn test_cli_help() {
     let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
@@ -147,64 +158,32 @@ fn test_cli_invalid_config_exits_with_error() {
 
 #[test]
 #[cfg(feature = "cli")]
-fn test_user_binding_url_static() {
+fn test_user_binding_url_redirects() {
     let xdg = write_test_config(
-        "url-static",
+        "url-redirects",
         r#"
 [user_bindings]
 cal = { url = "https://calendar.google.com/calendar/u/1/r" }
-"#,
-    );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("cal")
-        .assert()
-        .success()
-        .stdout("https://calendar.google.com/calendar/u/1/r\n");
-}
-
-#[test]
-#[cfg(feature = "cli")]
-fn test_user_binding_url_templated() {
-    let xdg = write_test_config(
-        "url-templated",
-        r#"
-[user_bindings]
 jira = { url = "https://corp.atlassian.net/browse/{}" }
-"#,
-    );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("jira")
-        .arg("PROJ-123")
-        .assert()
-        .success()
-        .stdout("https://corp.atlassian.net/browse/PROJ-123\n");
-}
-
-#[test]
-#[cfg(feature = "cli")]
-fn test_user_binding_url_with_description() {
-    let xdg = write_test_config(
-        "url-described",
-        r#"
-[user_bindings]
 notion = { url = "https://www.notion.so/{}", description = "Notion page" }
 "#,
     );
 
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("notion")
-        .arg("abc123")
-        .assert()
-        .success()
-        .stdout("https://www.notion.so/abc123\n");
+    assert_dry_run_stdout(
+        &xdg,
+        &["cal"],
+        "https://calendar.google.com/calendar/u/1/r\n",
+    );
+    assert_dry_run_stdout(
+        &xdg,
+        &["jira", "PROJ-123"],
+        "https://corp.atlassian.net/browse/PROJ-123\n",
+    );
+    assert_dry_run_stdout(
+        &xdg,
+        &["notion", "abc123"],
+        "https://www.notion.so/abc123\n",
+    );
 }
 
 #[test]
@@ -220,13 +199,7 @@ work = { command = "gh mycompany/repo", description = "Work repo" }
 "#,
     );
 
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("work")
-        .assert()
-        .success()
-        .stdout("https://github.com/mycompany/repo\n");
+    assert_dry_run_stdout(&xdg, &["work"], "https://github.com/mycompany/repo\n");
 }
 
 #[test]
@@ -242,64 +215,16 @@ work = { command = "gh mycompany/repo" }
 "#,
     );
 
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("work")
-        .arg("foo")
-        .arg("bar")
-        .assert()
-        .success()
-        .stdout("https://github.com/mycompany/repo\n");
-}
-
-#[test]
-#[cfg(feature = "cli")]
-fn test_user_binding_no_override_loses_to_builtin() {
-    // Without `override = true`, a name collision with a built-in must
-    // resolve to the built-in.
-    let xdg = write_test_config(
-        "no-override",
-        r#"
-[user_bindings]
-gh = { url = "https://example.com/should-be-shadowed" }
-"#,
+    assert_dry_run_stdout(
+        &xdg,
+        &["work", "foo", "bar"],
+        "https://github.com/mycompany/repo\n",
     );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("gh")
-        .arg("facebook/react")
-        .assert()
-        .success()
-        .stdout("https://github.com/facebook/react\n");
 }
 
 #[test]
 #[cfg(feature = "cli")]
-fn test_user_binding_override_shadows_builtin() {
-    // `override = true` opts in to shadowing a built-in command.
-    let xdg = write_test_config(
-        "override",
-        r#"
-[user_bindings]
-gh = { url = "https://example.com/my-fork", override = true }
-"#,
-    );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("gh")
-        .assert()
-        .success()
-        .stdout("https://example.com/my-fork\n");
-}
-
-#[test]
-#[cfg(feature = "cli")]
-fn test_user_binding_silent_conflict_emits_warning() {
+fn test_user_binding_builtin_conflict_warns_and_builtin_wins() {
     // Built-in wins on a name collision unless override = true, AND a
     // startup warning is emitted with a hint about the `override` flag.
     let xdg = write_test_config(
@@ -314,10 +239,27 @@ gh = { url = "https://example.com/should-be-shadowed" }
     cmd.env("XDG_CONFIG_HOME", &xdg)
         .arg("--dry-run")
         .arg("gh")
+        .arg("facebook/react")
         .assert()
         .success()
+        .stdout("https://github.com/facebook/react\n")
         .stderr(predicate::str::contains("shadowed").or(predicate::str::contains("conflict")))
         .stderr(predicate::str::contains("override"));
+}
+
+#[test]
+#[cfg(feature = "cli")]
+fn test_user_binding_override_shadows_builtin() {
+    // `override = true` opts in to shadowing a built-in command.
+    let xdg = write_test_config(
+        "override",
+        r#"
+[user_bindings]
+gh = { url = "https://example.com/my-fork", override = true }
+"#,
+    );
+
+    assert_dry_run_stdout(&xdg, &["gh"], "https://example.com/my-fork\n");
 }
 
 #[test]
@@ -390,25 +332,6 @@ cal = { url = "https://calendar.google.com/calendar/u/1/r" }
 
 #[test]
 #[cfg(feature = "cli")]
-fn test_user_binding_appears_on_list() {
-    let xdg = write_test_config(
-        "list",
-        r#"
-[user_bindings]
-cal = { url = "https://calendar.google.com/calendar/u/1/r" }
-"#,
-    );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--list")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("cal"));
-}
-
-#[test]
-#[cfg(feature = "cli")]
 fn test_user_binding_list_marks_active_override_and_ignored() {
     let xdg = write_test_config(
         "list-status",
@@ -440,9 +363,10 @@ ig = { url = "https://example.com/override", override = true }
 
 #[test]
 #[cfg(feature = "cli")]
-fn test_legacy_aliases_still_resolve_via_user_bindings_fold() {
+fn test_legacy_aliases_resolve_and_emit_deprecation_warning() {
     // [aliases] from before the user_bindings refactor must still work.
-    // They're migrated into user_bindings as Command variants at load time.
+    // They're migrated into user_bindings as Command variants at load time,
+    // and users should see the deprecation notice for the old table.
     let xdg = write_test_config(
         "aliases-fold",
         r#"
@@ -457,26 +381,7 @@ work = "gh mycompany/repo"
         .arg("work")
         .assert()
         .success()
-        .stdout("https://github.com/mycompany/repo\n");
-}
-
-#[test]
-#[cfg(feature = "cli")]
-fn test_legacy_aliases_emit_deprecation_warning() {
-    let xdg = write_test_config(
-        "aliases-deprecation",
-        r#"
-[aliases]
-work = "gh mycompany/repo"
-"#,
-    );
-
-    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
-    cmd.env("XDG_CONFIG_HOME", &xdg)
-        .arg("--dry-run")
-        .arg("work")
-        .assert()
-        .success()
+        .stdout("https://github.com/mycompany/repo\n")
         .stderr(predicate::str::contains("[aliases]"))
         .stderr(predicate::str::contains("deprecated"));
 }
