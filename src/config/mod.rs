@@ -601,6 +601,7 @@ mod tests {
         assert_eq!(config.default_search, "google");
         assert_eq!(config.stock_provider, "yahoo");
         assert!(config.aliases.is_empty());
+        assert!(config.user_bindings.is_empty());
         assert!(config.history.enabled);
         assert_eq!(config.history.max_entries, 1000);
         assert_eq!(config.server.port, 8000);
