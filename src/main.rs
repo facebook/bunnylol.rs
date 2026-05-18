@@ -256,7 +256,7 @@ fn execute_command(
     if config.history.enabled
         && let Some(history) = History::new(config)
     {
-        let username = whoami::username();
+        let username = whoami::username().unwrap_or_else(|_| "unknown".to_string());
         if let Err(e) = history.add(&full_args, &username) {
             eprintln!("Warning: Failed to save command to history: {}", e);
         }

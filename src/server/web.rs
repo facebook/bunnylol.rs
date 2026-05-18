@@ -7,7 +7,7 @@
 
 use std::sync::{OnceLock, RwLock};
 
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{BunnylolCommandInfo, BunnylolCommandRegistry, BunnylolConfig};
@@ -63,15 +63,15 @@ fn render_landing_page_html_uncached(
     display_url: String,
     user_bindings: Vec<BindingData>,
 ) -> String {
-    let body_content = leptos::ssr::render_to_string(move || {
+    let body_content = Owner::new().with(|| {
         view! {
             <LandingPage
                 server_display_url=display_url.clone()
                 user_bindings=user_bindings.clone()
             />
         }
-    })
-    .to_string();
+        .to_html()
+    });
 
     // Wrap in proper HTML document with favicon
     format!(
