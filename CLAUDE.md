@@ -384,6 +384,12 @@ Add parsing logic in `process_args()` (see `reddit.rs` for `r/` pattern)
 6. **Use parallel tool calls** when reading multiple command files for context
 7. **Check `url_encoding.rs`** before writing custom URL builders
 
+## Release Process
+
+Use `scripts/release.sh` for releases. Do not hand-roll release commits, tags,
+crates.io publishes, or GitHub releases. See `docs/release.md` for the full
+release workflow.
+
 ## Recent Changes
 
 - 2025-12-30: **Major refactor** - Merged binaries, added cross-platform service installation

@@ -16,6 +16,9 @@ homepage = "https://github.com/facebook/bunnylol.rs"
 keywords = ["browser", "bookmarks", "shortcuts", "url", "search"]
 categories = ["command-line-utilities", "web-programming::http-server", "development-tools"]
 
+[package.metadata.release]
+tag-prefix = "v"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
