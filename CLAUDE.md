@@ -390,6 +390,25 @@ Use `scripts/release.sh` for releases. Do not hand-roll release commits, tags,
 crates.io publishes, or GitHub releases. See `docs/release.md` for the full
 release workflow.
 
+## Commit Message Style
+
+Use short conventional prefixes for commits:
+
+- `feat:` for new user-facing features or tooling capabilities
+- `fix:` for bug fixes
+- `chore:` for dependency updates, releases, maintenance, and build/tooling upkeep
+- `docs:` for documentation-only changes
+- `test:` for test-only changes
+- `refactor:` for behavior-preserving code restructuring
+- `release:` for release version bump commits
+
+Examples:
+
+- `feat: add release automation`
+- `fix: handle invalid user binding configs`
+- `chore: update Cargo dependencies`
+- `release: v0.1.3`
+
 ## Recent Changes
 
 - 2025-12-30: **Major refactor** - Merged binaries, added cross-platform service installation
