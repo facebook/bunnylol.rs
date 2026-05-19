@@ -237,6 +237,8 @@ pub fn install_systemd_service(config: ServiceConfig) -> Result<(), ServiceError
         autostart: true,
         restart_policy: RestartPolicy::OnFailure {
             delay_secs: Some(5),
+            max_retries: None,
+            reset_after_secs: None,
         },
     };
 
