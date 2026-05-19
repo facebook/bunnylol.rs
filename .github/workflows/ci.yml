@@ -79,6 +79,18 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
 
+  systemd-service:
+    name: Systemd Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run systemd service test
+        run: tests/systemd_service_ci.sh
+
   copyright:
     name: Copyright Headers
     runs-on: ubuntu-latest
