@@ -31,14 +31,14 @@ The real release flow:
 2. Confirms the current branch is `main`.
 3. Confirms `main` is in sync with its upstream branch.
 4. Confirms GitHub CLI authentication.
-5. Confirms crates.io authentication by checking the configured Cargo token
-   against the crates.io API.
+5. Uses `cargo publish --dry-run` to verify the package through Cargo's
+   publish path.
 6. Installs `cargo-edit` if `cargo set-version` is missing.
 7. Bumps `Cargo.toml` and `Cargo.lock`.
 8. Runs `cargo metadata`, `git diff --check`, `cargo fmt`, `cargo clippy`,
-   `cargo test`, and `cargo package`.
+   `cargo test`, and `cargo publish --dry-run`.
 9. Creates a `release: vX.Y.Z` commit.
 10. Creates an annotated `vX.Y.Z` tag.
-11. Pushes `main` and the tag.
-12. Publishes to crates.io.
+11. Publishes to crates.io.
+12. Pushes `main` and the tag.
 13. Creates the GitHub release with generated release notes.

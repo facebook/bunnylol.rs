@@ -93,12 +93,6 @@ require_release_tools() {
   command -v jq >/dev/null ||
     die "jq is required to read cargo metadata"
 
-  command -v curl >/dev/null ||
-    die "curl is required to verify crates.io authentication"
-
-  command -v python3 >/dev/null ||
-    die "python3 is required to parse Cargo credentials TOML"
-
   command -v gh >/dev/null ||
     die "gh is required to create the GitHub release"
 
@@ -116,85 +110,6 @@ ensure_cargo_set_version() {
 
   if ! cargo set-version --help >/dev/null 2>&1; then
     die "cargo-edit installed, but cargo set-version is still unavailable"
-  fi
-}
-
-credential_file() {
-  local cargo_home
-  cargo_home="${CARGO_HOME:-$HOME/.cargo}"
-
-  if [[ -f "$cargo_home/credentials.toml" ]]; then
-    echo "$cargo_home/credentials.toml"
-    return
-  fi
-
-  if [[ -f "$cargo_home/credentials" ]]; then
-    echo "$cargo_home/credentials"
-    return
-  fi
-}
-
-cargo_registry_token() {
-  local file
-
-  if [[ -n "${CARGO_REGISTRY_TOKEN:-}" ]]; then
-    printf "%s" "$CARGO_REGISTRY_TOKEN"
-    return
-  fi
-
-  if [[ -n "${CARGO_REGISTRIES_CRATES_IO_TOKEN:-}" ]]; then
-    printf "%s" "$CARGO_REGISTRIES_CRATES_IO_TOKEN"
-    return
-  fi
-
-  file="$(credential_file)"
-  if [[ -z "$file" ]]; then
-    return 1
-  fi
-
-  python3 - "$file" <<'PY'
-import sys
-
-try:
-    import tomllib
-except ModuleNotFoundError:
-    sys.exit(2)
-
-with open(sys.argv[1], "rb") as f:
-    data = tomllib.load(f)
-
-token = (
-    data.get("registry", {}).get("token")
-    or data.get("registries", {}).get("crates-io", {}).get("token")
-    or data.get("token")
-)
-
-if token:
-    print(token, end="")
-PY
-}
-
-require_crates_io_auth() {
-  local http_status token
-
-  token="$(cargo_registry_token || true)"
-  if [[ -z "$token" ]]; then
-    die "crates.io token not found; run cargo login or set CARGO_REGISTRY_TOKEN"
-  fi
-
-  http_status="$(
-    curl \
-      --silent \
-      --show-error \
-      --output /dev/null \
-      --write-out "%{http_code}" \
-      --header "Authorization: $token" \
-      --header "User-Agent: bunnylol-release-script" \
-      https://crates.io/api/v1/me
-  )" || die "failed to verify crates.io authentication"
-
-  if [[ "$http_status" != "200" ]]; then
-    die "crates.io authentication check failed with HTTP ${http_status}; run cargo login with a valid publish token"
   fi
 }
 
@@ -318,19 +233,18 @@ The script will verify that:
   - The working tree is clean.
   - The current branch is main.
   - main is in sync with its upstream branch.
-  - jq, curl, python3, and gh are available.
+  - jq and gh are available.
   - gh is authenticated.
-  - crates.io authentication is valid.
   - ${tag} does not already exist.
 
 For a real release, the script will:
   - Install cargo-edit if cargo set-version is missing.
   - Run cargo set-version ${version}.
-  - Run cargo metadata, git diff --check, cargo fmt, cargo clippy, cargo test, and cargo package.
+  - Run cargo metadata, git diff --check, cargo fmt, cargo clippy, cargo test, and cargo publish --dry-run.
   - Commit Cargo.toml and Cargo.lock.
   - Create annotated tag ${tag}.
-  - Push main and ${tag}.
   - Publish ${version} to crates.io.
+  - Push main and ${tag}.
   - Create a GitHub release for ${tag} with generated release notes.
 
 Dry run mode only prints the steps; it does not change files, run checks, commit, tag, push, publish, or create a GitHub release.
@@ -380,9 +294,8 @@ if [[ "$dry_run" -eq 1 ]]; then
   echo "DRY RUN: would verify the working tree is clean"
   echo "DRY RUN: would verify the current branch is main"
   echo "DRY RUN: would verify main is in sync with its upstream branch"
-  echo "DRY RUN: would verify jq, curl, python3, and gh are available"
+  echo "DRY RUN: would verify jq and gh are available"
   echo "DRY RUN: would verify gh is authenticated"
-  echo "DRY RUN: would verify crates.io authentication"
   echo "DRY RUN: would verify ${tag} does not already exist"
   echo "DRY RUN: release ${current_version} -> ${version} (${tag})"
   echo "DRY RUN: would install cargo-edit if cargo set-version is missing"
@@ -393,11 +306,11 @@ if [[ "$dry_run" -eq 1 ]]; then
   echo "DRY RUN: would run cargo fmt --all -- --check"
   echo "DRY RUN: would run cargo clippy --all-features -- -D warnings"
   echo "DRY RUN: would run cargo test --all-features"
-  echo "DRY RUN: would run cargo package --allow-dirty"
+  echo "DRY RUN: would run cargo publish --dry-run --allow-dirty"
   echo "DRY RUN: would commit Cargo.toml and Cargo.lock with message: release: ${tag}"
   echo "DRY RUN: would create annotated tag ${tag}"
-  echo "DRY RUN: would run git push origin main ${tag}"
   echo "DRY RUN: would run cargo publish"
+  echo "DRY RUN: would run git push origin main ${tag}"
   echo "DRY RUN: would run gh release create ${tag} --verify-tag --title 'Release ${tag}' --generate-notes"
   echo "Dry run complete; no files were changed."
   exit 0
@@ -410,7 +323,6 @@ fi
 
 ensure_main_is_pushed
 require_release_tools
-require_crates_io_auth
 ensure_cargo_set_version
 
 if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
@@ -433,15 +345,15 @@ git diff --check
 cargo fmt --all -- --check
 cargo clippy --all-features -- -D warnings
 cargo test --all-features
-cargo package --allow-dirty
+cargo publish --dry-run --allow-dirty
 
 git add Cargo.toml Cargo.lock
 git commit -m "release: ${tag}" \
   -m "Bump bunnylol to ${version} and verify the crate package."
 git tag -a "$tag" -m "Release ${tag}"
 
-git push origin main "$tag"
 cargo publish
+git push origin main "$tag"
 gh release create "$tag" --verify-tag --title "Release ${tag}" --generate-notes
 
 echo "Created, pushed, and published GitHub release ${tag}."
