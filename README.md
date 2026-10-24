@@ -413,8 +413,8 @@ You can set your default search engine to `http://localhost:8000/?cmd=%s` and us
 | Command | Aliases | Description | Example |
 |---------|---------|-------------|---------|
 | `meta` | `metaai` | Navigate to Meta, Meta AI, Meta Accounts Center, or Meta Pay | `meta accounts` |
-| `claude` | — | Navigate to Claude AI (supports: `billing`, `cost`, `artifacts`, `chats`, `projects`) | `claude projects` |
-| `chatgpt` | — | Navigate to ChatGPT | `chatgpt` |
+| `claude` | — | Navigate to Claude AI or start a chat with a prompt (supports: `billing`, `cost`, `artifacts`, `chats`, `projects`) | `claude explain rust lifetimes` |
+| `chatgpt` | — | Navigate to ChatGPT or start a chat with a prompt | `chatgpt explain rust lifetimes` |
 
 ### Shopping & Finance
 
