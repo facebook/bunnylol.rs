@@ -6,8 +6,13 @@
  */
 
 /// Claude command handler
-/// Supports: claude -> redirects to claude.ai
+/// Supports:
+/// - claude -> https://claude.ai
+/// - claude platform/api/keys/apikey/billing/cost/artifacts/chats/projects/usage/upgrade
+///   -> the matching claude.ai or platform.claude.com page
+/// - claude [prompt] -> https://claude.ai/new?q=[prompt] (new chat with the prompt)
 use crate::commands::bunnylol_command::{BunnylolCommand, BunnylolCommandInfo};
+use crate::utils::url_encoding::build_search_url;
 
 pub struct ClaudeCommand;
 
@@ -31,7 +36,8 @@ impl BunnylolCommand for ClaudeCommand {
             "projects" => "https://claude.ai/projects".to_string(),
             "usage" => "https://claude.ai/settings/usage".to_string(),
             "upgrade" => "https://claude.ai/upgrade".to_string(),
-            _ => "https://claude.ai".to_string(),
+            "" => "https://claude.ai".to_string(),
+            _ => build_search_url("https://claude.ai/new", "q", query),
         };
 
         println!("   >> ClaudeCommand::process_args - returning: {}", result);
@@ -41,8 +47,8 @@ impl BunnylolCommand for ClaudeCommand {
     fn get_info() -> BunnylolCommandInfo {
         BunnylolCommandInfo::new(
             Self::BINDINGS,
-            "Navigate to Claude AI (supports: billing, cost, artifacts, chats, projects)",
-            "claude projects",
+            "Navigate to Claude AI or start a chat with a prompt (supports: billing, cost, artifacts, chats, projects)",
+            "claude explain rust lifetimes",
         )
     }
 }
@@ -57,10 +63,39 @@ mod tests {
     }
 
     #[test]
+    fn test_claude_command_binding_only() {
+        assert_eq!(ClaudeCommand::process_args("claude"), "https://claude.ai");
+    }
+
+    #[test]
     fn test_claude_command_with_args() {
         assert_eq!(
             ClaudeCommand::process_args("some args"),
-            "https://claude.ai"
+            "https://claude.ai/new?q=some%20args"
+        );
+    }
+
+    #[test]
+    fn test_claude_prompt() {
+        assert_eq!(
+            ClaudeCommand::process_args("claude explain rust lifetimes"),
+            "https://claude.ai/new?q=explain%20rust%20lifetimes"
+        );
+    }
+
+    #[test]
+    fn test_claude_prompt_special_chars() {
+        assert_eq!(
+            ClaudeCommand::process_args("claude is 2+2=4 & why?"),
+            "https://claude.ai/new?q=is%202%2B2%3D4%20%26%20why?"
+        );
+    }
+
+    #[test]
+    fn test_claude_subcommand_still_wins() {
+        assert_eq!(
+            ClaudeCommand::process_args("claude projects"),
+            "https://claude.ai/projects"
         );
     }
 
