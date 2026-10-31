@@ -153,21 +153,42 @@ impl From<BunnylolCommandInfo> for BindingData {
 /// showing them here would be misleading. Bindings with `override = true`
 /// are kept.
 fn collect_user_bindings(config: &BunnylolConfig) -> Vec<BindingData> {
+    use crate::config::UserBinding;
+
+    // Build a card for a single binding (or nested child). `command` is the
+    // display name (`"aoc"` for a parent, `"aoc r"` for a child).
+    fn card(command: String, binding: &UserBinding) -> BindingData {
+        let default_desc = match binding {
+            UserBinding::Url { .. } => "User URL binding",
+            UserBinding::Command { .. } => "User command binding",
+            UserBinding::Nested { .. } => "User nested binding",
+        };
+        BindingData {
+            command,
+            description: binding.description().unwrap_or(default_desc).to_string(),
+            example: format!("{} — {}", binding.kind_label(), binding.display_target()),
+        }
+    }
+
     let builtins = BunnylolCommandRegistry::builtin_binding_names();
     let mut rows: Vec<BindingData> = config
         .user_bindings
         .iter()
         .filter(|(name, binding)| binding.overrides_builtin() || !builtins.contains(name.as_str()))
-        .map(|(name, binding)| {
-            let default_desc = match binding {
-                crate::config::UserBinding::Url { .. } => "User URL binding",
-                crate::config::UserBinding::Command { .. } => "User command binding",
-            };
-            BindingData {
-                command: name.clone(),
-                description: binding.description().unwrap_or(default_desc).to_string(),
-                example: format!("{} — {}", binding.kind_label(), binding.display_target()),
+        .flat_map(|(name, binding)| {
+            let mut cards = vec![card(name.clone(), binding)];
+            // Expand nested children into their own cards (e.g. `aoc r`) so
+            // they are discoverable on the bindings page.
+            if let UserBinding::Nested { nested, .. } = binding {
+                let mut children: Vec<(&String, &UserBinding)> = nested.iter().collect();
+                children.sort_by_key(|(k, _)| k.to_lowercase());
+                cards.extend(
+                    children
+                        .into_iter()
+                        .map(|(child_key, child)| card(format!("{} {}", name, child_key), child)),
+                );
             }
+            cards
         })
         .collect();
     rows.sort_by_key(|a| a.command.to_lowercase());
@@ -524,6 +545,58 @@ mod tests {
             },
         );
         config
+    }
+
+    #[test]
+    fn test_collect_user_bindings_expands_nested_children() {
+        use std::collections::HashMap;
+
+        let mut nested = HashMap::new();
+        nested.insert(
+            "r".to_string(),
+            UserBinding::Url {
+                url: "https://www.reddit.com/r/adventofcode/".to_string(),
+                description: None,
+                override_builtin: false,
+            },
+        );
+        nested.insert(
+            "repo".to_string(),
+            UserBinding::Command {
+                command: "gh jrodal98/advent-of-code".to_string(),
+                description: None,
+                override_builtin: false,
+            },
+        );
+
+        let mut config = BunnylolConfig::default();
+        config.user_bindings.insert(
+            "aoc".to_string(),
+            UserBinding::Nested {
+                url: Some("https://adventofcode.com".to_string()),
+                description: Some("Advent of Code".to_string()),
+                override_builtin: false,
+                nested,
+            },
+        );
+
+        let rows = collect_user_bindings(&config);
+        let names: Vec<&str> = rows.iter().map(|r| r.command.as_str()).collect();
+        // Parent card plus one card per child (sorted alphabetically overall).
+        assert_eq!(names, vec!["aoc", "aoc r", "aoc repo"]);
+
+        let parent = rows.iter().find(|r| r.command == "aoc").unwrap();
+        assert_eq!(parent.example, "NEST — https://adventofcode.com");
+        assert_eq!(parent.description, "Advent of Code");
+
+        let child_url = rows.iter().find(|r| r.command == "aoc r").unwrap();
+        assert_eq!(
+            child_url.example,
+            "URL — https://www.reddit.com/r/adventofcode/"
+        );
+
+        let child_cmd = rows.iter().find(|r| r.command == "aoc repo").unwrap();
+        assert_eq!(child_cmd.example, "CMD — gh jrodal98/advent-of-code");
     }
 
     #[test]

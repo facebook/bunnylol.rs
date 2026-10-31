@@ -402,7 +402,9 @@ fn print_user_bindings_table(cfg: &BunnylolConfig) {
 
     let rows: Vec<UserBindingRow> = entries
         .into_iter()
-        .map(|(name, b)| {
+        .flat_map(|(name, b)| {
+            // Status reflects how the top-level name interacts with built-ins;
+            // it is computed once per parent and not applied to child rows.
             let status = if b.overrides_builtin() {
                 "override"
             } else if builtins.contains(name.as_str()) {
@@ -410,13 +412,32 @@ fn print_user_bindings_table(cfg: &BunnylolConfig) {
             } else {
                 "active"
             };
-            UserBindingRow {
+
+            let mut rows = vec![UserBindingRow {
                 command: name.clone(),
                 kind: b.kind_label().to_string(),
                 status: status.to_string(),
                 target: b.display_target().to_string(),
                 description: b.description().unwrap_or("—").to_string(),
+            }];
+
+            // Expand nested children into their own rows (e.g. `cal g`) so they
+            // are discoverable. Children sort case-insensitively by key.
+            if let UserBinding::Nested { nested, .. } = b {
+                let mut children: Vec<(&String, &UserBinding)> = nested.iter().collect();
+                children.sort_by_key(|(k, _)| k.to_lowercase());
+                for (child_key, child) in children {
+                    rows.push(UserBindingRow {
+                        command: format!("{} {}", name, child_key),
+                        kind: child.kind_label().to_string(),
+                        status: "nested".to_string(),
+                        target: child.display_target().to_string(),
+                        description: child.description().unwrap_or("—").to_string(),
+                    });
+                }
             }
+
+            rows
         })
         .collect();
 

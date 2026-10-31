@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use super::BunnylolConfig;
@@ -42,9 +44,47 @@ use super::BunnylolConfig;
 ///
 /// - By default, built-ins win on a name collision. Set `override = true`
 ///   to make a user binding shadow a built-in command.
+///
+/// - `Nested` bindings group sub-bindings under a parent name. They are
+///   resolved by a two-token lookup: with `aoc = { nested = { r = ... } }`,
+///   typing `aoc r` resolves child `r`, `aoc j 5` resolves child `j` with the
+///   remainder `5` as its args, and bare `aoc` (or `aoc <unknown>`) falls back
+///   to the parent's own `url` if present. Only the **parent's** `override`
+///   flag affects built-in shadowing; child `override` flags are ignored
+///   because children are only reachable through the parent. Nesting is one
+///   level deep — a child's own `nested` table is not reachable via the
+///   two-token dispatch.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum UserBinding {
+    /// A parent binding with named sub-bindings (one level of nesting).
+    ///
+    /// Declared first so serde's untagged matching selects this variant
+    /// whenever a `nested` table is present (the `Url`/`Command` variants do
+    /// not deny unknown fields and would otherwise swallow it). A parent may
+    /// also carry an optional `url` used when invoked bare or with an unknown
+    /// child.
+    ///
+    /// ```toml
+    /// [user_bindings.aoc]
+    /// url = "https://adventofcode.com"
+    /// description = "Advent of code"
+    ///
+    /// [user_bindings.aoc.nested.r]
+    /// url = "https://www.reddit.com/r/adventofcode/"
+    ///
+    /// [user_bindings.aoc.nested.j]
+    /// url = "https://github.com/jrodal98/advent-of-code/blob/master/py2024/day{}/solution.py"
+    /// ```
+    Nested {
+        #[serde(default)]
+        url: Option<String>,
+        #[serde(default)]
+        description: Option<String>,
+        #[serde(default, rename = "override")]
+        override_builtin: bool,
+        nested: HashMap<String, UserBinding>,
+    },
     /// Maps a name to a URL or URL template.
     Url {
         url: String,
@@ -68,9 +108,9 @@ impl UserBinding {
     /// The description shown on the /bindings web page, if any.
     pub fn description(&self) -> Option<&str> {
         match self {
-            UserBinding::Url { description, .. } | UserBinding::Command { description, .. } => {
-                description.as_deref()
-            }
+            UserBinding::Url { description, .. }
+            | UserBinding::Command { description, .. }
+            | UserBinding::Nested { description, .. } => description.as_deref(),
         }
     }
 
@@ -82,25 +122,31 @@ impl UserBinding {
             }
             | UserBinding::Command {
                 override_builtin, ..
+            }
+            | UserBinding::Nested {
+                override_builtin, ..
             } => *override_builtin,
         }
     }
 
-    /// Short label for display ("URL" or "CMD").
+    /// Short label for display ("URL", "CMD", or "NEST").
     pub fn kind_label(&self) -> &'static str {
         match self {
             UserBinding::Url { .. } => "URL",
             UserBinding::Command { .. } => "CMD",
+            UserBinding::Nested { .. } => "NEST",
         }
     }
 
-    /// The URL template (for `Url`) or command string (for `Command`), used
-    /// for displaying the binding's target in the /bindings web page and the
-    /// CLI `--list` table.
+    /// The URL template (for `Url`), command string (for `Command`), or the
+    /// parent URL / a `(N nested)` summary (for `Nested`), used for displaying
+    /// the binding's target in the /bindings web page and the CLI `--list`
+    /// table.
     pub fn display_target(&self) -> &str {
         match self {
             UserBinding::Url { url, .. } => url,
             UserBinding::Command { command, .. } => command,
+            UserBinding::Nested { url, .. } => url.as_deref().unwrap_or("(nested)"),
         }
     }
 }
@@ -121,13 +167,17 @@ impl BunnylolConfig {
         full_args: &str,
     ) -> Option<(ResolvedBinding, bool)> {
         let binding = self.user_bindings.get(name)?;
+        let overrides = binding.overrides_builtin();
         let resolved = match binding {
             UserBinding::Url { url, .. } => {
                 ResolvedBinding::Url(apply_url_template(url, name, full_args))
             }
             UserBinding::Command { command, .. } => ResolvedBinding::Command(command.clone()),
+            UserBinding::Nested { url, nested, .. } => {
+                resolve_nested(url.as_deref(), nested, name, full_args)?
+            }
         };
-        Some((resolved, binding.overrides_builtin()))
+        Some((resolved, overrides))
     }
 
     /// Validate this config's `[user_bindings]` against the set of built-in
@@ -156,6 +206,49 @@ impl BunnylolConfig {
     }
 }
 
+/// Resolve a `Nested` parent binding via a two-token lookup.
+///
+/// The first whitespace-delimited token after `parent_name` selects a child;
+/// the remainder is the child's args. On a child hit the child is resolved as
+/// an ordinary binding (`Url` → `{}` template, `Command` → rewrite). On a miss
+/// (no token, or an unknown child) the parent's own `url` is used, if any;
+/// otherwise `None` is returned so the registry falls through to its next tier.
+fn resolve_nested(
+    parent_url: Option<&str>,
+    nested: &HashMap<String, UserBinding>,
+    parent_name: &str,
+    full_args: &str,
+) -> Option<ResolvedBinding> {
+    let remainder = full_args
+        .strip_prefix(parent_name)
+        .map(|s| s.trim_start())
+        .unwrap_or(full_args);
+    let mut parts = remainder.splitn(2, char::is_whitespace);
+    let child_key = parts.next().unwrap_or("");
+    let child_args = parts.next().unwrap_or("").trim_start();
+
+    let child = (!child_key.is_empty())
+        .then(|| nested.get(child_key))
+        .flatten();
+    match child {
+        Some(UserBinding::Url { url, .. }) => Some(ResolvedBinding::Url(apply_url_template(
+            url, "", child_args,
+        ))),
+        Some(UserBinding::Command { command, .. }) => {
+            Some(ResolvedBinding::Command(command.clone()))
+        }
+        // Deeper nesting is not reachable by two-token dispatch; fall back to
+        // the child's own url, if it declares one.
+        Some(UserBinding::Nested { url, .. }) => url
+            .as_deref()
+            .map(|u| ResolvedBinding::Url(apply_url_template(u, "", child_args))),
+        // No matching child: fall back to the parent's own url, if any.
+        None => {
+            parent_url.map(|u| ResolvedBinding::Url(apply_url_template(u, parent_name, full_args)))
+        }
+    }
+}
+
 /// Apply a `{}` template substitution to a URL binding. `command` is stripped
 /// from the front of `full_args`, the remainder is URL-encoded, and
 /// substituted in. A template with no `{}` is returned as-is.
@@ -173,6 +266,17 @@ fn apply_url_template(template: &str, command: &str, full_args: &str) -> String 
 
 /// Format one `[user_bindings]` entry as its TOML inline-table representation.
 pub(super) fn format_user_binding_toml(name: &str, binding: &UserBinding) -> String {
+    format!(
+        "{} = {}",
+        format_toml_key(name),
+        format_user_binding_value(binding)
+    )
+}
+
+/// Format a binding's value (the `{ ... }` inline table), recursing into
+/// nested children. Kept separate from [`format_user_binding_toml`] so nested
+/// children can be rendered without a leading `name = `.
+fn format_user_binding_value(binding: &UserBinding) -> String {
     let mut parts: Vec<String> = Vec::new();
     match binding {
         UserBinding::Url {
@@ -201,8 +305,32 @@ pub(super) fn format_user_binding_toml(name: &str, binding: &UserBinding) -> Str
                 parts.push("override = true".to_string());
             }
         }
+        UserBinding::Nested {
+            url,
+            description,
+            override_builtin,
+            nested,
+        } => {
+            if let Some(u) = url {
+                parts.push(format!("url = \"{}\"", escape_toml_string(u)));
+            }
+            if let Some(d) = description {
+                parts.push(format!("description = \"{}\"", escape_toml_string(d)));
+            }
+            if *override_builtin {
+                parts.push("override = true".to_string());
+            }
+            let mut children: Vec<(&String, &UserBinding)> = nested.iter().collect();
+            children.sort_by_key(|(k, _)| k.to_lowercase());
+            let nested_body = children
+                .into_iter()
+                .map(|(k, v)| format!("{} = {}", format_toml_key(k), format_user_binding_value(v)))
+                .collect::<Vec<_>>()
+                .join(", ");
+            parts.push(format!("nested = {{ {} }}", nested_body));
+        }
     }
-    format!("{} = {{ {} }}", format_toml_key(name), parts.join(", "))
+    format!("{{ {} }}", parts.join(", "))
 }
 
 fn format_toml_key(key: &str) -> String {

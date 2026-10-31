@@ -357,6 +357,49 @@ ig = { url = "https://example.com/override", override = true }
         .stdout(predicate::str::contains("override"));
 }
 
+#[test]
+#[cfg(feature = "cli")]
+fn test_user_binding_list_expands_nested_children() {
+    // A Nested parent must render its own row plus one row per child, so
+    // nested sub-bindings (e.g. `aoc r`) are discoverable in `--list`.
+    let xdg = write_test_config(
+        "list-nested",
+        r#"
+[user_bindings]
+cal2 = { url = "https://internalfb.com/calendar" }
+
+[user_bindings.aoc]
+url = "https://adventofcode.com"
+description = "Advent of Code"
+
+[user_bindings.aoc.nested.r]
+url = "https://www.reddit.com/r/adventofcode/"
+
+[user_bindings.aoc.nested.repo]
+command = "gh jrodal98/advent-of-code"
+"#,
+    );
+
+    let mut cmd = assert_cmd::cargo::cargo_bin_cmd!("bunnylol");
+    cmd.env("XDG_CONFIG_HOME", &xdg)
+        .arg("--list")
+        .assert()
+        .success()
+        // Parent row: NEST kind, parent fallback url.
+        .stdout(predicate::str::contains("aoc"))
+        .stdout(predicate::str::contains("NEST"))
+        .stdout(predicate::str::contains("https://adventofcode.com"))
+        // Child rows are expanded as `<parent> <child>` with the `nested`
+        // status and their own targets.
+        .stdout(predicate::str::contains("aoc r"))
+        .stdout(predicate::str::contains("nested"))
+        .stdout(predicate::str::contains(
+            "https://www.reddit.com/r/adventofcode/",
+        ))
+        .stdout(predicate::str::contains("aoc repo"))
+        .stdout(predicate::str::contains("gh jrodal98/advent-of-code"));
+}
+
 // =====================================================================
 // [aliases] deprecation / migration tests
 // =====================================================================
