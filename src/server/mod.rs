@@ -24,6 +24,23 @@ use rocket::response::Redirect;
 #[cfg(feature = "server")]
 use crate::{BunnylolCommandRegistry, BunnylolConfig, ConfigReloader, History, utils};
 
+/// Combine the `cmd` query parameter with an optional `args` parameter into the
+/// full command string the registry should process.
+///
+/// The landing-page cards send the command in a hidden `cmd` field and the
+/// user's arguments in a separate `args` field; this stitches them back into
+/// `"cmd args"`. Empty/whitespace-only `args` yields the bare command, so
+/// existing single-parameter requests (e.g. `/?cmd=gh facebook/bunnylol.rs`,
+/// `/?cmd=%s`) are unchanged. Returns `None` when there is no command.
+#[cfg(feature = "server")]
+fn combine_command_args(cmd: Option<&str>, args: Option<&str>) -> Option<String> {
+    let cmd = cmd?;
+    match args {
+        Some(args) if !args.trim().is_empty() => Some(format!("{} {}", cmd, args.trim())),
+        _ => Some(cmd.to_string()),
+    }
+}
+
 #[cfg(feature = "server")]
 mod server_impl {
     use super::*;
@@ -44,27 +61,28 @@ mod server_impl {
         }
     }
 
-    // http://localhost:8000/?cmd=gh
-    #[rocket::get("/?<cmd>")]
+    // http://localhost:8000/?cmd=gh  (optionally &args=... from the card forms)
+    #[rocket::get("/?<cmd>&<args>")]
     pub(super) fn search(
         cmd: Option<&str>,
+        args: Option<&str>,
         config: &State<ConfigReloader>,
         client_ip: ClientIP,
     ) -> Result<Redirect, rocket::response::content::RawHtml<String>> {
         let config = config.current();
 
-        match cmd {
+        match combine_command_args(cmd, args) {
             Some(cmd_str) => {
                 println!("bunnylol command: {}", cmd_str);
 
-                let command = utils::get_command_from_query_string(cmd_str);
-                let redirect_url = BunnylolCommandRegistry::process_command(command, cmd_str);
+                let command = utils::get_command_from_query_string(&cmd_str);
+                let redirect_url = BunnylolCommandRegistry::process_command(command, &cmd_str);
                 println!("redirecting to: {}", redirect_url);
 
                 // Track command in history if enabled
                 if config.history.enabled
                     && let Some(history) = History::new(&config)
-                    && let Err(e) = history.add(cmd_str, &client_ip.0)
+                    && let Err(e) = history.add(&cmd_str, &client_ip.0)
                 {
                     eprintln!("Warning: Failed to save command to history: {}", e);
                 }

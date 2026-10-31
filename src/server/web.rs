@@ -176,6 +176,13 @@ fn collect_user_bindings(config: &BunnylolConfig) -> Vec<BindingData> {
 
 #[component]
 fn BindingCard(binding: BindingData) -> impl IntoView {
+    // The card opens commands through the server's `/?cmd=` redirect. Links are
+    // relative to this server, so they work regardless of host/proxy.
+    let command_url = format!("/?cmd={}", binding.command);
+    // The argument form is a JS-free GET form. The command travels in a hidden
+    // `cmd` field (so it can't be edited away); the visible field carries only
+    // the user's `args`, which the server combines into `cmd args`.
+    let cmd_value = binding.command.clone();
     view! {
         <div
             class="binding-card"
@@ -185,19 +192,21 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
             style:transition="transform 0.2s, box-shadow 0.2s"
             style:border="2px solid var(--border-light)"
         >
-            <div
-                style:font-family="'JetBrains Mono', monospace"
-                style:font-size="1.4em"
-                style:font-weight="700"
-                style:color="var(--accent-blue)"
-                style:margin-bottom="10px"
-                style:background="var(--bg-white)"
-                style:padding="8px 12px"
-                style:border-radius="4px"
-                style:display="inline-block"
-            >
-                {binding.command}
-            </div>
+            <a href=command_url style:text-decoration="none" style:display="inline-block">
+                <div
+                    style:font-family="'JetBrains Mono', monospace"
+                    style:font-size="1.4em"
+                    style:font-weight="700"
+                    style:color="var(--accent-blue)"
+                    style:margin-bottom="10px"
+                    style:background="var(--bg-white)"
+                    style:padding="8px 12px"
+                    style:border-radius="4px"
+                    style:display="inline-block"
+                >
+                    {binding.command}
+                </div>
+            </a>
             <div
                 style:color="var(--text-dark)"
                 style:margin-bottom="15px"
@@ -229,6 +238,58 @@ fn BindingCard(binding: BindingData) -> impl IntoView {
                     {binding.example}
                 </div>
             </div>
+            // Argument form: the command is fixed (hidden field); the user types
+            // only arguments and submits (button or Enter) to open a specific
+            // target. The `×` is a JS-free reset that clears the args field.
+            <form action="/" method="get" style:margin-top="15px" style:display="flex" style:gap="8px">
+                <input type="hidden" name="cmd" value=cmd_value />
+                <div style:position="relative" style:flex="1" style:display="flex">
+                    <input
+                        type="text"
+                        name="args"
+                        placeholder="arguments (optional)"
+                        aria-label="arguments"
+                        style:flex="1"
+                        style:font-family="'JetBrains Mono', monospace"
+                        style:font-size="0.9em"
+                        style:padding="8px 28px 8px 10px"
+                        style:border="1px solid var(--border-light)"
+                        style:border-radius="4px"
+                        style:min-width="0"
+                    />
+                    <button
+                        type="reset"
+                        aria-label="clear"
+                        title="clear"
+                        style:position="absolute"
+                        style:right="6px"
+                        style:top="50%"
+                        style:transform="translateY(-50%)"
+                        style:border="none"
+                        style:background="transparent"
+                        style:color="var(--text-light)"
+                        style:cursor="pointer"
+                        style:font-size="1.1em"
+                        style:line-height="1"
+                        style:padding="2px 4px"
+                    >
+                        "×"
+                    </button>
+                </div>
+                <button
+                    type="submit"
+                    style:font-family="'JetBrains Mono', monospace"
+                    style:font-weight="600"
+                    style:color="var(--bg-white)"
+                    style:background="var(--accent-blue)"
+                    style:border="none"
+                    style:border-radius="4px"
+                    style:padding="8px 14px"
+                    style:cursor="pointer"
+                >
+                    "open"
+                </button>
+            </form>
         </div>
     }
 }
